@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="ja">
+<head>
+		<meta charset="utf-8">
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jasmine/3.3.0/jasmine.min.css">
+</head>
+<body>
+
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jasmine/3.3.0/jasmine.min.js"></script>
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jasmine/3.3.0/jasmine-html.js"></script>
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jasmine/3.3.0/boot.min.js"></script>
+<script src="https://bundle.run/buffer@6.0.3"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/tweetnacl/1.0.2/nacl-fast.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/js-sha3/0.8.0/sha3.min.js"></script>
+
+<script src="https://xembook.github.io/nem2-browserify/tsunagi-sdk-0.1.js"></script>
+<script>
+
+
+jasmine.DEFAULT_TIMEOUT_INTERVAL =240000;
+describe('tsunagi-sdk.0.1',() => {
+
+
+	beforeEach(async()=>{
+	});
+
+	beforeAll(async()=>{
+
+		const network = {
+			version:1,
+			network:'TESTNET',
+			generationHash:'7fccd304802016bebbcd342a332f91ff1f3bb5e902988b352697be245f48e836',
+			currencyMosaicId:0x3A8416DB2D53B6C8n,
+			currencyNamespaceId:0xE74B99BA41F4AFEEn,
+			currencyDivisibility:6,
+			epochAdjustment:1637848847,
+			catjasonBase:"https://xembook.github.io/tsunagi-sdk/catjson/",
+			wellknownNodes:[
+				'https://sym-test.opening-line.jp:3001',
+				'https://sym-test.opening-line.jp:3001',
+				'https://sym-test.opening-line.jp:3001',
+			]
+		}
+	});
+
+	describe('network properties', () => {
+
+		it('resolves to epochAdjustment', async () => {
+
+			//Alice->Bob
+			tx1 = {
+				type:'TRANSFER',
+				signer_public_key:"5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
+				recipient_address:"TCO7HLVDQUX6V7C737BCM3VYJ3MKP6REE2EKROA",
+				mosaics:[
+					{mosaic_id: 0x2A09B7F9097934C2n, amount: 1n},
+					{mosaic_id: 0x3A8416DB2D53B6C8n, amount: 100n},
+				],
+				message:"Hello Tsunagi(Catjson) SDK!",
+			}
+			//Bob->Caroll
+			tx2 = {
+				type:'TRANSFER',
+				signer_public_key:"6199BAE3B241DF60418E258D046C22C8C1A5DE2F4F325753554E7FD9C650AFEC",
+				recipient_address:"TDZBCWHAVA62R4JFZJJUXQWXLIRTUK5KZHFR5AQ",
+				mosaics:[
+					{mosaic_id: 0x3A8416DB2D53B6C8n, amount: 100n},
+					{mosaic_id: 0x2A09B7F9097934C2n, amount: 1n},
+				],
+				message:"Hello Carol! This is Bob.",
+			}
+			//Caroll->Alice
+			tx3 = {
+				type:'TRANSFER',
+				signer_public_key:"886ADFBD4213576D63EA7E7A4BECE61C6933C27CD2FF36F85155C8FEBFB6EB4E",
+				recipient_address:"TBUXMJAYYW3EH3XHBZXSBVGVKXKZS4EH26TINKI",
+				mosaics:[
+					{mosaic_id: 0x3A8416DB2D53B6C8n, amount: 100n},
+					{mosaic_id: 0x2A09B7F9097934C2n, amount: 1n},
+				],
+				message:"Hello Alice, This is Carol.",
+			}
+
+			cosignature1 = {
+				version:0n,
+				signer_public_key:"6199BAE3B241DF60418E258D046C22C8C1A5DE2F4F325753554E7FD9C650AFEC",
+				signature:"",
+			}
+
+			cosignature2 = {
+				version:0n,
+				signer_public_key:"886ADFBD4213576D63EA7E7A4BECE61C6933C27CD2FF36F85155C8FEBFB6EB4E",
+				signature:"",
+			}
+
+			aggTx = {
+				type:'AGGREGATE_COMPLETE',
+				signer_public_key:"5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
+				fee:1000000n,
+				deadline:deadline,
+				transactions:[tx1,tx2,tx3],
+				cosignatures:[cosignature1,cosignature2]
+			}
+
+
+			catjson = await loadCatjson(aggTx);
+			layout = await loadLayout(aggTx,catjson,false); //isEmbedded false
+
+			preparedTx = await prepare(aggTx,layout,network); //事前準備
+			parsedTx   = await parse(preparedTx,layout,catjson); //構築
+			builtTx    = build(parsedTx);
+
+			privateKey = "94ee0f4d7fe388ac4b04a6a6ae2ba969617879b83616e4d25710d688a89d80c7";
+			signature = sign(builtTx,privateKey,network);
+			updateTx(builtTx,"signature","value",signature);
+
+			//トランザクションハッシュ作成
+			txHash = hashTransaction(aggTx.signer_public_key,signature,builtTx,network);
+
+			bobPrivateKey = "fa6373f4f497773c5cc55c103e348b139461d61fd4b45387e69d08a68000e06b";
+			carolPrivateKey = "1e090b2a266877a9f88a510af2eb0945a63dc69dbce674ccd83272717d4175cf";
+			cosignature1.signature = cosign(txHash,bobPrivateKey);
+			cosignature2.signature = cosign(txHash,carolPrivateKey);
+
+			cosignaturesLayout = layout.find(lf=>lf.name === "cosignatures");
+			parsedCosignatures = await parse(preparedTx,[cosignaturesLayout],catjson); //構築
+			updateTx(builtTx,"cosignatures","layout",parsedCosignatures[0].layout);
+
+//			payload = `{"payload": "${toHex(builtTx)}"}`;
+
+			expect(toHex(builtTx))
+			.toBe(1616694977)
+		})
+
+	});
+
+
+
+});//symbol-sdk
+</script>
+
+</body>
+</html>

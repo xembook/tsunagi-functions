@@ -1,0 +1,625 @@
+[
+  {
+    "layout": [
+      {
+        "signedness": "unsigned", 
+        "type": "byte", 
+        "name": "primary_id", 
+        "comments": "Transaction primary source (e.g. index within the block).", 
+        "size": 4
+      }, 
+      {
+        "signedness": "unsigned", 
+        "type": "byte", 
+        "name": "secondary_id", 
+        "comments": "Transaction secondary source (e.g. index within aggregate).", 
+        "size": 4
+      }
+    ], 
+    "type": "struct", 
+    "name": "ReceiptSource", 
+    "comments": "The transaction inside the block that triggered the receipt."
+  }, 
+  {
+    "layout": [
+      {
+        "type": "ReceiptSource", 
+        "name": "source", 
+        "comments": "Information about the transaction that triggered the receipt."
+      }, 
+      {
+        "type": "Address", 
+        "name": "resolved_value", 
+        "comments": "Resolved Address."
+      }
+    ], 
+    "type": "struct", 
+    "name": "AddressResolutionEntry", 
+    "comments": "Actual Address behind a NamespaceId at the time a transaction was confirmed."
+  }, 
+  {
+    "layout": [
+      {
+        "type": "UnresolvedAddress", 
+        "name": "unresolved", 
+        "comments": "Unresolved address."
+      }, 
+      {
+        "signedness": "unsigned", 
+        "type": "byte", 
+        "name": "resolution_entries_count", 
+        "comments": "Number of resolution entries.", 
+        "size": 4
+      }, 
+      {
+        "name": "resolution_entries", 
+        "type": "AddressResolutionEntry", 
+        "comments": "Resolution entries.", 
+        "disposition": "array", 
+        "size": "resolution_entries_count"
+      }
+    ], 
+    "type": "struct", 
+    "name": "AddressResolutionStatement", 
+    "comments": "An Address resolution statement links a namespace alias used in a transaction to the real address **at the time of the transaction**."
+  }, 
+  {
+    "layout": [
+      {
+        "type": "ReceiptSource", 
+        "name": "source", 
+        "comments": "Information about the transaction that triggered the receipt."
+      }, 
+      {
+        "type": "MosaicId", 
+        "name": "resolved_value", 
+        "comments": "Resolved MosaicId."
+      }
+    ], 
+    "type": "struct", 
+    "name": "MosaicResolutionEntry", 
+    "comments": "Actual MosaicId behind a NamespaceId at the time a transaction was confirmed."
+  }, 
+  {
+    "layout": [
+      {
+        "type": "UnresolvedMosaicId", 
+        "name": "unresolved", 
+        "comments": "Unresolved mosaic."
+      }, 
+      {
+        "signedness": "unsigned", 
+        "type": "byte", 
+        "name": "resolution_entries_count", 
+        "comments": "Number of resolution entries.", 
+        "size": 4
+      }, 
+      {
+        "name": "resolution_entries", 
+        "type": "MosaicResolutionEntry", 
+        "comments": "Resolution entries.", 
+        "disposition": "array", 
+        "size": "resolution_entries_count"
+      }
+    ], 
+    "type": "struct", 
+    "name": "MosaicResolutionStatement", 
+    "comments": "A Mosaic resolution statement links a namespace alias used in a transaction to the real mosaic id **at the time of the transaction**."
+  }, 
+  {
+    "signedness": "unsigned", 
+    "type": "byte", 
+    "name": "Amount", 
+    "comments": "A quantity of mosaics in [absolute units](/concepts/mosaic.html#divisibility).\nIt can only be positive or zero. Negative quantities must be indicated by other means (See for example MosaicSupplyChangeTransaction and MosaicSupplyChangeAction).", 
+    "size": 8
+  }, 
+  {
+    "signedness": "unsigned", 
+    "type": "byte", 
+    "name": "BlockDuration", 
+    "comments": "A time lapse, expressed in number of blocks.", 
+    "size": 8
+  }, 
+  {
+    "signedness": "unsigned", 
+    "type": "byte", 
+    "name": "BlockFeeMultiplier", 
+    "comments": "Multiplier applied to the size of a transaction to obtain its fee, in [absolute units](/concepts/mosaic.html#divisibility).\nSee the [fees documentation](/concepts/fees.html).", 
+    "size": 4
+  }, 
+  {
+    "signedness": "unsigned", 
+    "type": "byte", 
+    "name": "Difficulty", 
+    "comments": "How hard it was to harvest this block.\nThe initial value is 1e14 and it will remain like this as long as blocks are generated every `blockGenerationTargetTime` seconds ([network property](/guides/network/configuring-network-properties.html)).\nIf blocks start taking more or less time than the configured value, the difficulty will be adjusted (in the range of 1e13 to 1e15) to try to hit the target time.\nSee the [Technical Reference](/symbol-technicalref/main.pdf) section 8.1.", 
+    "size": 8
+  }, 
+  {
+    "signedness": "unsigned", 
+    "type": "byte", 
+    "name": "FinalizationEpoch", 
+    "comments": "Index of a [finalization](/concepts/block.html#finalization) epoch.\nThe first epoch is number 1 and contains only the first block (the [Nemesis](/concepts/block.html#block-creation) block). Epoch duration (in blocks) is defined by the `votingSetGrouping` network property.", 
+    "size": 4
+  }, 
+  {
+    "signedness": "unsigned", 
+    "type": "byte", 
+    "name": "FinalizationPoint", 
+    "comments": "A particular point in time inside a [finalization](/concepts/block.html#finalization) epoch.\nSee the [Technical Reference](/symbol-technicalref/main.pdf) section 15.2.", 
+    "size": 4
+  }, 
+  {
+    "signedness": "unsigned", 
+    "type": "byte", 
+    "name": "Height", 
+    "comments": "Index of a block in the blockchain.\nThe first block (the [Nemesis](/concepts/block.html#block-creation) block) has height 1 and each subsequent block increases height by 1.", 
+    "size": 8
+  }, 
+  {
+    "signedness": "unsigned", 
+    "type": "byte", 
+    "name": "Importance", 
+    "comments": "[Importance score](/concepts/consensus-algorithm.html#importance-score) for an account.\nSee also ImportanceHeight and ImportanceSnapshot.", 
+    "size": 8
+  }, 
+  {
+    "signedness": "unsigned", 
+    "type": "byte", 
+    "name": "ImportanceHeight", 
+    "comments": "Block height at which an Importance was calculated.", 
+    "size": 8
+  }, 
+  {
+    "signedness": "unsigned", 
+    "type": "byte", 
+    "name": "UnresolvedMosaicId", 
+    "comments": "Either a MosaicId or a NamespaceId.\nThe **most**-significant bit of the first byte is 0 for MosaicId's and 1 for NamespaceId's.", 
+    "size": 8
+  }, 
+  {
+    "signedness": "unsigned", 
+    "type": "byte", 
+    "name": "MosaicId", 
+    "comments": "A [Mosaic](/concepts/mosaic.html) identifier.", 
+    "size": 8
+  }, 
+  {
+    "signedness": "unsigned", 
+    "type": "byte", 
+    "name": "Timestamp", 
+    "comments": "Number of milliseconds elapsed since the creation of the [Nemesis](/concepts/block.html#block-creation) block.\nThe Nemesis block creation time can be found in the `epochAdjustment` field returned by the [/network/properties](/symbol-openapi/v1.0.1/#operation/getNetworkProperties) REST endpoint. This is the number of seconds elapsed since the [UNIX epoch](https://en.wikipedia.org/wiki/Unix_time) and it is always 1615853185 for Symbol's MAINNET.", 
+    "size": 8
+  }, 
+  {
+    "signedness": "unsigned", 
+    "type": "byte", 
+    "name": "UnresolvedAddress", 
+    "comments": "Either an Address or a NamespaceId.\nThe **least**-significant bit of the first byte is 0 for Addresses and 1 for NamespaceId's.", 
+    "size": 24
+  }, 
+  {
+    "signedness": "unsigned", 
+    "type": "byte", 
+    "name": "Address", 
+    "comments": "An [address](/concepts/cryptography.html#address) identifies an account and is derived from its PublicKey.", 
+    "size": 24
+  }, 
+  {
+    "signedness": "unsigned", 
+    "type": "byte", 
+    "name": "Hash256", 
+    "comments": "A 32-byte (256 bit) hash.\nThe exact algorithm is unspecified as it can change depending on where it is used.", 
+    "size": 32
+  }, 
+  {
+    "signedness": "unsigned", 
+    "type": "byte", 
+    "name": "Hash512", 
+    "comments": "A 64-byte (512 bit) hash.\nThe exact algorithm is unspecified as it can change depending on where it is used.", 
+    "size": 64
+  }, 
+  {
+    "signedness": "unsigned", 
+    "type": "byte", 
+    "name": "PublicKey", 
+    "comments": "A 32-byte (256 bit) integer derived from a private key.\nIt serves as the public identifier of the [key pair](/concepts/cryptography.html#key-pair) and can be disseminated widely. It is used to prove that an entity was signed with the paired private key.", 
+    "size": 32
+  }, 
+  {
+    "signedness": "unsigned", 
+    "type": "byte", 
+    "name": "VotingPublicKey", 
+    "comments": "A PublicKey used for voting during the [finalization process](/concepts/block.html#finalization).", 
+    "size": 32
+  }, 
+  {
+    "signedness": "unsigned", 
+    "type": "byte", 
+    "name": "Signature", 
+    "comments": "A 64-byte (512 bit) array certifying that the signed data has not been modified.\nSymbol currently uses [Ed25519](https://ed25519.cr.yp.to/) signatures.", 
+    "size": 64
+  }, 
+  {
+    "layout": [
+      {
+        "type": "MosaicId", 
+        "name": "mosaic_id", 
+        "comments": "Mosaic identifier."
+      }, 
+      {
+        "type": "Amount", 
+        "name": "amount", 
+        "comments": "Mosaic amount."
+      }
+    ], 
+    "type": "struct", 
+    "name": "Mosaic", 
+    "comments": "A quantity of a certain mosaic."
+  }, 
+  {
+    "layout": [
+      {
+        "type": "UnresolvedMosaicId", 
+        "name": "mosaic_id", 
+        "comments": "Unresolved mosaic identifier."
+      }, 
+      {
+        "type": "Amount", 
+        "name": "amount", 
+        "comments": "Mosaic amount."
+      }
+    ], 
+    "type": "struct", 
+    "name": "UnresolvedMosaic", 
+    "comments": "A quantity of a certain mosaic, specified either through a MosaicId or an alias."
+  }, 
+  {
+    "values": [
+      {
+        "name": "UNLINK", 
+        "value": 0, 
+        "comments": "Unlink an account."
+      }, 
+      {
+        "name": "LINK", 
+        "value": 1, 
+        "comments": "Link an account."
+      }
+    ], 
+    "name": "LinkAction", 
+    "signedness": "unsigned", 
+    "type": "enum", 
+    "comments": "Link actions.", 
+    "size": 1
+  }, 
+  {
+    "values": [
+      {
+        "name": "MAINNET", 
+        "value": 104, 
+        "comments": "Public network."
+      }, 
+      {
+        "name": "TESTNET", 
+        "value": 152, 
+        "comments": "Public test network."
+      }
+    ], 
+    "name": "NetworkType", 
+    "signedness": "unsigned", 
+    "type": "enum", 
+    "comments": "Enumeration of network types.", 
+    "size": 1
+  }, 
+  {
+    "values": [
+      {
+        "name": "MOSAIC_RENTAL_FEE", 
+        "value": 4685, 
+        "comments": "Mosaic rental fee receipt."
+      }, 
+      {
+        "name": "NAMESPACE_RENTAL_FEE", 
+        "value": 4942, 
+        "comments": "Namespace rental fee receipt."
+      }, 
+      {
+        "name": "HARVEST_FEE", 
+        "value": 8515, 
+        "comments": "Harvest fee receipt."
+      }, 
+      {
+        "name": "LOCK_HASH_COMPLETED", 
+        "value": 8776, 
+        "comments": "Hash lock completed receipt."
+      }, 
+      {
+        "name": "LOCK_HASH_EXPIRED", 
+        "value": 9032, 
+        "comments": "Hash lock expired receipt."
+      }, 
+      {
+        "name": "LOCK_SECRET_COMPLETED", 
+        "value": 8786, 
+        "comments": "Secret lock completed receipt."
+      }, 
+      {
+        "name": "LOCK_SECRET_EXPIRED", 
+        "value": 9042, 
+        "comments": "Secret lock expired receipt."
+      }, 
+      {
+        "name": "LOCK_HASH_CREATED", 
+        "value": 12616, 
+        "comments": "Hash lock created receipt."
+      }, 
+      {
+        "name": "LOCK_SECRET_CREATED", 
+        "value": 12626, 
+        "comments": "Secret lock created receipt."
+      }, 
+      {
+        "name": "MOSAIC_EXPIRED", 
+        "value": 16717, 
+        "comments": "Mosaic expired receipt."
+      }, 
+      {
+        "name": "NAMESPACE_EXPIRED", 
+        "value": 16718, 
+        "comments": "Namespace expired receipt."
+      }, 
+      {
+        "name": "NAMESPACE_DELETED", 
+        "value": 16974, 
+        "comments": "Namespace deleted receipt."
+      }, 
+      {
+        "name": "INFLATION", 
+        "value": 20803, 
+        "comments": "Inflation receipt."
+      }, 
+      {
+        "name": "TRANSACTION_GROUP", 
+        "value": 57667, 
+        "comments": "Transaction group receipt."
+      }, 
+      {
+        "name": "ADDRESS_ALIAS_RESOLUTION", 
+        "value": 61763, 
+        "comments": "Address alias resolution receipt."
+      }, 
+      {
+        "name": "MOSAIC_ALIAS_RESOLUTION", 
+        "value": 62019, 
+        "comments": "Mosaic alias resolution receipt."
+      }
+    ], 
+    "name": "ReceiptType", 
+    "signedness": "unsigned", 
+    "type": "enum", 
+    "comments": "Enumeration of receipt types.", 
+    "size": 2
+  }, 
+  {
+    "layout": [
+      {
+        "signedness": "unsigned", 
+        "type": "byte", 
+        "name": "size", 
+        "comments": "Entity size in bytes.\nThis size includes the header and the full payload of the entity. I.e, the size field matches the size reported in the structure documentation (plus the variable part, if there is any).", 
+        "size": 4
+      }, 
+      {
+        "signedness": "unsigned", 
+        "type": "byte", 
+        "name": "version", 
+        "comments": "Receipt version.", 
+        "size": 2
+      }, 
+      {
+        "type": "ReceiptType", 
+        "name": "type", 
+        "comments": "Type of receipt."
+      }
+    ], 
+    "name": "Receipt", 
+    "comments": "Receipts provide proof for every state change not retrievable from the block.", 
+    "initializers": [
+      {
+        "target_property_name": "type", 
+        "value": "RECEIPT_TYPE"
+      }
+    ], 
+    "disposition": "abstract", 
+    "discriminator": [
+      "type"
+    ], 
+    "type": "struct", 
+    "size": "size"
+  }, 
+  {
+    "layout": [
+      {
+        "disposition": "const", 
+        "type": "ReceiptType", 
+        "name": "RECEIPT_TYPE", 
+        "value": "HARVEST_FEE"
+      }, 
+      {
+        "signedness": "unsigned", 
+        "type": "byte", 
+        "name": "size", 
+        "comments": "Entity size in bytes.\nThis size includes the header and the full payload of the entity. I.e, the size field matches the size reported in the structure documentation (plus the variable part, if there is any).", 
+        "size": 4
+      }, 
+      {
+        "signedness": "unsigned", 
+        "type": "byte", 
+        "name": "version", 
+        "comments": "Receipt version.", 
+        "size": 2
+      }, 
+      {
+        "type": "ReceiptType", 
+        "name": "type", 
+        "comments": "Type of receipt."
+      }, 
+      {
+        "type": "Mosaic", 
+        "name": "mosaic", 
+        "comments": "Modified mosaic."
+      }, 
+      {
+        "type": "Address", 
+        "name": "target_address", 
+        "comments": "Address of the affected account."
+      }
+    ], 
+    "factory_type": "Receipt", 
+    "comments": "Receipt generated when transaction fees are credited to a block harvester.", 
+    "name": "HarvestFeeReceipt", 
+    "initializers": [
+      {
+        "target_property_name": "type", 
+        "value": "RECEIPT_TYPE"
+      }
+    ], 
+    "discriminator": [
+      "type"
+    ], 
+    "type": "struct", 
+    "size": "size"
+  }, 
+  {
+    "layout": [
+      {
+        "disposition": "const", 
+        "type": "ReceiptType", 
+        "name": "RECEIPT_TYPE", 
+        "value": "INFLATION"
+      }, 
+      {
+        "signedness": "unsigned", 
+        "type": "byte", 
+        "name": "size", 
+        "comments": "Entity size in bytes.\nThis size includes the header and the full payload of the entity. I.e, the size field matches the size reported in the structure documentation (plus the variable part, if there is any).", 
+        "size": 4
+      }, 
+      {
+        "signedness": "unsigned", 
+        "type": "byte", 
+        "name": "version", 
+        "comments": "Receipt version.", 
+        "size": 2
+      }, 
+      {
+        "type": "ReceiptType", 
+        "name": "type", 
+        "comments": "Type of receipt."
+      }, 
+      {
+        "type": "Mosaic", 
+        "name": "mosaic", 
+        "comments": "Created mosaic."
+      }
+    ], 
+    "factory_type": "Receipt", 
+    "comments": "Network currency mosaics were created due to [inflation](/concepts/inflation).", 
+    "name": "InflationReceipt", 
+    "initializers": [
+      {
+        "target_property_name": "type", 
+        "value": "RECEIPT_TYPE"
+      }
+    ], 
+    "discriminator": [
+      "type"
+    ], 
+    "type": "struct", 
+    "size": "size"
+  }, 
+  {
+    "layout": [
+      {
+        "signedness": "unsigned", 
+        "type": "byte", 
+        "name": "primary_id", 
+        "comments": "Transaction primary source (e.g. index within the block).", 
+        "size": 4
+      }, 
+      {
+        "signedness": "unsigned", 
+        "type": "byte", 
+        "name": "secondary_id", 
+        "comments": "Transaction secondary source (e.g. index within aggregate).", 
+        "size": 4
+      }, 
+      {
+        "signedness": "unsigned", 
+        "type": "byte", 
+        "name": "receipt_count", 
+        "comments": "Number of receipts.", 
+        "size": 4
+      }, 
+      {
+        "name": "receipts", 
+        "type": "Receipt", 
+        "comments": "Receipts.", 
+        "disposition": "array", 
+        "size": "receipt_count"
+      }
+    ], 
+    "type": "struct", 
+    "name": "TransactionStatement", 
+    "comments": "Collection of receipts scoped to a single source (transaction or block)."
+  }, 
+  {
+    "layout": [
+      {
+        "signedness": "unsigned", 
+        "type": "byte", 
+        "name": "transaction_statement_count", 
+        "comments": "Number of transaction statements.", 
+        "size": 4
+      }, 
+      {
+        "name": "transaction_statements", 
+        "type": "TransactionStatement", 
+        "comments": "Transaction statements.", 
+        "disposition": "array", 
+        "size": "transaction_statement_count"
+      }, 
+      {
+        "signedness": "unsigned", 
+        "type": "byte", 
+        "name": "address_resolution_statement_count", 
+        "comments": "Number of address resolution statements.", 
+        "size": 4
+      }, 
+      {
+        "name": "address_resolution_statements", 
+        "type": "AddressResolutionStatement", 
+        "comments": "Address resolution statements.", 
+        "disposition": "array", 
+        "size": "address_resolution_statement_count"
+      }, 
+      {
+        "signedness": "unsigned", 
+        "type": "byte", 
+        "name": "mosaic_resolution_statement_count", 
+        "comments": "Number of mosaic resolution statements.", 
+        "size": 4
+      }, 
+      {
+        "name": "mosaic_resolution_statements", 
+        "type": "MosaicResolutionStatement", 
+        "comments": "Mosaic resolution statements.", 
+        "disposition": "array", 
+        "size": "mosaic_resolution_statement_count"
+      }
+    ], 
+    "type": "struct", 
+    "name": "BlockStatement", 
+    "comments": "Collection of statements scoped to a block."
+  }
+]
