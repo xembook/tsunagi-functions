@@ -3,7 +3,7 @@ function getVerifiableData(builtTx){
     let typeLayer = builtTx.find(bf=>bf.name==="type");
     if([16705,16961].includes(typeLayer.value)){
         return builtTx.slice(5,11);
-    else{
+    }else{
         return builtTx.slice(5,builtTx.length);
     }
 }
