@@ -13,7 +13,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/tweetnacl/1.0.2/nacl-fast.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/js-sha3/0.8.0/sha3.min.js"></script>
 
-<script src="https://xembook.github.io/nem2-browserify/tsunagi-sdk-0.1.js"></script>
+<script src="https://xembook.github.io/tsunagi-sdk/tsunagi-sdk-0.1.js"></script>
 <script>
 
 
@@ -26,7 +26,7 @@ describe('tsunagi-sdk.0.1',() => {
 
 	beforeAll(async()=>{
 
-		const network = {
+		this.network = {
 			version:1,
 			network:'TESTNET',
 			generationHash:'7fccd304802016bebbcd342a332f91ff1f3bb5e902988b352697be245f48e836',
@@ -41,6 +41,10 @@ describe('tsunagi-sdk.0.1',() => {
 				'https://sym-test.opening-line.jp:3001',
 			]
 		}
+		const epochAdjustment = 1637848847; //テストネットの誕生時刻 Thu Nov 25 2021 23:00:47 GMT+0900 (日本標準時)
+		const value = epochAdjustment * 1000;
+		this.deadline = BigInt(value);
+		
 	});
 
 	describe('network properties', () => {
@@ -97,7 +101,7 @@ describe('tsunagi-sdk.0.1',() => {
 				type:'AGGREGATE_COMPLETE',
 				signer_public_key:"5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
 				fee:1000000n,
-				deadline:deadline,
+				deadline:this.deadline,
 				transactions:[tx1,tx2,tx3],
 				cosignatures:[cosignature1,cosignature2]
 			}
@@ -106,16 +110,16 @@ describe('tsunagi-sdk.0.1',() => {
 			catjson = await loadCatjson(aggTx);
 			layout = await loadLayout(aggTx,catjson,false); //isEmbedded false
 
-			preparedTx = await prepare(aggTx,layout,network); //事前準備
+			preparedTx = await prepare(aggTx,layout,this.network); //事前準備
 			parsedTx   = await parse(preparedTx,layout,catjson); //構築
 			builtTx    = build(parsedTx);
 
 			privateKey = "94ee0f4d7fe388ac4b04a6a6ae2ba969617879b83616e4d25710d688a89d80c7";
-			signature = sign(builtTx,privateKey,network);
+			signature = sign(builtTx,privateKey,this.network);
 			updateTx(builtTx,"signature","value",signature);
 
 			//トランザクションハッシュ作成
-			txHash = hashTransaction(aggTx.signer_public_key,signature,builtTx,network);
+			txHash = hashTransaction(aggTx.signer_public_key,signature,builtTx,this.network);
 
 			bobPrivateKey = "fa6373f4f497773c5cc55c103e348b139461d61fd4b45387e69d08a68000e06b";
 			carolPrivateKey = "1e090b2a266877a9f88a510af2eb0945a63dc69dbce674ccd83272717d4175cf";
@@ -129,7 +133,10 @@ describe('tsunagi-sdk.0.1',() => {
 //			payload = `{"payload": "${toHex(builtTx)}"}`;
 
 			expect(toHex(builtTx))
-			.toBe(1616694977)
+			.toEqual(
+				"280300000000000099fa61bacf8076594c15f3cda5f8b2a799b9119bf5c72192162721c3b936c2c92c6f8b8b85cb5d47e853ada36f9cc2cf6aeaaa67575bb282c6c0970314fa39015f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb000000000198414140420f0000000000981266577d010000ae67220a53b24a241f2da951ba6cfe044aedc42a0afb5f2742c5a454e3c9c6e1b0010000000000008c000000000000005f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb0000000001985441989df3aea3852feafc5fdfc2266eb84ed8a7fa242688a8b81c00020000000000c2347909f9b7092a0100000000000000c8b6532ddb16843a64000000000000000048656c6c6f205473756e616769284361746a736f6e292053444b21000000008a000000000000006199bae3b241df60418e258d046c22c8c1a5de2f4f325753554e7fd9c650afec000000000198544198f21158e0a83da8f125ca534bc2d75a233a2baac9cb1e821a00020000000000c2347909f9b7092a0100000000000000c8b6532ddb16843a64000000000000000048656c6c6f204361726f6c21205468697320697320426f622e0000000000008c00000000000000886adfbd4213576d63ea7e7a4bece61c6933c27cd2ff36f85155c8febfb6eb4e00000000019854419869762418c5b643eee70e6f20d4d555d5997087d7a686a91c00020000000000c2347909f9b7092a0100000000000000c8b6532ddb16843a64000000000000000048656c6c6f20416c6963652c2054686973206973204361726f6c2e0000000000000000000000006199bae3b241df60418e258d046c22c8c1a5de2f4f325753554e7fd9c650afec6ea8ac34f92e3d17b64e7edcc9ee06172bf710b4a859a30da917e8e97f42d0cda4d7d36c9a2c439006a9461dfd1ed3b2f48b7b0c753a55c01e5b51b679cd79060000000000000000886adfbd4213576d63ea7e7a4bece61c6933c27cd2ff36f85155c8febfb6eb4eb00577f93b7aff5b1388ddbc63c97517eadb348cbba58a0f8daaa0a6ab780a3da842dffef1f8e3755dfd09b16acd637ffcb72ca9b7a559cba8cc80496f5a9e06"
+			);
+			
 		})
 
 	});

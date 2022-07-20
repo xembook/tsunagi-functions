@@ -1,11 +1,21 @@
 
+function getVerifiableData(builtTx){
+    let typeLayer = builtTx.find(bf=>bf.name==="type");
+    if([16705,16961].includes(typeLayer.value)){
+        return builtTx.slice(5,11);
+    else{
+        return builtTx.slice(5,builtTx.length);
+    }
+}
+
+
 function hashTransaction(signer,signature,builtTx,network){
 
     let hasher = sha3_256.create();
     hasher.update(buffer.Buffer.from(signature,"hex"));
     hasher.update(buffer.Buffer.from(signer,"hex"));
     hasher.update(buffer.Buffer.from(network.generationHash,"hex"));
-    hasher.update(buffer.Buffer.from(toHex(builtTx.slice(5,11)),"hex")); //verifiableData
+    hasher.update(buffer.Buffer.from(toHex(getVerifiableData(builtTx)),"hex")); //verifiableData
     let txHash = hasher.hex();
     return txHash;
 }
@@ -352,7 +362,7 @@ function sign(builtTx,priKey,network){
 	let sig = nacl.sign.detached(
 		new Uint8Array([
 			...buffer.Buffer.from(network.generationHash,"hex"),
-			...buffer.Buffer.from(toHex(builtTx.slice(5,11)),"hex"),
+			...buffer.Buffer.from(toHex(getVerifiableData(builtTx)),"hex"),
 		]) ,
 		new Uint8Array([
 			...buffer.Buffer.from(priKey,"hex"),
