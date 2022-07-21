@@ -1,5 +1,5 @@
 
-function createTransaction(aggTx){
+async function createTransaction(aggTx){
 
 	catjson = await loadCatjson(aggTx);
 	layout = await loadLayout(aggTx,catjson,false); //isEmbedded false

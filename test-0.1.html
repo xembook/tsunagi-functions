@@ -110,7 +110,7 @@ describe('tsunagi-sdk.0.1',() => {
 				cosignatures:[cosignature1,cosignature2]
 			}
 
-			let tx = createTransaction(aggTx);
+			let tx = await createTransaction(aggTx);
 			let signature = sign(tx,this.privateKey,this.network);
 			tx = updateTx(tx,"signature","value",signature);
 
