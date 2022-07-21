@@ -143,6 +143,47 @@ describe('tsunagi-sdk.0.1',() => {
 	});
 
 
+	describe('transfer transaction', () => {
+
+		it('resolves 2 mosaic transfer', async () => {
+
+			//Alice->Bob
+			let tx1 = {
+				type:'TRANSFER',
+				signer_public_key:"5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
+				fee:16000n,
+				deadline:this.deadline,
+				recipient_address:"TCO7HLVDQUX6V7C737BCM3VYJ3MKP6REE2EKROA",
+				mosaics:[
+					{mosaic_id: 0x2A09B7F9097934C2n, amount: 1n},
+					{mosaic_id: 0x3A8416DB2D53B6C8n, amount: 100n},
+				],
+				message:"Hello Tsunagi(Catjson) SDK!",
+			}
+
+			let catjson = await loadCatjson(tx1,this.network);
+			let layout = await loadLayout(tx1,catjson,false); //isEmbedded false
+
+			let preparedTx = await prepareTransaction(tx1,layout,this.network); //TX事前準備
+			let parsedTx   = await parseTransaction(preparedTx,layout,catjson,this.network); //TX解析
+			let builtTx    = buildTransaction(parsedTx); //TX構築
+
+			let signature = signTransaction(builtTx,this.privateKey,this.network);
+			builtTx = updateTransaction(builtTx,"signature","value",signature);
+
+			//トランザクションハッシュ作成
+			let txHash = hashTransaction(tx1.signer_public_key,signature,builtTx,this.network);
+
+			let payload = hexlifyTransaction(builtTx);
+			console.log(payload)
+			expect(payload)
+			.toEqual(
+				"dc0000000000000026d24cb83382935af4481d49dba914699b11df158f7c87a2f65470ad5bef9cfe9f64e56c0a694c5e324e4b96d3b612f1aeab58aa34f5b81e87b52152df3baf0b5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb0000000001985441803e000000000000981266577d010000989df3aea3852feafc5fdfc2266eb84ed8a7fa242688a8b81c00020000000000c2347909f9b7092a0100000000000000c8b6532ddb16843a64000000000000000048656c6c6f205473756e616769284361746a736f6e292053444b21"
+			);
+		})
+	});
+
+
 
 });//symbol-sdk
 </script>

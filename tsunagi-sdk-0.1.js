@@ -198,32 +198,33 @@ function buildTransaction(parsedTx){
 	}
 
 	//Merkle Hash Builder
-	let hashes = [];
-	for(let eTx of builtTx.find(lf=>lf.name === "transactions").layout){
-		hashes.push(sha3_256.create().update(buffer.Buffer.from(hexlifyTransaction(eTx),"hex")).digest());
-	}
-
-	let numRemainingHashes = hashes.length;
-	while (1 < numRemainingHashes) {
-		let i = 0;
-		while (i < numRemainingHashes) {
-			const hasher = sha3_256.create();
-			hasher.update(hashes[i]);
-
-			if (i + 1 < numRemainingHashes) {
-				hasher.update(hashes[i + 1]);
-			} else {
-				// if there is an odd number of hashes, duplicate the last one
-				hasher.update(hashes[i]);
-				numRemainingHashes += 1;
-			}
-			hashes[Math.trunc(i / 2)] = hasher.digest();
-			i += 2;
-		}
-		numRemainingHashes = Math.trunc(numRemainingHashes / 2);
-	}
 	let layerTransactionsHash = builtTx.find(lf=>lf.name === "transactions_hash");
 	if(layerTransactionsHash){
+
+		let hashes = [];
+		for(let eTx of builtTx.find(lf=>lf.name === "transactions").layout){
+			hashes.push(sha3_256.create().update(buffer.Buffer.from(hexlifyTransaction(eTx),"hex")).digest());
+		}
+
+		let numRemainingHashes = hashes.length;
+		while (1 < numRemainingHashes) {
+			let i = 0;
+			while (i < numRemainingHashes) {
+				const hasher = sha3_256.create();
+				hasher.update(hashes[i]);
+
+				if (i + 1 < numRemainingHashes) {
+					hasher.update(hashes[i + 1]);
+				} else {
+					// if there is an odd number of hashes, duplicate the last one
+					hasher.update(hashes[i]);
+					numRemainingHashes += 1;
+				}
+				hashes[Math.trunc(i / 2)] = hasher.digest();
+				i += 2;
+			}
+			numRemainingHashes = Math.trunc(numRemainingHashes / 2);
+		}
 		layerTransactionsHash.value = buffer.Buffer.from(hashes[0]).toString("hex");
 	}
 	return builtTx;
