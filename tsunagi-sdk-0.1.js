@@ -1,12 +1,11 @@
 async function loadCatjson(tx,network){
 
-	let res;
 	let catjson;
 	if(tx.type === 'AGGREGATE_COMPLETE'){
-		res = await fetch(network.catjasonBase + 'aggregate.json');
+		let res = await fetch(network.catjasonBase + 'aggregate.json');
 		catjson = await res.json();
 	}else if(tx.type === 'TRANSFER'){
-		res = await fetch(network.catjasonBase + 'transfer.json');
+		let res = await fetch(network.catjasonBase + 'transfer.json');
 		catjson = await res.json();
 	}
 	return catjson;
