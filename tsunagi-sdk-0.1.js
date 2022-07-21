@@ -1,29 +1,41 @@
 
+function createTransaction(aggTx){
+
+	catjson = await loadCatjson(aggTx);
+	layout = await loadLayout(aggTx,catjson,false); //isEmbedded false
+
+	preparedTx = await prepare(aggTx,layout,this.network); //事前準備
+	parsedTx   = await parse(preparedTx,layout,catjson); //構築
+	builtTx    = build(parsedTx);
+
+}
+
 function getVerifiableData(builtTx){
-    let typeLayer = builtTx.find(bf=>bf.name==="type");
-    if([16705,16961].includes(typeLayer.value)){
-        return builtTx.slice(5,11);
-    }else{
-        return builtTx.slice(5,builtTx.length);
-    }
+	let typeLayer = builtTx.find(bf=>bf.name==="type");
+	if([16705,16961].includes(typeLayer.value)){
+		return builtTx.slice(5,11);
+	}else{
+		return builtTx.slice(5,builtTx.length);
+	}
 }
 
 
 function hashTransaction(signer,signature,builtTx,network){
 
-    let hasher = sha3_256.create();
-    hasher.update(buffer.Buffer.from(signature,"hex"));
-    hasher.update(buffer.Buffer.from(signer,"hex"));
-    hasher.update(buffer.Buffer.from(network.generationHash,"hex"));
-    hasher.update(buffer.Buffer.from(toHex(getVerifiableData(builtTx)),"hex")); //verifiableData
-    let txHash = hasher.hex();
-    return txHash;
+	let hasher = sha3_256.create();
+	hasher.update(buffer.Buffer.from(signature,"hex"));
+	hasher.update(buffer.Buffer.from(signer,"hex"));
+	hasher.update(buffer.Buffer.from(network.generationHash,"hex"));
+	hasher.update(buffer.Buffer.from(toHex(getVerifiableData(builtTx)),"hex")); //verifiableData
+	let txHash = hasher.hex();
+	return txHash;
 }
 
 function updateTx(builtTx,name,type,value){
-    let layer = builtTx.find(bf=>bf.name === name);
-    layer[type] = value;
-    console.log(layer);
+	let layer = builtTx.find(bf=>bf.name === name);
+	layer[type] = value;
+	console.log(layer);
+	return builtTx;
 }
 
 
@@ -36,7 +48,6 @@ async function loadLayout(tx,catjson,isEmbedded){
 		prefix = "";
 	}
 
-//	  let catjson = await loadCatjson(tx);
 	let layoutName;
 	if(tx.type === "AGGREGATE_COMPLETE"){
 		layoutName = "AggregateCompleteTransaction";
@@ -71,20 +82,20 @@ async function prepare(tx,layout,network){
 	preparedTx.network = network.network;
 	preparedTx.version = network.version;
 	if('recipient_address' in preparedTx){
-        preparedTx.recipient_address = buffer.Buffer(base32.decode(tx.recipient_address + "A").slice(0, -1)).toString("hex");
-    }
+		preparedTx.recipient_address = buffer.Buffer(base32.decode(tx.recipient_address + "A").slice(0, -1)).toString("hex");
+	}
 	if('message' in preparedTx){
-        preparedTx.message = buffer.Buffer.from([0,...(new TextEncoder('utf-8')).encode(tx.message)]).toString("hex");
-    }
+		preparedTx.message = buffer.Buffer.from([0,...(new TextEncoder('utf-8')).encode(tx.message)]).toString("hex");
+	}
 	//TODO:recipient_addressがネームスペースだった場合の変換も必要
 
-    if("mosaics" in tx){
-        tx.mosaics = tx.mosaics.sort(function(a,b){
-            if(a.mosaic_id < b.mosaic_id) return -1;
-            if(a.mosaic_id > b.mosaic_id) return 1;
-            return 0;
-        });
-    }
+	if("mosaics" in tx){
+		tx.mosaics = tx.mosaics.sort(function(a,b){
+			if(a.mosaic_id < b.mosaic_id) return -1;
+			if(a.mosaic_id > b.mosaic_id) return 1;
+			return 0;
+		});
+	}
 
 	//レイアウト層ごとの処理
 	for(let layer of layout){
@@ -110,7 +121,7 @@ async function prepare(tx,layout,network){
 		let txes = [];
 		for(let eTx of tx.transactions){
 
-            let eCatjson = await loadCatjson(eTx);
+			let eCatjson = await loadCatjson(eTx);
 			let eLayout = await loadLayout(eTx,eCatjson,true);
 			//再帰処理
 			ePreparedTx = await prepare(eTx,eLayout,network);
@@ -121,7 +132,6 @@ async function prepare(tx,layout,network){
 	console.log(preparedTx);
 	return preparedTx;
 }
-
 
 async function parse(tx,layout,catjson){
 
@@ -134,35 +144,35 @@ async function parse(tx,layout,catjson){
 		if(layerDisposition === "const"){
 			continue;
 		}else if(layerType === "EmbeddedTransaction"){
-            
+			
 			let txLayer = Object.assign({}, layer);
 			let items = [];
 			for(let eTx of tx.transactions){ //小文字のeはembeddedの略
 				let eCatjson = await loadCatjson(eTx);//catjsonの更新
 				let eLayout = await loadLayout(eTx,eCatjson,true); //isEmbedded:true
 				let eBuiltTx = await parse(eTx,eLayout,eCatjson); //再帰
-                items.push(eBuiltTx);
+				items.push(eBuiltTx);
 			}
 			txLayer.layout = items;
-            builtTx.push(txLayer);
-            continue;
+			builtTx.push(txLayer);
+			continue;
 
-        }else if("layout" in catitem){ // else:byte,struct
+		}else if("layout" in catitem){ // else:byte,struct
 
-            let txLayer = Object.assign({}, layer);
-            let items = [];
-            for(let item of tx[layer.name]){
+			let txLayer = Object.assign({}, layer);
+			let items = [];
+			for(let item of tx[layer.name]){
 
-                let itemBuiltTx = await parse(item,catjson.find(cj=>cj.name === layerType).layout,catjson); //再帰
-                items.push(itemBuiltTx);
-            }
-            txLayer.layout = items;
-            builtTx.push(txLayer);            
-            continue;
+				let itemBuiltTx = await parse(item,catjson.find(cj=>cj.name === layerType).layout,catjson); //再帰
+				items.push(itemBuiltTx);
+			}
+			txLayer.layout = items;
+			builtTx.push(txLayer);			  
+			continue;
 
-        }else if(catitem.type === "enum"){
-            catitem.value = catitem.values.find(cvf=>cvf.name === tx[layer.name]).value;
-        }
+		}else if(catitem.type === "enum"){
+			catitem.value = catitem.values.find(cvf=>cvf.name === tx[layer.name]).value;
+		}
 		//layerの配置
 		if(layerDisposition !== undefined && layerDisposition.indexOf('array') != -1){ // "array sized","array fill"
 
@@ -171,9 +181,9 @@ async function parse(tx,layout,catjson){
 
 				if("element_disposition" in layer){ //message
 
-                    let subLayout = Object.assign({}, layer);
-                    let items = [];
-                    for(let count = 0; count < size; count++){
+					let subLayout = Object.assign({}, layer);
+					let items = [];
+					for(let count = 0; count < size; count++){
 						let txLayer = {};
 						txLayer.signedness = layer.element_disposition.signedness;
 						txLayer.name = "element_disposition";
@@ -181,8 +191,8 @@ async function parse(tx,layout,catjson){
 						txLayer.value = tx.message.substr(count * 2, 2);
 						txLayer.type = layerType;
 						items.push([txLayer]);
-                    }
-                    subLayout.layout = items;
+					}
+					subLayout.layout = items;
 					builtTx.push(subLayout);
 
 				}else{console.error("not yet");}
@@ -190,32 +200,32 @@ async function parse(tx,layout,catjson){
 		}else{ //reserved またはそれ以外(定義なし)
 
 			let txLayer = Object.assign({}, layer);
-            if(Object.keys(catitem).length > 0){
+			if(Object.keys(catitem).length > 0){
 
-                //catjsonのデータを使う
-                txLayer.signedness	= catitem.signedness;
-                txLayer.size  = catitem.size;
-                txLayer.type  = catitem.type;
-                txLayer.value = catitem.value;
-            }
+				//catjsonのデータを使う
+				txLayer.signedness	= catitem.signedness;
+				txLayer.size  = catitem.size;
+				txLayer.type  = catitem.type;
+				txLayer.value = catitem.value;
+			}
 
-            //txに指定されている場合上書き(enumパラメータは上書きしない)
-            if(layer.name in tx && catitem.type !== "enum"){
-                txLayer.value = tx[layer.name];                
-            }else{
-                /* そのままtxLayerを追加 */
-                console.log(layer.name);
-            }
-            builtTx.push(txLayer);
-        }
+			//txに指定されている場合上書き(enumパラメータは上書きしない)
+			if(layer.name in tx && catitem.type !== "enum"){
+				txLayer.value = tx[layer.name]; 			   
+			}else{
+				/* そのままtxLayerを追加 */
+				console.log(layer.name);
+			}
+			builtTx.push(txLayer);
+		}
 	}
 
-    let layerSize = builtTx.find(lf=>lf.name === "size");
-    if(layerSize !== undefined && "size" in layerSize){
-        layerSize.value = countSize(builtTx);
-    }
+	let layerSize = builtTx.find(lf=>lf.name === "size");
+	if(layerSize !== undefined && "size" in layerSize){
+		layerSize.value = countSize(builtTx);
+	}
 
-    console.log(builtTx);
+	console.log(builtTx);
 	return builtTx;
 }
 
@@ -223,79 +233,79 @@ async function parse(tx,layout,catjson){
 function build(parsedTx){
 
 	let builtTx = Object.assign([], parsedTx);
-    
-    let layerPayloadSize = builtTx.find(lf=>lf.name === "payload_size");
-    if(layerPayloadSize !== undefined && "size" in layerPayloadSize){
-        layerPayloadSize.value = countSize(builtTx.find(lf=>lf.name === "transactions"));
-    }
+	
+	let layerPayloadSize = builtTx.find(lf=>lf.name === "payload_size");
+	if(layerPayloadSize !== undefined && "size" in layerPayloadSize){
+		layerPayloadSize.value = countSize(builtTx.find(lf=>lf.name === "transactions"));
+	}
 
-    //Merkle Hash Builder
-    let hashes = [];
-    for(let eTx of builtTx.find(lf=>lf.name === "transactions").layout){
-        hashes.push(sha3_256.create().update(buffer.Buffer.from(toHex(eTx),"hex")).digest());
-    }
+	//Merkle Hash Builder
+	let hashes = [];
+	for(let eTx of builtTx.find(lf=>lf.name === "transactions").layout){
+		hashes.push(sha3_256.create().update(buffer.Buffer.from(toHex(eTx),"hex")).digest());
+	}
 
-    let numRemainingHashes = hashes.length;
-    while (1 < numRemainingHashes) {
-        let i = 0;
-        while (i < numRemainingHashes) {
-            const hasher = sha3_256.create();
-            hasher.update(hashes[i]);
+	let numRemainingHashes = hashes.length;
+	while (1 < numRemainingHashes) {
+		let i = 0;
+		while (i < numRemainingHashes) {
+			const hasher = sha3_256.create();
+			hasher.update(hashes[i]);
 
-            if (i + 1 < numRemainingHashes) {
-                hasher.update(hashes[i + 1]);
-            } else {
-                // if there is an odd number of hashes, duplicate the last one
-                hasher.update(hashes[i]);
-                numRemainingHashes += 1;
-            }
-            hashes[Math.trunc(i / 2)] = hasher.digest();
-            i += 2;
-        }
-        numRemainingHashes = Math.trunc(numRemainingHashes / 2);
-    }
-    let layerTransactionsHash = builtTx.find(lf=>lf.name === "transactions_hash");
-    if(layerTransactionsHash){
-        layerTransactionsHash.value = buffer.Buffer.from(hashes[0]).toString("hex");
-    }
-    return builtTx;
+			if (i + 1 < numRemainingHashes) {
+				hasher.update(hashes[i + 1]);
+			} else {
+				// if there is an odd number of hashes, duplicate the last one
+				hasher.update(hashes[i]);
+				numRemainingHashes += 1;
+			}
+			hashes[Math.trunc(i / 2)] = hasher.digest();
+			i += 2;
+		}
+		numRemainingHashes = Math.trunc(numRemainingHashes / 2);
+	}
+	let layerTransactionsHash = builtTx.find(lf=>lf.name === "transactions_hash");
+	if(layerTransactionsHash){
+		layerTransactionsHash.value = buffer.Buffer.from(hashes[0]).toString("hex");
+	}
+	return builtTx;
 }
 
 
 function countSize(item,alignment){
 
-    let totalSize = 0;
-    
-    //レイアウトサイズの取得
-    if(item !== undefined && item.layout){
-		for(let layer of item.layout){
-            let itemAlignment;
-            if("alignment" in item){
-                itemAlignment = item.alignment;
-            }else{
-                itemAlignment = 0;
-            }
-            totalSize += countSize(layer,itemAlignment); //再帰
-		}
-    //レイアウトを構成するレイヤーサイズの取得
-    }else if(Array.isArray(item)){
-        let layoutSize = 0;
-        for(let layout of item){
-            layoutSize += countSize(layout,alignment);
-        }        
-        if(alignment !== undefined && alignment > 0){
-            layoutSize = Math.floor((layoutSize  + alignment - 1) / alignment ) * alignment;
-        }
-        totalSize += layoutSize;
+	let totalSize = 0;
 	
-    }else{
-        if("size" in item){
-            totalSize += item.size;
-            console.log(item.name + ":" + item.size);
-        }else{console.error("no size:" + item.name);}
-    }
-    console.log(totalSize);
-    return totalSize;
+	//レイアウトサイズの取得
+	if(item !== undefined && item.layout){
+		for(let layer of item.layout){
+			let itemAlignment;
+			if("alignment" in item){
+				itemAlignment = item.alignment;
+			}else{
+				itemAlignment = 0;
+			}
+			totalSize += countSize(layer,itemAlignment); //再帰
+		}
+	//レイアウトを構成するレイヤーサイズの取得
+	}else if(Array.isArray(item)){
+		let layoutSize = 0;
+		for(let layout of item){
+			layoutSize += countSize(layout,alignment);
+		}		 
+		if(alignment !== undefined && alignment > 0){
+			layoutSize = Math.floor((layoutSize  + alignment - 1) / alignment ) * alignment;
+		}
+		totalSize += layoutSize;
+	
+	}else{
+		if("size" in item){
+			totalSize += item.size;
+			console.log(item.name + ":" + item.size);
+		}else{console.error("no size:" + item.name);}
+	}
+	console.log(totalSize);
+	return totalSize;
 }
 
 //hex化
@@ -304,43 +314,42 @@ function toHex(item,alignment){
 	let hex = "";
 	if(item !== undefined && item.layout){
 		for(let layer of item.layout){
-            let itemAlignment;
-            if("alignment" in item){
-                itemAlignment = item.alignment;
-            }else{
-                itemAlignment = 0;
-            }
-            hex += toHex(layer,itemAlignment); //再帰
+			let itemAlignment;
+			if("alignment" in item){
+				itemAlignment = item.alignment;
+			}else{
+				itemAlignment = 0;
+			}
+			hex += toHex(layer,itemAlignment); //再帰
 		}
 	}else if(Array.isArray(item)){
-        let subLayoutHex = "";
-        for(let subLayout of item){
-            //subLayoutSize += countSize(subLayout);
-            subLayoutHex += toHex(subLayout,alignment);
-            hexLength = subLayoutHex.length;
-        }        
-        if(alignment !== undefined && alignment > 0){
-            let alignedSize = Math.floor((subLayoutHex.length + (alignment * 2) - 2)/ (alignment * 2) ) * (alignment * 2);
-            subLayoutHex = subLayoutHex + "0".repeat(alignedSize - hexLength);
-        }
+		let subLayoutHex = "";
+		for(let subLayout of item){
+			//subLayoutSize += countSize(subLayout);
+			subLayoutHex += toHex(subLayout,alignment);
+			hexLength = subLayoutHex.length;
+		}		 
+		if(alignment !== undefined && alignment > 0){
+			let alignedSize = Math.floor((subLayoutHex.length + (alignment * 2) - 2)/ (alignment * 2) ) * (alignment * 2);
+			subLayoutHex = subLayoutHex + "0".repeat(alignedSize - hexLength);
+		}
 		hex += subLayoutHex;
-   
-    }else{
-        let size = item.size;
-        if(item.value === undefined){
-            if(size >= 24){
-                item.value = "00".repeat(size);
-            }else{
-                item.value = 0;
-            }
-        }
+	}else{
+		let size = item.size;
+		if(item.value === undefined){
+			if(size >= 24){
+				item.value = "00".repeat(size);
+			}else{
+				item.value = 0;
+			}
+		}
 
 		if(size==1){
-            if(item.name === "element_disposition"){
-                hex = buffer.Buffer.from(item.value,'hex').toString("hex");
-            }else{
-                hex = buffer.Buffer.from(new Uint8Array([item.value]).buffer).toString("hex");
-            }    
+			if(item.name === "element_disposition"){
+				hex = buffer.Buffer.from(item.value,'hex').toString("hex");
+			}else{
+				hex = buffer.Buffer.from(new Uint8Array([item.value]).buffer).toString("hex");
+			}	 
 		}else if(size==2){
 			hex = buffer.Buffer.from(new Uint16Array([item.value]).buffer).toString("hex");
 		}else if(size==4){
@@ -372,14 +381,14 @@ function sign(builtTx,priKey,network){
 		])
 	);
 	let signature = buffer.Buffer(sig).toString("hex");
-    console.log(signature);
+	console.log(signature);
 	return signature; 
 }
 
 //連署
 function cosign(txhash,priKey){
 
-    let sig = nacl.sign.detached(
+	let sig = nacl.sign.detached(
 		new Uint8Array(buffer.Buffer.from(txhash,"hex")) ,
 		new Uint8Array([
 			...buffer.Buffer.from(priKey,"hex"),
