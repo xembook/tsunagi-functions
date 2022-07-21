@@ -1,7 +1,7 @@
 async function loadCatjson(tx,network){
 
 	let catjson;
-	if(tx.type === 'AGGREGATE_COMPLETE'){
+	if(tx.type === 'AGGREGATE_COMPLETE' || tx.type === 'AGGREGATE_BONDED'){
 		let res = await fetch(network.catjasonBase + 'aggregate.json');
 		catjson = await res.json();
 	}else if(tx.type === 'TRANSFER'){
@@ -23,6 +23,8 @@ async function loadLayout(tx,catjson,isEmbedded){
 	let layoutName;
 	if(tx.type === "AGGREGATE_COMPLETE"){
 		layoutName = "AggregateCompleteTransaction";
+	}else if(tx.type === "AGGREGATE_BONDED"){
+		layoutName = "AggregateBondedTransaction";
 	}else if(tx.type === 'TRANSFER'){
 		layoutName = prefix + "TransferTransaction";
 	}
@@ -114,7 +116,7 @@ async function parseTransaction(tx,layout,catjson,network){
 			builtTx.push(txLayer);
 			continue;
 
-		}else if("layout" in catitem){ // else:byte,struct
+		}else if("layout" in catitem && layer.name in tx){ // else:byte,struct
 
 			let txLayer = Object.assign({}, layer);
 			let items = [];
