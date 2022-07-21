@@ -20,8 +20,10 @@
 jasmine.DEFAULT_TIMEOUT_INTERVAL =240000;
 describe('tsunagi-sdk.0.1',() => {
 
-
 	beforeEach(async()=>{
+	});
+
+	afterEach(async()=>{
 	});
 
 	beforeAll(async()=>{
@@ -45,9 +47,13 @@ describe('tsunagi-sdk.0.1',() => {
 				'https://sym-test.opening-line.jp:3001',
 			]
 		}
-		const epochAdjustment = 1637848847; //テストネットの誕生時刻 Thu Nov 25 2021 23:00:47 GMT+0900 (日本標準時)
-		const value = epochAdjustment * 1000;
+
+		let now = 0;
+//		let now = Date.now(); //実際に使用できるpayloadを出力する場合（テストはエラーになります）
+		let secs = 7200; //2時間後を期限とする場合
+		let value = ((Math.trunc(now / 1000) + secs) - this.network.epochAdjustment) * 1000;
 		this.deadline = BigInt(value);
+
 		
 	});
 
@@ -135,11 +141,11 @@ describe('tsunagi-sdk.0.1',() => {
 			console.log(payload)
 			expect(payload)
 			.toEqual(
-				"280300000000000099fa61bacf8076594c15f3cda5f8b2a799b9119bf5c72192162721c3b936c2c92c6f8b8b85cb5d47e853ada36f9cc2cf6aeaaa67575bb282c6c0970314fa39015f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb000000000198414140420f0000000000981266577d010000ae67220a53b24a241f2da951ba6cfe044aedc42a0afb5f2742c5a454e3c9c6e1b0010000000000008c000000000000005f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb0000000001985441989df3aea3852feafc5fdfc2266eb84ed8a7fa242688a8b81c00020000000000c2347909f9b7092a0100000000000000c8b6532ddb16843a64000000000000000048656c6c6f205473756e616769284361746a736f6e292053444b21000000008a000000000000006199bae3b241df60418e258d046c22c8c1a5de2f4f325753554e7fd9c650afec000000000198544198f21158e0a83da8f125ca534bc2d75a233a2baac9cb1e821a00020000000000c2347909f9b7092a0100000000000000c8b6532ddb16843a64000000000000000048656c6c6f204361726f6c21205468697320697320426f622e0000000000008c00000000000000886adfbd4213576d63ea7e7a4bece61c6933c27cd2ff36f85155c8febfb6eb4e00000000019854419869762418c5b643eee70e6f20d4d555d5997087d7a686a91c00020000000000c2347909f9b7092a0100000000000000c8b6532ddb16843a64000000000000000048656c6c6f20416c6963652c2054686973206973204361726f6c2e0000000000000000000000006199bae3b241df60418e258d046c22c8c1a5de2f4f325753554e7fd9c650afec6ea8ac34f92e3d17b64e7edcc9ee06172bf710b4a859a30da917e8e97f42d0cda4d7d36c9a2c439006a9461dfd1ed3b2f48b7b0c753a55c01e5b51b679cd79060000000000000000886adfbd4213576d63ea7e7a4bece61c6933c27cd2ff36f85155c8febfb6eb4eb00577f93b7aff5b1388ddbc63c97517eadb348cbba58a0f8daaa0a6ab780a3da842dffef1f8e3755dfd09b16acd637ffcb72ca9b7a559cba8cc80496f5a9e06"
+				"2803000000000000124c4cb111caa9e6b70e363ffbdd3e1e7880b818ab1e6e90ad5bcc0741952ca5a29fe2c8fe2e85ad28701926bfc3cce345c8faf00ca37e766016ef1cd141a7005f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb000000000198414140420f000000000068ca07a982feffffae67220a53b24a241f2da951ba6cfe044aedc42a0afb5f2742c5a454e3c9c6e1b0010000000000008c000000000000005f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb0000000001985441989df3aea3852feafc5fdfc2266eb84ed8a7fa242688a8b81c00020000000000c2347909f9b7092a0100000000000000c8b6532ddb16843a64000000000000000048656c6c6f205473756e616769284361746a736f6e292053444b21000000008a000000000000006199bae3b241df60418e258d046c22c8c1a5de2f4f325753554e7fd9c650afec000000000198544198f21158e0a83da8f125ca534bc2d75a233a2baac9cb1e821a00020000000000c2347909f9b7092a0100000000000000c8b6532ddb16843a64000000000000000048656c6c6f204361726f6c21205468697320697320426f622e0000000000008c00000000000000886adfbd4213576d63ea7e7a4bece61c6933c27cd2ff36f85155c8febfb6eb4e00000000019854419869762418c5b643eee70e6f20d4d555d5997087d7a686a91c00020000000000c2347909f9b7092a0100000000000000c8b6532ddb16843a64000000000000000048656c6c6f20416c6963652c2054686973206973204361726f6c2e0000000000000000000000006199bae3b241df60418e258d046c22c8c1a5de2f4f325753554e7fd9c650afecbd92ad19a7b1e2b15a53c6ff03123fc664ebb299ae640b49f3eafb817a3b9309f2d0f8824226a7a29bf6e3a06c069d390f6d415eb3e68a0582774d201bcce4000000000000000000886adfbd4213576d63ea7e7a4bece61c6933c27cd2ff36f85155c8febfb6eb4eca42050a48185bdfadeb01f1a85d2770c2227bbd8e3efd30d4e6f405a49b10ee7ca0e87f739c95c2ae72259858c0acbe98313c5f174ad5790b6d155981c9bb0f"
 			);
-			
-		})
 
+			builtTx = updateTransaction(builtTx,"deadline","value",signature);
+		})
 	});
 
 
@@ -178,12 +184,124 @@ describe('tsunagi-sdk.0.1',() => {
 			console.log(payload)
 			expect(payload)
 			.toEqual(
-				"dc000000000000008c79ea7b4e2ca00a5b56534cabb777a8f65aa74ba27489ba1df005bc477c1a3050465178f247b64754504c1fa50e0f11688b069bc7b75a8381843677374eac075f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb0000000001985441a861000000000000981266577d010000989df3aea3852feafc5fdfc2266eb84ed8a7fa242688a8b81c00020000000000c2347909f9b7092a0100000000000000c8b6532ddb16843a64000000000000000048656c6c6f205473756e616769284361746a736f6e292053444b21"
+				"dc00000000000000baef5cd699f98641939427f7ffdc347b671150838e7b7ebf3b7e61ff3ad77e23cc3472d47e5eeca811af56fdda3fb823b4d6b428e7146659275a5beb7ced07005f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb0000000001985441a86100000000000068ca07a982feffff989df3aea3852feafc5fdfc2266eb84ed8a7fa242688a8b81c00020000000000c2347909f9b7092a0100000000000000c8b6532ddb16843a64000000000000000048656c6c6f205473756e616769284361746a736f6e292053444b21"
+			);
+		})
+
+		it('resolves opposite mosaice order', async () => {
+
+			//Alice->Bob
+			let tx1 = {
+				type:'TRANSFER',
+				signer_public_key:"5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
+				fee:25000n,
+				deadline:this.deadline,
+				recipient_address:"TCO7HLVDQUX6V7C737BCM3VYJ3MKP6REE2EKROA",
+				mosaics:[
+					{mosaic_id: 0x3A8416DB2D53B6C8n, amount: 100n},
+					{mosaic_id: 0x2A09B7F9097934C2n, amount: 1n},
+				],
+				message:"Hello Tsunagi(Catjson) SDK!",
+			}
+
+			let catjson = await loadCatjson(tx1,this.network);
+			let layout = await loadLayout(tx1,catjson,false); //isEmbedded false
+
+			let preparedTx = await prepareTransaction(tx1,layout,this.network); //TX事前準備
+			let parsedTx   = await parseTransaction(preparedTx,layout,catjson,this.network); //TX解析
+			let builtTx    = buildTransaction(parsedTx); //TX構築
+
+			let signature = signTransaction(builtTx,this.privateKey,this.network);
+			builtTx = updateTransaction(builtTx,"signature","value",signature);
+
+			//トランザクションハッシュ作成
+			let txHash = hashTransaction(tx1.signer_public_key,signature,builtTx,this.network);
+
+			let payload = hexlifyTransaction(builtTx);
+			console.log(payload)
+			expect(payload)
+			.toEqual(
+				"dc00000000000000baef5cd699f98641939427f7ffdc347b671150838e7b7ebf3b7e61ff3ad77e23cc3472d47e5eeca811af56fdda3fb823b4d6b428e7146659275a5beb7ced07005f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb0000000001985441a86100000000000068ca07a982feffff989df3aea3852feafc5fdfc2266eb84ed8a7fa242688a8b81c00020000000000c2347909f9b7092a0100000000000000c8b6532ddb16843a64000000000000000048656c6c6f205473756e616769284361746a736f6e292053444b21"
+			);
+		})
+
+		it('resolves null message', async () => {
+
+			//Alice->Bob
+			let tx1 = {
+				type:'TRANSFER',
+				signer_public_key:"5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
+				fee:25000n,
+				deadline:this.deadline,
+				recipient_address:"TCO7HLVDQUX6V7C737BCM3VYJ3MKP6REE2EKROA",
+				mosaics:[
+					{mosaic_id: 0x3A8416DB2D53B6C8n, amount: 100n},
+					{mosaic_id: 0x2A09B7F9097934C2n, amount: 1n},
+				],
+				message:"",
+			}
+
+			let catjson = await loadCatjson(tx1,this.network);
+			let layout = await loadLayout(tx1,catjson,false); //isEmbedded false
+
+			let preparedTx = await prepareTransaction(tx1,layout,this.network); //TX事前準備
+			let parsedTx   = await parseTransaction(preparedTx,layout,catjson,this.network); //TX解析
+			let builtTx    = buildTransaction(parsedTx); //TX構築
+
+			let signature = signTransaction(builtTx,this.privateKey,this.network);
+			builtTx = updateTransaction(builtTx,"signature","value",signature);
+
+			//トランザクションハッシュ作成
+			let txHash = hashTransaction(tx1.signer_public_key,signature,builtTx,this.network);
+
+			let payload = hexlifyTransaction(builtTx);
+
+			console.log(payload);
+			console.log(txHash);
+
+			expect(payload)
+			.toEqual(
+				"c1000000000000002662637cca6686223e4aa6489d9bdf9fd8bf21a434b9a8188931f9e07ec54570e620f783ee7bab2c149651ac22a0227e713290a0d0c00e30d2ae7986dc71e00c5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb0000000001985441a86100000000000068ca07a982feffff989df3aea3852feafc5fdfc2266eb84ed8a7fa242688a8b80100020000000000c2347909f9b7092a0100000000000000c8b6532ddb16843a640000000000000000"
+			);
+		})
+
+
+		it('resolves undefined message', async () => {
+
+			//Alice->Bob
+			let tx1 = {
+				type:'TRANSFER',
+				signer_public_key:"5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
+				fee:25000n,
+				deadline:this.deadline,
+				recipient_address:"TCO7HLVDQUX6V7C737BCM3VYJ3MKP6REE2EKROA",
+				mosaics:[
+					{mosaic_id: 0x3A8416DB2D53B6C8n, amount: 100n},
+					{mosaic_id: 0x2A09B7F9097934C2n, amount: 1n},
+				],
+			}
+
+			let catjson = await loadCatjson(tx1,this.network);
+			let layout = await loadLayout(tx1,catjson,false); //isEmbedded false
+
+			let preparedTx = await prepareTransaction(tx1,layout,this.network); //TX事前準備
+			let parsedTx   = await parseTransaction(preparedTx,layout,catjson,this.network); //TX解析
+			let builtTx    = buildTransaction(parsedTx); //TX構築
+
+			let signature = signTransaction(builtTx,this.privateKey,this.network);
+			builtTx = updateTransaction(builtTx,"signature","value",signature);
+
+			//トランザクションハッシュ作成
+			let txHash = hashTransaction(tx1.signer_public_key,signature,builtTx,this.network);
+
+			let payload = hexlifyTransaction(builtTx);
+			console.log(payload)
+			expect(payload)
+			.toEqual(
+				"c000000000000000122b13f2b300efca963d2d9b5a2e0866fd26b4485b9570d9a65f50b22e62f59ebf5119ddb322d5b8e02a0fa656bf3698fe7368185e2f044e9a4956b8588aee045f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb0000000001985441a86100000000000068ca07a982feffff989df3aea3852feafc5fdfc2266eb84ed8a7fa242688a8b80000020000000000c2347909f9b7092a0100000000000000c8b6532ddb16843a6400000000000000"
 			);
 		})
 	});
-
-
 
 });//symbol-sdk
 </script>

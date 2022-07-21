@@ -61,9 +61,9 @@ async function prepareTransaction(tx,layout,network){
 		//size定義の調査
 		if(layer.size !== undefined && isNaN(layer.size)){
 
-			let size;
+			let size = 0;
 			//element_dispositionが定義されている場合は、TX内の実データをそのサイズ数で分割する。
-			if("element_disposition" in layer){
+			if("element_disposition" in layer && layer.name in preparedTx){
 				size = preparedTx[layer.name].length / (layer.element_disposition.size * 2);
 
 			//それ以外は、TX内の実データサイズ数を指定する。
