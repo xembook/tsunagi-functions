@@ -1,43 +1,16 @@
+async function loadCatjson(tx,network){
 
-async function createTransaction(aggTx){
-
-	catjson = await loadCatjson(aggTx);
-	layout = await loadLayout(aggTx,catjson,false); //isEmbedded false
-
-	preparedTx = await prepare(aggTx,layout,this.network); //éñëOèÄîı
-	parsedTx   = await parse(preparedTx,layout,catjson); //ç\íz
-	builtTx    = build(parsedTx);
-
-}
-
-function getVerifiableData(builtTx){
-	let typeLayer = builtTx.find(bf=>bf.name==="type");
-	if([16705,16961].includes(typeLayer.value)){
-		return builtTx.slice(5,11);
-	}else{
-		return builtTx.slice(5,builtTx.length);
+	let res;
+	let catjson;
+	if(tx.type === 'AGGREGATE_COMPLETE'){
+		res = await fetch(network.catjasonBase + 'aggregate.json');
+		catjson = await res.json();
+	}else if(tx.type === 'TRANSFER'){
+		res = await fetch(network.catjasonBase + 'transfer.json');
+		catjson = await res.json();
 	}
+	return catjson;
 }
-
-
-function hashTransaction(signer,signature,builtTx,network){
-
-	let hasher = sha3_256.create();
-	hasher.update(buffer.Buffer.from(signature,"hex"));
-	hasher.update(buffer.Buffer.from(signer,"hex"));
-	hasher.update(buffer.Buffer.from(network.generationHash,"hex"));
-	hasher.update(buffer.Buffer.from(toHex(getVerifiableData(builtTx)),"hex")); //verifiableData
-	let txHash = hasher.hex();
-	return txHash;
-}
-
-function updateTx(builtTx,name,type,value){
-	let layer = builtTx.find(bf=>bf.name === name);
-	layer[type] = value;
-	console.log(layer);
-	return builtTx;
-}
-
 
 async function loadLayout(tx,catjson,isEmbedded){
 
@@ -59,24 +32,9 @@ async function loadLayout(tx,catjson,isEmbedded){
 	return factory.layout;
 }
 
-async function loadCatjson(tx){
 
-	let res;
-	let catjson;
-	const CATJSON_BASE = "https://xembook.github.io/symbol-browserify/catjson/";
-	if(tx.type === 'AGGREGATE_COMPLETE'){
-		res = await fetch(CATJSON_BASE + 'aggregate.json');
-		catjson = await res.json();
-	}else if(tx.type === 'TRANSFER'){
-		res = await fetch(CATJSON_BASE + 'transfer.json');
-		catjson = await res.json();
-	}
-	return catjson;
-}
-
-
-//éñëOèÄîı
-async function prepare(tx,layout,network){
+//‰∫ãÂâçÊ∫ñÂÇô
+async function prepareTransaction(tx,layout,network){
 
 	let preparedTx = Object.assign({}, tx);
 	preparedTx.network = network.network;
@@ -87,7 +45,7 @@ async function prepare(tx,layout,network){
 	if('message' in preparedTx){
 		preparedTx.message = buffer.Buffer.from([0,...(new TextEncoder('utf-8')).encode(tx.message)]).toString("hex");
 	}
-	//TODO:recipient_addressÇ™ÉlÅ[ÉÄÉXÉyÅ[ÉXÇæÇ¡ÇΩèÍçáÇÃïœä∑Ç‡ïKóv
+	//TODO:recipient_address„Åå„Éç„Éº„É†„Çπ„Éö„Éº„Çπ„Å†„Å£„ÅüÂ†¥Âêà„ÅÆÂ§âÊèõ„ÇÇÂøÖË¶Å
 
 	if("mosaics" in tx){
 		tx.mosaics = tx.mosaics.sort(function(a,b){
@@ -97,22 +55,22 @@ async function prepare(tx,layout,network){
 		});
 	}
 
-	//ÉåÉCÉAÉEÉgëwÇ≤Ç∆ÇÃèàóù
+	//„É¨„Ç§„Ç¢„Ç¶„ÉàÂ±§„Åî„Å®„ÅÆÂá¶ÁêÜ
 	for(let layer of layout){
 
-		//sizeíËã`ÇÃí≤ç∏
+		//sizeÂÆöÁæ©„ÅÆË™øÊüª
 		if(layer.size !== undefined && isNaN(layer.size)){
 
 			let size;
-			//element_dispositionÇ™íËã`Ç≥ÇÍÇƒÇ¢ÇÈèÍçáÇÕÅATXì‡ÇÃé¿ÉfÅ[É^ÇÇªÇÃÉTÉCÉYêîÇ≈ï™äÑÇ∑ÇÈÅB
+			//element_disposition„ÅåÂÆöÁæ©„Åï„Çå„Å¶„ÅÑ„ÇãÂ†¥Âêà„ÅØ„ÄÅTXÂÜÖ„ÅÆÂÆü„Éá„Éº„Çø„Çí„Åù„ÅÆ„Çµ„Ç§„Ç∫Êï∞„ÅßÂàÜÂâ≤„Åô„Çã„ÄÇ
 			if("element_disposition" in layer){
 				size = preparedTx[layer.name].length / (layer.element_disposition.size * 2);
 
-			//ÇªÇÍà»äOÇÕÅATXì‡ÇÃé¿ÉfÅ[É^ÉTÉCÉYêîÇéwíËÇ∑ÇÈÅB
-			}else if('sort_key' in layer){//ébíË sort_key Ç≈Ç´ÇÈsizeílÇÕÉJÉEÉìÉgêîÇì¸ÇÍÇÈÇ∆âéﬂ
+			//„Åù„Çå‰ª•Â§ñ„ÅØ„ÄÅTXÂÜÖ„ÅÆÂÆü„Éá„Éº„Çø„Çµ„Ç§„Ç∫Êï∞„ÇíÊåáÂÆö„Åô„Çã„ÄÇ
+			}else if('sort_key' in layer){//Êö´ÂÆö sort_key „Åß„Åç„ÇãsizeÂÄ§„ÅØ„Ç´„Ç¶„É≥„ÉàÊï∞„ÇíÂÖ•„Çå„Çã„Å®Ëß£Èáà
 				size = preparedTx[layer.name].length;
 			}else{
-				//ÇªÇÃëºÇÃsizeílÇÕPayloadÇÃí∑Ç≥Çì¸ÇÍÇÈÇΩÇﬂåªéûì_Ç≈ÇÕïsñæ
+				//„Åù„ÅÆ‰ªñ„ÅÆsizeÂÄ§„ÅØPayload„ÅÆÈï∑„Åï„ÇíÂÖ•„Çå„Çã„Åü„ÇÅÁèæÊôÇÁÇπ„Åß„ÅØ‰∏çÊòé
 			}
 			preparedTx[layer.size] = size;
 		}
@@ -121,10 +79,10 @@ async function prepare(tx,layout,network){
 		let txes = [];
 		for(let eTx of tx.transactions){
 
-			let eCatjson = await loadCatjson(eTx);
+			let eCatjson = await loadCatjson(eTx,network);
 			let eLayout = await loadLayout(eTx,eCatjson,true);
-			//çƒãAèàóù
-			ePreparedTx = await prepare(eTx,eLayout,network);
+			//ÂÜçÂ∏∞Âá¶ÁêÜ
+			ePreparedTx = await prepareTransaction(eTx,eLayout,network);
 			txes.push(ePreparedTx);
 		}
 		preparedTx.transactions = txes;
@@ -133,7 +91,7 @@ async function prepare(tx,layout,network){
 	return preparedTx;
 }
 
-async function parse(tx,layout,catjson){
+async function parseTransaction(tx,layout,catjson,network){
 
 	let builtTx = []; //return
 	for(let layer of layout){
@@ -147,10 +105,10 @@ async function parse(tx,layout,catjson){
 			
 			let txLayer = Object.assign({}, layer);
 			let items = [];
-			for(let eTx of tx.transactions){ //è¨ï∂éöÇÃeÇÕembeddedÇÃó™
-				let eCatjson = await loadCatjson(eTx);//catjsonÇÃçXêV
+			for(let eTx of tx.transactions){ //Â∞èÊñáÂ≠ó„ÅÆe„ÅØembedded„ÅÆÁï•
+				let eCatjson = await loadCatjson(eTx,network);//catjson„ÅÆÊõ¥Êñ∞
 				let eLayout = await loadLayout(eTx,eCatjson,true); //isEmbedded:true
-				let eBuiltTx = await parse(eTx,eLayout,eCatjson); //çƒãA
+				let eBuiltTx = await parseTransaction(eTx,eLayout,eCatjson); //ÂÜçÂ∏∞
 				items.push(eBuiltTx);
 			}
 			txLayer.layout = items;
@@ -163,7 +121,7 @@ async function parse(tx,layout,catjson){
 			let items = [];
 			for(let item of tx[layer.name]){
 
-				let itemBuiltTx = await parse(item,catjson.find(cj=>cj.name === layerType).layout,catjson); //çƒãA
+				let itemBuiltTx = await parseTransaction(item,catjson.find(cj=>cj.name === layerType).layout,catjson,network); //ÂÜçÂ∏∞
 				items.push(itemBuiltTx);
 			}
 			txLayer.layout = items;
@@ -173,7 +131,7 @@ async function parse(tx,layout,catjson){
 		}else if(catitem.type === "enum"){
 			catitem.value = catitem.values.find(cvf=>cvf.name === tx[layer.name]).value;
 		}
-		//layerÇÃîzíu
+		//layer„ÅÆÈÖçÁΩÆ
 		if(layerDisposition !== undefined && layerDisposition.indexOf('array') != -1){ // "array sized","array fill"
 
 			let size = tx[layer.size];
@@ -197,23 +155,23 @@ async function parse(tx,layout,catjson){
 
 				}else{console.error("not yet");}
 			}else{console.log("not yet");}
-		}else{ //reserved Ç‹ÇΩÇÕÇªÇÍà»äO(íËã`Ç»Çµ)
+		}else{ //reserved „Åæ„Åü„ÅØ„Åù„Çå‰ª•Â§ñ(ÂÆöÁæ©„Å™„Åó)
 
 			let txLayer = Object.assign({}, layer);
 			if(Object.keys(catitem).length > 0){
 
-				//catjsonÇÃÉfÅ[É^ÇégÇ§
+				//catjson„ÅÆ„Éá„Éº„Çø„Çí‰Ωø„ÅÜ
 				txLayer.signedness	= catitem.signedness;
 				txLayer.size  = catitem.size;
 				txLayer.type  = catitem.type;
 				txLayer.value = catitem.value;
 			}
 
-			//txÇ…éwíËÇ≥ÇÍÇƒÇ¢ÇÈèÍçáè„èëÇ´(enumÉpÉâÉÅÅ[É^ÇÕè„èëÇ´ÇµÇ»Ç¢)
+			//tx„Å´ÊåáÂÆö„Åï„Çå„Å¶„ÅÑ„ÇãÂ†¥Âêà‰∏äÊõ∏„Åç(enum„Éë„É©„É°„Éº„Çø„ÅØ‰∏äÊõ∏„Åç„Åó„Å™„ÅÑ)
 			if(layer.name in tx && catitem.type !== "enum"){
 				txLayer.value = tx[layer.name]; 			   
 			}else{
-				/* ÇªÇÃÇ‹Ç‹txLayerÇí«â¡ */
+				/* „Åù„ÅÆ„Åæ„ÅætxLayer„ÇíËøΩÂä† */
 				console.log(layer.name);
 			}
 			builtTx.push(txLayer);
@@ -230,7 +188,7 @@ async function parse(tx,layout,catjson){
 }
 
 
-function build(parsedTx){
+function buildTransaction(parsedTx){
 
 	let builtTx = Object.assign([], parsedTx);
 	
@@ -242,7 +200,7 @@ function build(parsedTx){
 	//Merkle Hash Builder
 	let hashes = [];
 	for(let eTx of builtTx.find(lf=>lf.name === "transactions").layout){
-		hashes.push(sha3_256.create().update(buffer.Buffer.from(toHex(eTx),"hex")).digest());
+		hashes.push(sha3_256.create().update(buffer.Buffer.from(hexlifyTransaction(eTx),"hex")).digest());
 	}
 
 	let numRemainingHashes = hashes.length;
@@ -272,11 +230,40 @@ function build(parsedTx){
 }
 
 
+function getVerifiableData(builtTx){
+	let typeLayer = builtTx.find(bf=>bf.name==="type");
+	if([16705,16961].includes(typeLayer.value)){
+		return builtTx.slice(5,11);
+	}else{
+		return builtTx.slice(5,builtTx.length);
+	}
+}
+
+
+function hashTransaction(signer,signature,builtTx,network){
+
+	let hasher = sha3_256.create();
+	hasher.update(buffer.Buffer.from(signature,"hex"));
+	hasher.update(buffer.Buffer.from(signer,"hex"));
+	hasher.update(buffer.Buffer.from(network.generationHash,"hex"));
+	hasher.update(buffer.Buffer.from(hexlifyTransaction(getVerifiableData(builtTx)),"hex")); //verifiableData
+	let txHash = hasher.hex();
+	return txHash;
+}
+
+function updateTransaction(builtTx,name,type,value){
+	let layer = builtTx.find(bf=>bf.name === name);
+	layer[type] = value;
+	console.log(layer);
+	return builtTx;
+}
+
+
 function countSize(item,alignment){
 
 	let totalSize = 0;
 	
-	//ÉåÉCÉAÉEÉgÉTÉCÉYÇÃéÊìæ
+	//„É¨„Ç§„Ç¢„Ç¶„Éà„Çµ„Ç§„Ç∫„ÅÆÂèñÂæó
 	if(item !== undefined && item.layout){
 		for(let layer of item.layout){
 			let itemAlignment;
@@ -285,9 +272,9 @@ function countSize(item,alignment){
 			}else{
 				itemAlignment = 0;
 			}
-			totalSize += countSize(layer,itemAlignment); //çƒãA
+			totalSize += countSize(layer,itemAlignment); //ÂÜçÂ∏∞
 		}
-	//ÉåÉCÉAÉEÉgÇç\ê¨Ç∑ÇÈÉåÉCÉÑÅ[ÉTÉCÉYÇÃéÊìæ
+	//„É¨„Ç§„Ç¢„Ç¶„Éà„ÇíÊßãÊàê„Åô„Çã„É¨„Ç§„É§„Éº„Çµ„Ç§„Ç∫„ÅÆÂèñÂæó
 	}else if(Array.isArray(item)){
 		let layoutSize = 0;
 		for(let layout of item){
@@ -308,8 +295,8 @@ function countSize(item,alignment){
 	return totalSize;
 }
 
-//hexâª
-function toHex(item,alignment){
+//hexÂåñ
+function hexlifyTransaction(item,alignment){
 
 	let hex = "";
 	if(item !== undefined && item.layout){
@@ -320,13 +307,13 @@ function toHex(item,alignment){
 			}else{
 				itemAlignment = 0;
 			}
-			hex += toHex(layer,itemAlignment); //çƒãA
+			hex += hexlifyTransaction(layer,itemAlignment); //ÂÜçÂ∏∞
 		}
 	}else if(Array.isArray(item)){
 		let subLayoutHex = "";
 		for(let subLayout of item){
 			//subLayoutSize += countSize(subLayout);
-			subLayoutHex += toHex(subLayout,alignment);
+			subLayoutHex += hexlifyTransaction(subLayout,alignment);
 			hexLength = subLayoutHex.length;
 		}		 
 		if(alignment !== undefined && alignment > 0){
@@ -366,12 +353,12 @@ function toHex(item,alignment){
 	return hex;
 }
 
-//èêñº
-function sign(builtTx,priKey,network){
+//ÁΩ≤Âêç
+function signTransaction(builtTx,priKey,network){
 	let sig = nacl.sign.detached(
 		new Uint8Array([
 			...buffer.Buffer.from(network.generationHash,"hex"),
-			...buffer.Buffer.from(toHex(getVerifiableData(builtTx)),"hex"),
+			...buffer.Buffer.from(hexlifyTransaction(getVerifiableData(builtTx)),"hex"),
 		]) ,
 		new Uint8Array([
 			...buffer.Buffer.from(priKey,"hex"),
@@ -385,8 +372,8 @@ function sign(builtTx,priKey,network){
 	return signature; 
 }
 
-//òAèê
-function cosign(txhash,priKey){
+//ÈÄ£ÁΩ≤
+function cosignTransaction(txhash,priKey){
 
 	let sig = nacl.sign.detached(
 		new Uint8Array(buffer.Buffer.from(txhash,"hex")) ,

@@ -13,7 +13,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/tweetnacl/1.0.2/nacl-fast.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/js-sha3/0.8.0/sha3.min.js"></script>
 
-<script src="https://xembook.github.io/tsunagi-sdk/tsunagi-sdk-0.1.js"></script>
+<script src="./tsunagi-sdk-0.1.js"></script>
 <script>
 
 
@@ -110,22 +110,28 @@ describe('tsunagi-sdk.0.1',() => {
 				cosignatures:[cosignature1,cosignature2]
 			}
 
-			let tx = await createTransaction(aggTx);
-			let signature = sign(tx,this.privateKey,this.network);
-			tx = updateTx(tx,"signature","value",signature);
+			let catjson = await loadCatjson(aggTx,this.network);
+			let layout = await loadLayout(aggTx,catjson,false); //isEmbedded false
+
+			let preparedTx = await prepareTransaction(aggTx,layout,this.network); //TX事前準備
+			let parsedTx   = await parseTransaction(preparedTx,layout,catjson,this.network); //TX解析
+			let builtTx    = buildTransaction(parsedTx); //TX構築
+
+			let signature = signTransaction(builtTx,this.privateKey,this.network);
+			builtTx = updateTransaction(builtTx,"signature","value",signature);
 
 			//トランザクションハッシュ作成
-			let txHash = hashTransaction(aggTx.signer_public_key,signature,tx,this.network);
+			let txHash = hashTransaction(aggTx.signer_public_key,signature,builtTx,this.network);
 
 			//連署
-			cosignature1.signature = cosign(txHash,this.bobPrivateKey);
-			cosignature2.signature = cosign(txHash,this.carolPrivateKey);
+			cosignature1.signature = cosignTransaction(txHash,this.bobPrivateKey);
+			cosignature2.signature = cosignTransaction(txHash,this.carolPrivateKey);
 
 			let cosignaturesLayout = layout.find(lf=>lf.name === "cosignatures");
-			let parsedCosignatures = await parse(preparedTx,[cosignaturesLayout],catjson); //構築
-			tx = updateTx(tx,"cosignatures","layout",parsedCosignatures[0].layout);
+			let parsedCosignatures = await parseTransaction(preparedTx,[cosignaturesLayout],catjson,network); //構築
+			builtTx = updateTransaction(builtTx,"cosignatures","layout",parsedCosignatures[0].layout);
 
-			let payload = toHex(tx);
+			let payload = hexlifyTransaction(builtTx);
 			console.log(payload)
 			expect(payload)
 			.toEqual(
