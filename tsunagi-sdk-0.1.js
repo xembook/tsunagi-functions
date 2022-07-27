@@ -1,31 +1,12 @@
 async function loadCatjson(tx,network){
 
 	let jsonFile;
-	if(tx.type === 'AGGREGATE_COMPLETE' || tx.type === 'AGGREGATE_BONDED'){jsonFile =  'aggregate.json';
-	}else if(tx.type === 'HASH_LOCK'){jsonFile =  'hash_lock.json';
-	}else if(tx.type === 'TRANSFER' ){jsonFile =  'transfer.json';
-
-	}else if(tx.type === 'ACCOUNT_ADDRESS_RESTRICTION' ){jsonFile =  'account_address_restriction.json';
-	}else if(tx.type === 'ACCOUNT_METADATA' ){           jsonFile =  'account_metadata.json';
-	}else if(tx.type === 'ACCOUNT_MOSAIC_RESTRICTION' ){ jsonFile =  'account_mosaic_restriction.json';
-	}else if(tx.type === 'ACCOUNT_OPERATION_RESTRICTION' ){jsonFile =  'account_operation_restriction.json';
-	}else if(tx.type === 'ADDRESS_ALIAS' ){              jsonFile =  'address_alias.json';
-	}else if(tx.type === 'MOSAIC_ADDRESS_RESTRICTION' ){ jsonFile =  'mosaic_address_restriction.json';
-	}else if(tx.type === 'MOSAIC_ALIAS' ){               jsonFile =  'mosaic_alias.json';
-	}else if(tx.type === 'MOSAIC_DEFINITION' ){          jsonFile =  'mosaic_definition.json';
-	}else if(tx.type === 'MOSAIC_GLOBAL_RESTRICTION' ){  jsonFile =  'mosaic_global_restriction.json';
-	}else if(tx.type === 'MOSAIC_METADATA' ){            jsonFile =  'mosaic_metadata.json';
-	}else if(tx.type === 'MOSAIC_SUPPLY_CHANGE' ){       jsonFile =  'mosaic_supply_change.json';
-	}else if(tx.type === 'MOSAIC_SUPPLY_REVOCATION' ){   jsonFile =  'mosaic_supply_revocation.json';
-	}else if(tx.type === 'MULTISIG_ACCOUNT_MODIFICATION' ){jsonFile =  'multisig_account_modification.json';
-	}else if(tx.type === 'NAMESPACE_METADATA' ){         jsonFile =  'namespace_metadata.json';
-	}else if(tx.type === 'NAMESPACE_REGISTRATION' ){     jsonFile =  'namespace_registration.json';
-	}else if(tx.type === 'NODE_KEY_LINK' ){              jsonFile =  'node_key_link.json';
-	}else if(tx.type === 'SECRET_PROOF' ){               jsonFile =  'secret_proof.json';
-	}else if(tx.type === 'VOTING_KEY_LINK' ){            jsonFile =  'voting_key_link.json';
-	}else if(tx.type === 'VRF_KEY_LINK' ){               jsonFile =  'vrf_key_link.json';
-
+	if(tx.type === 'AGGREGATE_COMPLETE' || tx.type === 'AGGREGATE_BONDED'){
+		jsonFile =  'aggregate.json';
+	}else{
+		jsonFile =  tx.type.toLowerCase() + '.json';
 	}
+
 	let res = await fetch(network.catjasonBase + jsonFile);
 	let catjson = await res.json();
 	
@@ -42,38 +23,25 @@ async function loadLayout(tx,catjson,isEmbedded){
 	}
 
 	let layoutName;
-	if(tx.type === "AGGREGATE_COMPLETE"){     layoutName = "AggregateCompleteTransaction";
-	}else if(tx.type === "AGGREGATE_BONDED"){ layoutName = "AggregateBondedTransaction";
-	}else if(tx.type === 'TRANSFER'){         layoutName = prefix + "TransferTransaction";
-	}else if(tx.type === "ACCOUNT_KEY_LINK"){         layoutName = prefix + "AccountKeyLinkTransaction";
-	}else if(tx.type === "NODE_KEY_LINK"){         layoutName = prefix + "NodeKeyLinkTransaction";
-	}else if(tx.type === "VOTING_KEY_LINK"){         layoutName = prefix + "VotingKeyLinkTransaction";
-	}else if(tx.type === "VRF_KEY_LINK"){         layoutName = prefix + "VrfKeyLinkTransaction";
-	}else if(tx.type === "HASH_LOCK"){         layoutName = prefix + "HashLockTransaction";
-	}else if(tx.type === "SECRET_LOCK"){         layoutName = prefix + "SecretLockTransaction";
-	}else if(tx.type === "SECRET_PROOF"){         layoutName = prefix + "SecretProofTransaction";
-	}else if(tx.type === "ACCOUNT_METADATA"){         layoutName = prefix + "AccountMetadataTransaction";
-	}else if(tx.type === "MOSAIC_METADATA"){         layoutName = prefix + "MosaicMetadataTransaction";
-	}else if(tx.type === "NAMESPACE_METADATA"){         layoutName = prefix + "NamespaceMetadataTransaction";
-	}else if(tx.type === "MOSAIC_DEFINITION"){         layoutName = prefix + "MosaicDefinitionTransaction";
-	}else if(tx.type === "MOSAIC_SUPPLY_CHANGE"){         layoutName = prefix + "MosaicSupplyChangeTransaction";
-	}else if(tx.type === "MOSAIC_SUPPLY_REVOCATION"){         layoutName = prefix + "MosaicSupplyRevocationTransaction";
-	}else if(tx.type === "MULTISIG_ACCOUNT_MODIFICATION"){         layoutName = prefix + "MultisigAccountModificationTransaction";
-	}else if(tx.type === "ADDRESS_ALIAS"){         layoutName = prefix + "AddressAliasTransaction";
-	}else if(tx.type === "MOSAIC_ALIAS"){         layoutName = prefix + "MosaicAliasTransaction";
-	}else if(tx.type === "NAMESPACE_REGISTRATION"){         layoutName = prefix + "NamespaceRegistrationTransaction";
-	}else if(tx.type === "ACCOUNT_ADDRESS_RESTRICTION"){         layoutName = prefix + "AccountAddressRestrictionTransaction";
-	}else if(tx.type ===  "ACCOUNT_MOSAIC_RESTRICTION"){         layoutName = prefix + "AccountMosaicRestrictionTransaction";
-	}else if(tx.type ===  "ACCOUNT_OPERATION_RESTRICTION"){         layoutName = prefix + "AccountOperationRestrictionTransaction";
-	}else if(tx.type ===  "MOSAIC_ADDRESS_RESTRICTION"){         layoutName = prefix + "MosaicAddressRestrictionTransaction";
-	}else if(tx.type ===  "MOSAIC_GLOBAL_RESTRICTION"){         layoutName = prefix + "MosaicGlobalRestrictionTransaction";
 
-
+	if(      tx.type === "AGGREGATE_COMPLETE"){ layoutName = "AggregateCompleteTransaction";
+	}else if(tx.type === "AGGREGATE_BONDED"){   layoutName = "AggregateBondedTransaction";
+	}else{
+		layoutName = prefix + toCamelCase(tx.type) + "Transaction";
 	}
-	
+
 	let factory = catjson.find(item => item.factory_type === prefix + "Transaction" && item.name === layoutName);
 	return factory.layout;
 }
+
+// スネークケースからキャメルケースに変換（文字列）.
+function toCamelCase(str) {
+	return str.split('_').map(function(word,index){
+		return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+	}).join('');
+}
+
+
 
 
 //事前準備
@@ -172,7 +140,19 @@ async function parseTransaction(tx,layout,catjson,network){
 			continue;
 
 		}else if(catitem.type === "enum"){
-			catitem.value = catitem.values.find(cvf=>cvf.name === tx[layer.name]).value;
+			if(catitem.name.indexOf('Flags') != -1){
+
+				let value = 0;
+				for(let itemLayer of catitem.values){
+					if(tx[layer.name].indexOf(itemLayer.name) != -1){
+						value += itemLayer.value;
+					}
+				}
+				catitem.value = value;
+			}else{
+			
+				catitem.value = catitem.values.find(cvf=>cvf.name === tx[layer.name]).value;
+			}
 		}
 		//layerの配置
 		if(layerDisposition !== undefined && layerDisposition.indexOf('array') != -1){ // "array sized","array fill"
