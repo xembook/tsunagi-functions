@@ -58,6 +58,10 @@ async function prepareTransaction(tx,layout,network){
 	}
 	//TODO:recipient_addressがネームスペースだった場合の変換も必要
 
+	if('name' in preparedTx){
+		preparedTx.name = buffer.Buffer.from((new TextEncoder('utf-8')).encode(tx.name)).toString("hex");
+	}
+
 	if("mosaics" in tx){
 		tx.mosaics = tx.mosaics.sort(function(a,b){
 			if(a.mosaic_id < b.mosaic_id) return -1;
@@ -110,6 +114,15 @@ async function parseTransaction(tx,layout,catjson,network){
 		let layerType = layer.type;
 		let layerDisposition = layer.disposition;
 		let catitem = Object.assign({}, catjson.find(cj=>cj.name === layerType));
+		
+		if("condition" in layer ){
+			if(layer.condition_operation === "equals"){
+				if(layer.condition_value !== tx[layer.condition]){
+					continue;
+				}
+			}
+		}
+
 		if(layerDisposition === "const"){
 			continue;
 		}else if(layerType === "EmbeddedTransaction"){
@@ -169,7 +182,7 @@ async function parseTransaction(tx,layout,catjson,network){
 						txLayer.signedness = layer.element_disposition.signedness;
 						txLayer.name = "element_disposition";
 						txLayer.size = layer.element_disposition.size;
-						txLayer.value = tx.message.substr(count * 2, 2);
+						txLayer.value = tx[layer.name].substr(count * 2, 2);
 						txLayer.type = layerType;
 						items.push([txLayer]);
 					}
