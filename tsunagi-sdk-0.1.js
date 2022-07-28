@@ -53,6 +53,9 @@ async function prepareTransaction(tx,layout,network){
 	if('recipient_address' in preparedTx){
 		preparedTx.recipient_address = buffer.Buffer(base32.decode(tx.recipient_address + "A").slice(0, -1)).toString("hex");
 	}
+	if('address' in preparedTx){
+		preparedTx.address = buffer.Buffer(base32.decode(tx.address + "A").slice(0, -1)).toString("hex");
+	}
 	if('message' in preparedTx){
 		preparedTx.message = buffer.Buffer.from([0,...(new TextEncoder('utf-8')).encode(tx.message)]).toString("hex");
 	}
