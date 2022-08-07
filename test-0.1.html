@@ -927,7 +927,7 @@ describe('tsunagi-sdk.0.1',() => {
 		});
 
 		it('resolves account metadata without aggregate', async () => {
-		//ResourceNotFound
+			//ResourceNotFound
 
 			let tx1 = {
 				type:'ACCOUNT_METADATA',
@@ -946,6 +946,141 @@ describe('tsunagi-sdk.0.1',() => {
 			);
 		});
 
+
+		it('resolves mosaic metadata', async () => {
+
+			let tx1 = {
+				type:'MOSAIC_METADATA',
+				signer_public_key:"5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
+				fee:1000000n,
+				deadline:this.deadline,
+				target_address:"TBUXMJAYYW3EH3XHBZXSBVGVKXKZS4EH26TINKI",
+				target_mosaic_id:0x4DAFFBE5505DE676n,
+				scoped_metadata_key:0xCF217E116AA422E2n, //"key_mosaic"
+				value_size_delta:27,
+				value:"Hello Tsunagi(Catjson) SDK!",
+			};
+
+			let aggTx = {
+				type:'AGGREGATE_COMPLETE',
+				signer_public_key:"5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
+				fee:1000000n,
+				deadline:this.deadline,
+				transactions:[tx1],
+			}
+
+			let catjson = await loadCatjson(aggTx,this.network);
+			let layout = await loadLayout(aggTx,catjson,false); //isEmbedded false
+
+			let preparedTx = await prepareTransaction(aggTx,layout,this.network); //TX事前準備
+			let parsedTx   = await parseTransaction(preparedTx,layout,catjson,this.network); //TX解析
+			let builtTx    = buildTransaction(parsedTx); //TX構築
+
+			let signature = signTransaction(builtTx,this.privateKey,this.network);
+			builtTx = updateTransaction(builtTx,"signature","value",signature);
+
+			//トランザクションハッシュ作成
+			let txHash = hashTransaction(aggTx.signer_public_key,signature,builtTx,this.network);
+
+			let payload = hexlifyTransaction(builtTx);
+			console.log(payload);
+			console.log(txHash)
+
+			expect(payload)
+			.toEqual(
+				"2001000000000000b6c125c94aed659dc1346151d03e72552dfe57c6882baa924310f3cddea39c2387bf238aba046b6a7a2f849802b38bb5f046de6b455e60a2fbaa5f22eb4d53005f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb000000000198414140420f000000000000dd6d0000000000eadc97a286bf8081b523c4d246cf6ca05f208835b82e1f97ad978a2d638386a2780000000000000077000000000000005f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb00000000019844429869762418c5b643eee70e6f20d4d555d5997087d7a686a9e222a46a117e21cf76e65d50e5fbaf4d1b001b0048656c6c6f205473756e616769284361746a736f6e292053444b2100"
+			);
+		});
+
+
+		it('resolves mosaic metadata without aggregate', async () => {
+			//ResourceNotFound
+
+			let tx1 = {
+				type:'MOSAIC_METADATA',
+				signer_public_key:"5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
+				fee:1000000n,
+				deadline:this.deadline,
+				target_address:"TBUXMJAYYW3EH3XHBZXSBVGVKXKZS4EH26TINKI",
+				target_mosaic_id:0x4DAFFBE5505DE676n,
+				scoped_metadata_key:0xCF217E116AA422E2n, //"key_mosaic"
+				value_size_delta:27,
+				value:"Hello Tsunagi(Catjson) SDK!",
+			};
+
+			expect(await this.getPayload(tx1))
+			.toEqual(
+				"c700000000000000dc5ff39f1dc61eb4500f2d19dec8bc36f03dffcb65504e906e6f6e6eecb71022b9e88993f4f55de53ba969563ad48be7fb718aaf1021617a1fa6324814f9b0045f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb000000000198444240420f000000000000dd6d00000000009869762418c5b643eee70e6f20d4d555d5997087d7a686a9e222a46a117e21cf76e65d50e5fbaf4d1b001b0048656c6c6f205473756e616769284361746a736f6e292053444b21"
+			);
+		});
+
+
+		it('resolves namespace metadata', async () => {
+
+			let tx1 = {
+				type:'NAMESPACE_METADATA',
+				signer_public_key:"5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
+				fee:1000000n,
+				deadline:this.deadline,
+				target_address:"TBUXMJAYYW3EH3XHBZXSBVGVKXKZS4EH26TINKI",
+				target_namespace_id:0xA43415EB268C7385n, //xembook
+				scoped_metadata_key:0x8B6A8A370873D0D9n, //"key_namespace"
+				value_size_delta:27,
+				value:"Hello Tsunagi(Catjson) SDK!",
+			}
+
+			let aggTx = {
+				type:'AGGREGATE_COMPLETE',
+				signer_public_key:"5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
+				fee:1000000n,
+				deadline:this.deadline,
+				transactions:[tx1],
+			}
+
+			let catjson = await loadCatjson(aggTx,this.network);
+			let layout = await loadLayout(aggTx,catjson,false); //isEmbedded false
+
+			let preparedTx = await prepareTransaction(aggTx,layout,this.network); //TX事前準備
+			let parsedTx   = await parseTransaction(preparedTx,layout,catjson,this.network); //TX解析
+			let builtTx    = buildTransaction(parsedTx); //TX構築
+
+			let signature = signTransaction(builtTx,this.privateKey,this.network);
+			builtTx = updateTransaction(builtTx,"signature","value",signature);
+
+			//トランザクションハッシュ作成
+			let txHash = hashTransaction(aggTx.signer_public_key,signature,builtTx,this.network);
+
+			let payload = hexlifyTransaction(builtTx);
+			console.log(payload);
+			console.log(txHash)
+
+			expect(payload)
+			.toEqual(
+				"2001000000000000b80a6851320a00db3e505516813106f3190fbbd349266667373faf85cdd370cec50c3224c8110c62147a3bffb7be8b1bc09aec7d7701bc15299b45c18ddd70015f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb000000000198414140420f000000000000dd6d0000000000accdb81d64d2626a79d546a2380171879f39beecc9b314805ca9b5a0d2b547e4780000000000000077000000000000005f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb00000000019844439869762418c5b643eee70e6f20d4d555d5997087d7a686a9d9d07308378a6a8b85738c26eb1534a41b001b0048656c6c6f205473756e616769284361746a736f6e292053444b2100"
+			);
+		});
+
+
+		it('resolves namespace metadata without aggregate', async () => {
+			//ResourceNotFound
+
+			let tx1 = {
+				type:'NAMESPACE_METADATA',
+				signer_public_key:"5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
+				fee:1000000n,
+				deadline:this.deadline,
+				target_address:"TBUXMJAYYW3EH3XHBZXSBVGVKXKZS4EH26TINKI",
+				target_namespace_id:0xA43415EB268C7385n, //xembook
+				scoped_metadata_key:0x8B6A8A370873D0D9n, //"key_namespace"
+				value_size_delta:27,
+				value:"Hello Tsunagi(Catjson) SDK!",
+			}
+
+			expect(await this.getPayload(tx1))
+			.toEqual(
+				"c700000000000000093141b56044db8b665d8c86f3119988f505c8ac3ad557f22383b2d8b0e2177fd934059df8e7890632b0ec020a087bf0569f8a992201a9e9a69870aa14351e055f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb000000000198444340420f000000000000dd6d00000000009869762418c5b643eee70e6f20d4d555d5997087d7a686a9d9d07308378a6a8b85738c26eb1534a41b001b0048656c6c6f205473756e616769284361746a736f6e292053444b21"
+			);
+		});
 
 	});
 
