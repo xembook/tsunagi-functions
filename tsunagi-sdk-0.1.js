@@ -56,6 +56,10 @@ async function prepareTransaction(tx,layout,network){
 	if('address' in preparedTx){
 		preparedTx.address = buffer.Buffer(base32.decode(tx.address + "A").slice(0, -1)).toString("hex");
 	}
+	if('target_address' in preparedTx){
+		preparedTx.target_address = buffer.Buffer(base32.decode(tx.target_address + "A").slice(0, -1)).toString("hex");
+	}
+
 	if('message' in preparedTx){
 		preparedTx.message = buffer.Buffer.from([0,...(new TextEncoder('utf-8')).encode(tx.message)]).toString("hex");
 	}
@@ -63,6 +67,10 @@ async function prepareTransaction(tx,layout,network){
 
 	if('name' in preparedTx){
 		preparedTx.name = buffer.Buffer.from((new TextEncoder('utf-8')).encode(tx.name)).toString("hex");
+	}
+
+	if('value' in preparedTx){
+		preparedTx.value = buffer.Buffer.from((new TextEncoder('utf-8')).encode(tx.value)).toString("hex");
 	}
 
 	if("mosaics" in tx){
