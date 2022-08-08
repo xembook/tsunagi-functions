@@ -92,9 +92,21 @@ async function prepareTransaction(tx,layout,network){
 			if("element_disposition" in layer && layer.name in preparedTx){
 				size = preparedTx[layer.name].length / (layer.element_disposition.size * 2);
 
+
+			//いらないかもしれない
 			//それ以外は、TX内の実データサイズ数を指定する。
 			}else if('sort_key' in layer){//暫定 sort_key できるsize値はカウント数を入れると解釈
 				size = preparedTx[layer.name].length;
+
+			}else if(layer.size.indexOf('_count') != -1){//暫定 sizeにcountという文字列が含まれている場合はサイズ値を指定する項目が含まれると考える
+				
+				if(layer.name in preparedTx){
+					size = preparedTx[layer.name].length;
+				}else{
+					size = 0;
+				}
+
+
 			}else{
 				//その他のsize値はPayloadの長さを入れるため現時点では不明
 			}
@@ -113,6 +125,25 @@ async function prepareTransaction(tx,layout,network){
 		}
 		preparedTx.transactions = txes;
 	}
+
+	if('address_additions' in tx){
+		let address_additions = [];
+		for(let address of tx.address_additions){
+
+			address_additions.push(buffer.Buffer(base32.decode(address + "A").slice(0, -1)).toString("hex"));
+		}
+		preparedTx.address_additions = address_additions;
+	}
+
+	if('address_deletions' in tx){
+		let address_deletions = [];
+		for(let address of tx.address_deletions){
+
+			address_deletions.push(buffer.Buffer(base32.decode(address + "A").slice(0, -1)).toString("hex"));
+		}
+		preparedTx.address_deletions = address_deletions;
+	}
+	
 	console.log(preparedTx);
 	return preparedTx;
 }
@@ -201,7 +232,21 @@ async function parseTransaction(tx,layout,catjson,network){
 					builtTx.push(subLayout);
 
 				}else{console.error("not yet");}
-			}else{console.log("not yet");}
+			}else if(layer.name in tx){
+
+				let subLayout = Object.assign({}, layer);
+				let items = [];
+//				for(let count = 0; count < size; count++){
+				for(let txItem of tx[layer.name]){
+					let txLayer = Object.assign({}, catjson.find(cj=>cj.name === layerType));
+					txLayer.value = txItem;
+					items.push([txLayer]);
+				}
+				subLayout.layout = items;
+				builtTx.push(subLayout);
+
+
+			}// else{console.log("not yet");}
 		}else{ //reserved またはそれ以外(定義なし)
 
 			let txLayer = Object.assign({}, layer);

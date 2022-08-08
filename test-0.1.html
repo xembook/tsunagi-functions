@@ -1084,10 +1084,218 @@ describe('tsunagi-sdk.0.1',() => {
 
 	});
 
-	describe('seclet lock transaction', () => {});
-	describe('multisig transaction', () => {});
+	describe('multisig transaction', () => {
+	
+
+		it('resolves multisig account modification address_additions', async () => {
+
+			let tx1 = {
+				type:'MULTISIG_ACCOUNT_MODIFICATION',
+				signer_public_key:"66ADB706BC9A93E6E803B2B76A1341A8ACD98690EF204B402643AE3D4701EE77",
+				min_removal_delta:1,
+				min_approval_delta:1,
+				address_additions:[
+					"TCO7HLVDQUX6V7C737BCM3VYJ3MKP6REE2EKROA",
+					"TBUXMJAYYW3EH3XHBZXSBVGVKXKZS4EH26TINKI"
+				],
+				address_deletions:[]
+			}
+
+			let cosignature1 = {
+				version:0n,
+				signer_public_key:"5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
+				signature:"",
+			}
+
+			let cosignature2 = {
+				version:0n,
+				signer_public_key:"6199BAE3B241DF60418E258D046C22C8C1A5DE2F4F325753554E7FD9C650AFEC",
+				signature:"",
+			}
+
+			let aggTx = {
+				type:'AGGREGATE_COMPLETE',
+				signer_public_key:"66ADB706BC9A93E6E803B2B76A1341A8ACD98690EF204B402643AE3D4701EE77",
+				fee:1000000n,
+				deadline:this.deadline,
+				transactions:[tx1],
+				cosignatures:[cosignature1,cosignature2]
+			}
+
+			let catjson = await loadCatjson(aggTx,this.network);
+			let layout = await loadLayout(aggTx,catjson,false); //isEmbedded false
+
+			let preparedTx = await prepareTransaction(aggTx,layout,this.network); //TX事前準備
+			let parsedTx   = await parseTransaction(preparedTx,layout,catjson,this.network); //TX解析
+			let builtTx    = buildTransaction(parsedTx); //TX構築
+
+			let signature = signTransaction(builtTx,"22F0BA129FE0C66BA596D7127B85961BF8EEF32784364338BACB4E88D6F284D6",this.network);
+			builtTx = updateTransaction(builtTx,"signature","value",signature);
+
+			//トランザクションハッシュ作成
+			let txHash = hashTransaction(aggTx.signer_public_key,signature,builtTx,this.network);
+
+			//連署
+			cosignature1.signature = cosignTransaction(txHash,"94ee0f4d7fe388ac4b04a6a6ae2ba969617879b83616e4d25710d688a89d80c7");
+			cosignature2.signature = cosignTransaction(txHash,"fa6373f4f497773c5cc55c103e348b139461d61fd4b45387e69d08a68000e06b");
+
+			let cosignaturesLayout = layout.find(lf=>lf.name === "cosignatures");
+			let parsedCosignatures = await parseTransaction(preparedTx,[cosignaturesLayout],catjson,network); //構築
+			builtTx = updateTransaction(builtTx,"cosignatures","layout",parsedCosignatures[0].layout);
+
+			let payload = hexlifyTransaction(builtTx);
+			console.log(payload);
+			console.log(txHash);
+			expect(payload)
+			.toEqual(
+				"e001000000000000bf1f73806cedc96540806bd2535be327889448b282e23168ab543037774e202f8d89245c6d4af99f476cf547decd0ae1f77b809ce2e3ec33eb39f3bcaed7970d66adb706bc9a93e6e803b2b76a1341a8acd98690ef204b402643ae3d4701ee77000000000198414140420f000000000000dd6d0000000000336c1c549f927fd26a4ff9f3602423cb544e766d6c2c655e261c80679f185cb56800000000000000680000000000000066adb706bc9a93e6e803b2b76a1341a8acd98690ef204b402643ae3d4701ee7700000000019855410101020000000000989df3aea3852feafc5fdfc2266eb84ed8a7fa242688a8b89869762418c5b643eee70e6f20d4d555d5997087d7a686a900000000000000005f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cbfa0f1120bdd09578723c07734b3a6bebe9810b2871d24532f7bcaba613f821a1ae9835b5dc3927ff6f350f3ca5e3490067b76d23274e264ba30b58e0643fea0400000000000000006199bae3b241df60418e258d046c22c8c1a5de2f4f325753554e7fd9c650afec959793a935b0c02b860238732cff351bef70d82af806ce56223205ee6d89f76fedb8fb4b5ae0004bced6db5e5fc6283c3d8a78a1a54a4de197dc75bef0b1210a"
+			);
+		});
+
+		it('resolves multisig account modification change delta', async () => {
+
+			let tx1 = {
+				type:'MULTISIG_ACCOUNT_MODIFICATION',
+				signer_public_key:"66ADB706BC9A93E6E803B2B76A1341A8ACD98690EF204B402643AE3D4701EE77",
+				min_removal_delta:1,
+				min_approval_delta:1,
+			}
+
+			let aggTx = {
+				type:'AGGREGATE_COMPLETE',
+				signer_public_key:"5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
+				fee:1000000n,
+				deadline:this.deadline,
+				transactions:[tx1],
+			}
+
+			let catjson = await loadCatjson(aggTx,this.network);
+			let layout = await loadLayout(aggTx,catjson,false); //isEmbedded false
+
+			let preparedTx = await prepareTransaction(aggTx,layout,this.network); //TX事前準備
+			let parsedTx   = await parseTransaction(preparedTx,layout,catjson,this.network); //TX解析
+			let builtTx    = buildTransaction(parsedTx); //TX構築
+
+			let signature = signTransaction(builtTx,"94ee0f4d7fe388ac4b04a6a6ae2ba969617879b83616e4d25710d688a89d80c7",this.network);
+			builtTx = updateTransaction(builtTx,"signature","value",signature);
+
+			//トランザクションハッシュ作成
+			let txHash = hashTransaction(aggTx.signer_public_key,signature,builtTx,this.network);
+
+
+			let payload = hexlifyTransaction(builtTx);
+			console.log(payload);
+			console.log(txHash);
+			expect(payload)
+			.toEqual(
+				"e00000000000000000e3f627769675a51f98c7a9745e8540e74f33a2ed63932e7de26f87b98dc94af51b133ab7d6826e1de86c9cbaa160a7aec5da4d9972ce915da8bf0c85a3010f5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb000000000198414140420f000000000000dd6d0000000000be95dbbb0adf29fe5f5a766fbf3c10e4a60e0d71c216d263e2b167e06c70dac93800000000000000380000000000000066adb706bc9a93e6e803b2b76a1341a8acd98690ef204b402643ae3d4701ee7700000000019855410101000000000000"
+			);
+		});
+
+		it('resolves multisig account modification address_deletions', async () => {
+
+			let tx1 = {
+				type:'MULTISIG_ACCOUNT_MODIFICATION',
+				signer_public_key:"66ADB706BC9A93E6E803B2B76A1341A8ACD98690EF204B402643AE3D4701EE77",
+				min_removal_delta:-1,
+				min_approval_delta:-1,
+				address_additions:[],
+				address_deletions:[
+					"TCO7HLVDQUX6V7C737BCM3VYJ3MKP6REE2EKROA"
+				]
+			}
+
+			let cosignature2 = {
+				version:0n,
+				signer_public_key:"6199BAE3B241DF60418E258D046C22C8C1A5DE2F4F325753554E7FD9C650AFEC",
+				signature:"",
+			}
+
+
+			let aggTx = {
+				type:'AGGREGATE_COMPLETE',
+				signer_public_key:"5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
+				fee:1000000n,
+				deadline:this.deadline,
+				transactions:[tx1],
+				cosignatures:[cosignature2]
+			}
+
+			let catjson = await loadCatjson(aggTx,this.network);
+			let layout = await loadLayout(aggTx,catjson,false); //isEmbedded false
+
+			let preparedTx = await prepareTransaction(aggTx,layout,this.network); //TX事前準備
+			let parsedTx   = await parseTransaction(preparedTx,layout,catjson,this.network); //TX解析
+			let builtTx    = buildTransaction(parsedTx); //TX構築
+
+			let signature = signTransaction(builtTx,"94ee0f4d7fe388ac4b04a6a6ae2ba969617879b83616e4d25710d688a89d80c7",this.network);
+			builtTx = updateTransaction(builtTx,"signature","value",signature);
+
+			//トランザクションハッシュ作成
+			let txHash = hashTransaction(aggTx.signer_public_key,signature,builtTx,this.network);
+
+			//連署
+			cosignature2.signature = cosignTransaction(txHash,"fa6373f4f497773c5cc55c103e348b139461d61fd4b45387e69d08a68000e06b");
+			let cosignaturesLayout = layout.find(lf=>lf.name === "cosignatures");
+			let parsedCosignatures = await parseTransaction(preparedTx,[cosignaturesLayout],catjson,network); //構築
+			builtTx = updateTransaction(builtTx,"cosignatures","layout",parsedCosignatures[0].layout);
+
+			let payload = hexlifyTransaction(builtTx);
+			console.log(payload);
+			console.log(txHash);
+			expect(payload)
+			.toEqual(
+				"6001000000000000a119633807603dffcfa86a981b4e31d97f6d21a024470139aeee0400ea748695943486743bf3fa3c6edf6207b47afbdfec3b086b8560e9ba3460f43a70391c0e5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb000000000198414140420f000000000000dd6d0000000000317c15bcbe4d9edadca95ed3fbeabe47fe41e749fbc120e9b83abf57083163745000000000000000500000000000000066adb706bc9a93e6e803b2b76a1341a8acd98690ef204b402643ae3d4701ee770000000001985541ffff000100000000989df3aea3852feafc5fdfc2266eb84ed8a7fa242688a8b800000000000000006199bae3b241df60418e258d046c22c8c1a5de2f4f325753554e7fd9c650afeccf75de4350bbfd1a8f4e7fb3c42e7c50725a9403ca5234fb71268c5eb6691734007a5fe0f8cc14a93011e76a6477e0e8ae1d7a0f9607e4deed709d1a3937c309"
+			);
+		});
+
+
+		it('resolves multisig account modification address_deletions 2', async () => {
+
+			let tx1 = {
+				type:'MULTISIG_ACCOUNT_MODIFICATION',
+				signer_public_key:"66ADB706BC9A93E6E803B2B76A1341A8ACD98690EF204B402643AE3D4701EE77",
+				min_removal_delta:-1,
+				min_approval_delta:-1,
+				address_deletions:["TBUXMJAYYW3EH3XHBZXSBVGVKXKZS4EH26TINKI"]
+			}
+
+			let aggTx = {
+				type:'AGGREGATE_COMPLETE',
+				signer_public_key:"5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
+				fee:1000000n,
+				deadline:this.deadline,
+				transactions:[tx1],
+			}
+
+			let catjson = await loadCatjson(aggTx,this.network);
+			let layout = await loadLayout(aggTx,catjson,false); //isEmbedded false
+
+			let preparedTx = await prepareTransaction(aggTx,layout,this.network); //TX事前準備
+			let parsedTx   = await parseTransaction(preparedTx,layout,catjson,this.network); //TX解析
+			let builtTx    = buildTransaction(parsedTx); //TX構築
+
+			let signature = signTransaction(builtTx,"94ee0f4d7fe388ac4b04a6a6ae2ba969617879b83616e4d25710d688a89d80c7",this.network);
+			builtTx = updateTransaction(builtTx,"signature","value",signature);
+
+			//トランザクションハッシュ作成
+			let txHash = hashTransaction(aggTx.signer_public_key,signature,builtTx,this.network);
+
+
+			let payload = hexlifyTransaction(builtTx);
+			console.log(payload);
+			console.log(txHash);
+			expect(payload)
+			.toEqual(
+				"f800000000000000434d6772e7f92dc5daf56ec8310afce152203a8c3b1dc25d87d1fe1d2300f452d28801cb6e1e59f77ad4f73cac28cdd027e17a44040c7bbb8185462359f1ad005f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb000000000198414140420f000000000000dd6d0000000000bdbccdc54cb19c89113a1c58ecfa776ded496a0b55568d7338530208137922fb5000000000000000500000000000000066adb706bc9a93e6e803b2b76a1341a8acd98690ef204b402643ae3d4701ee770000000001985541ffff0001000000009869762418c5b643eee70e6f20d4d555d5997087d7a686a9"
+			);
+		});
+
+	
+	});
 	describe('account restriction transaction', () => {});
 	describe('global mosaic restriction transaction', () => {});
+	describe('seclet lock transaction', () => {});
 
 });//symbol-sdk
 </script>
