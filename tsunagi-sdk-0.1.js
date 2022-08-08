@@ -95,8 +95,8 @@ async function prepareTransaction(tx,layout,network){
 
 			//いらないかもしれない
 			//それ以外は、TX内の実データサイズ数を指定する。
-			}else if('sort_key' in layer){//暫定 sort_key できるsize値はカウント数を入れると解釈
-				size = preparedTx[layer.name].length;
+//			}else if('sort_key' in layer){//暫定 sort_key できるsize値はカウント数を入れると解釈
+//				size = preparedTx[layer.name].length;
 
 			}else if(layer.size.indexOf('_count') != -1){//暫定 sizeにcountという文字列が含まれている場合はサイズ値を指定する項目が含まれると考える
 				
