@@ -1293,7 +1293,121 @@ describe('tsunagi-sdk.0.1',() => {
 
 	
 	});
-	describe('account restriction transaction', () => {});
+
+	describe('account restriction transaction', () => {
+	
+	
+		it('resolves 2 address restriction_additions transfer', async () => {
+
+			let tx1 = {
+				type:'ACCOUNT_ADDRESS_RESTRICTION',
+				signer_public_key:"5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
+				fee:25000n,
+				deadline:this.deadline,
+				restriction_flags:"ADDRESS BLOCK OUTGOING",
+				restriction_additions:["TCO7HLVDQUX6V7C737BCM3VYJ3MKP6REE2EKROA","TDZBCWHAVA62R4JFZJJUXQWXLIRTUK5KZHFR5AQ"],
+				restriction_deletions:[]
+			}
+
+			expect(await this.getPayload(tx1))
+			.toEqual(
+				"b8000000000000005dd7b8579be90231ada1d6f4158ff6ce47f17a7946f0f9872a5a2d451ab5920c389e8237e25560e71e4e4e2dfcb3c8e297642f1ed78975ab206a984feef2de095f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb0000000001985041a86100000000000000dd6d000000000001c0020000000000989df3aea3852feafc5fdfc2266eb84ed8a7fa242688a8b898f21158e0a83da8f125ca534bc2d75a233a2baac9cb1e82"
+			);
+		});
+
+		it('resolves 2 address restriction_deletions transfer', async () => {
+
+			let tx1 = {
+				type:'ACCOUNT_ADDRESS_RESTRICTION',
+				signer_public_key:"5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
+				fee:25000n,
+				deadline:this.deadline,
+				restriction_flags:"ADDRESS BLOCK OUTGOING",
+				restriction_additions:[],
+				restriction_deletions:["TCO7HLVDQUX6V7C737BCM3VYJ3MKP6REE2EKROA","TDZBCWHAVA62R4JFZJJUXQWXLIRTUK5KZHFR5AQ"]
+			}
+
+			expect(await this.getPayload(tx1))
+			.toEqual(
+				"b8000000000000000f2d19602306a1418229fa0ba8a67bbd0cbc777e9aa51a14647528ae5477ce26cc1bb5f4ceaf8d4a36b58955f324d76a520278438125b2df676fa6089f6ac3035f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb0000000001985041a86100000000000000dd6d000000000001c0000200000000989df3aea3852feafc5fdfc2266eb84ed8a7fa242688a8b898f21158e0a83da8f125ca534bc2d75a233a2baac9cb1e82"
+			);
+		});
+
+		it('resolves 2 mosaic restriction_additions transfer', async () => {
+
+			let tx1 = {
+				type:'ACCOUNT_MOSAIC_RESTRICTION',
+				signer_public_key:"5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
+				fee:25000n,
+				deadline:this.deadline,
+				restriction_flags:"MOSAIC_ID BLOCK",
+				restriction_additions:[0x4DAFFBE5505DE676n,0x2A09B7F9097934C2n],
+				restriction_deletions:[]
+			}
+
+			expect(await this.getPayload(tx1))
+			.toEqual(
+				"9800000000000000e876104b9595db102728e39715c548b5992a3743348fe2a01f53e155ca27d955482c1a2ca05d3a2f1784db510427d14431f112a6bf339b1f709e95f4d441f4015f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb0000000001985042a86100000000000000dd6d0000000000028002000000000076e65d50e5fbaf4dc2347909f9b7092a"
+			);
+		});
+
+		it('resolves 2 mosaic restriction_deletions transfer', async () => {
+
+			let tx1 = {
+				type:'ACCOUNT_MOSAIC_RESTRICTION',
+				signer_public_key:"5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
+				fee:25000n,
+				deadline:this.deadline,
+				restriction_flags:"MOSAIC_ID BLOCK",
+				restriction_additions:[],
+				restriction_deletions:[0x4DAFFBE5505DE676n,0x2A09B7F9097934C2n]
+			}
+
+			expect(await this.getPayload(tx1))
+			.toEqual(
+				"980000000000000063ccbdc7a6bd545d6751a1ed5dad87eda2efbef52462d19ba2e9a1f39d36999539b833a4732d12b87e8ea6802002fb575ac8d04ab4398827e12a41f0a425600c5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb0000000001985042a86100000000000000dd6d0000000000028000020000000076e65d50e5fbaf4dc2347909f9b7092a"
+			);
+		});
+	
+		it('resolves 2 operation restriction_additions transfer', async () => {
+
+			let tx1 = {
+				type:'ACCOUNT_OPERATION_RESTRICTION',
+				signer_public_key:"5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
+				fee:25000n,
+				deadline:this.deadline,
+				restriction_flags:"TRANSACTION_TYPE BLOCK OUTGOING",
+				restriction_additions:["TRANSFER","AGGREGATE_COMPLETE"],
+				restriction_deletions:[]
+			}
+
+			expect(await this.getPayload(tx1))
+			.toEqual(
+				"8c00000000000000d78ef15ed98496bc101c340ef9862fccca5e73aea04b93612ec00c4bd745674c1173827b81449a1e120bb960c176d56339f2b3d8ce7b7cd95d4b438f6e96ad075f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb0000000001985043a86100000000000000dd6d000000000004c002000000000054414141"
+			);
+		});
+	
+		it('resolves 2 operation restriction_deletions transfer', async () => {
+
+			let tx1 = {
+				type:'ACCOUNT_OPERATION_RESTRICTION',
+				signer_public_key:"5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
+				fee:25000n,
+				deadline:this.deadline,
+				restriction_flags:"TRANSACTION_TYPE BLOCK OUTGOING",
+				restriction_additions:[],
+				restriction_deletions:["TRANSFER","AGGREGATE_COMPLETE"]
+			}
+
+			expect(await this.getPayload(tx1))
+			.toEqual(
+				"8c000000000000000d553c66bdddc3e1a91cd7cf8ee3fe1bd92f4a9c25a876b78ad95876d03856bb8bcb7cff0bc64ed8a672d1d8592068140a040dbd83e5970ebd57e30be3a31a0a5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb0000000001985043a86100000000000000dd6d000000000004c000020000000054414141"
+			);
+		});
+	
+	
+	
+	});
 	describe('global mosaic restriction transaction', () => {});
 	describe('seclet lock transaction', () => {});
 

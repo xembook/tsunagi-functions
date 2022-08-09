@@ -143,6 +143,28 @@ async function prepareTransaction(tx,layout,network){
 		}
 		preparedTx.address_deletions = address_deletions;
 	}
+
+
+	if(tx.type === "ACCOUNT_ADDRESS_RESTRICTION"){
+		if('restriction_additions' in tx){
+			let restriction_additions = [];
+			for(let address of tx.restriction_additions){
+
+				restriction_additions.push(buffer.Buffer(base32.decode(address + "A").slice(0, -1)).toString("hex"));
+			}
+			preparedTx.restriction_additions = restriction_additions;
+		}
+
+		if('restriction_deletions' in tx){
+			let restriction_deletions = [];
+			for(let address of tx.restriction_deletions){
+
+				restriction_deletions.push(buffer.Buffer(base32.decode(address + "A").slice(0, -1)).toString("hex"));
+			}
+			preparedTx.restriction_deletions = restriction_deletions;
+		}		
+	}
+
 	
 	console.log(preparedTx);
 	return preparedTx;
@@ -204,6 +226,12 @@ async function parseTransaction(tx,layout,catjson,network){
 					}
 				}
 				catitem.value = value;
+			}else if(layerDisposition !== undefined && layerDisposition.indexOf('array') != -1){
+				values = [];
+				for(let item of  tx[layer.name]){
+					values.push(catitem.values.find(cvf=>cvf.name === item).value);
+				}
+				tx[layer.name] = values;
 			}else{
 			
 				catitem.value = catitem.values.find(cvf=>cvf.name === tx[layer.name]).value;
