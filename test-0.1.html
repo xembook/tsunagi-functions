@@ -1408,7 +1408,55 @@ describe('tsunagi-sdk.0.1',() => {
 	
 	
 	});
-	describe('global mosaic restriction transaction', () => {});
+
+	describe('global mosaic restriction transaction', () => {
+	
+		it('resolves global mosaic restriction transfer', async () => {
+
+			let tx1 = {
+				type:'MOSAIC_GLOBAL_RESTRICTION',
+				signer_public_key:"5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
+				fee:25000n,
+				deadline:this.deadline,
+				mosaic_id:0x4DAFFBE5505DE676n,
+				reference_mosaic_id:0n,
+				restriction_key:0x9772B71B058127D7n,
+				previous_restriction_value:0n,
+				new_restriction_value:0x1n,
+				previous_restriction_type:"NONE",
+				new_restriction_type:"EQ"
+			}
+
+			expect(await this.getPayload(tx1))
+			.toEqual(
+				"aa0000000000000083b18a9467dd39067ef18dc9eb5d7ee69b51fc68c954586d4291e68407ab41feca86224ddafcd9fd2b5375f33e1e4bb4de031b47fa42c742d4adb82fc60caf0e5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb0000000001985141a86100000000000000dd6d000000000076e65d50e5fbaf4d0000000000000000d72781051bb77297000000000000000001000000000000000001"
+			);
+		});
+
+		it('resolves global mosaic restriction transfer', async () => {
+
+			let tx1 = {
+				type:'MOSAIC_ADDRESS_RESTRICTION',
+				signer_public_key:"5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
+				fee:25000n,
+				deadline:this.deadline,
+				mosaic_id:0x4DAFFBE5505DE676n,
+				restriction_key:0x9772B71B058127D7n,
+				previous_restriction_value:0xFFFFFFFFFFFFFFFFn,
+				new_restriction_value:0x1n,
+				target_address:"TBUXMJAYYW3EH3XHBZXSBVGVKXKZS4EH26TINKI"
+			}
+
+			expect(await this.getPayload(tx1))
+			.toEqual(
+				"b80000000000000040748328e8dab01fee7f82b4e23b3ed2c6336783790f286aa75eab0982c2a60af9eb5a2c524a427ec5d7e451d47a3f1620e5478ae37d048441fd7f2675e4880e5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb0000000001985142a86100000000000000dd6d000000000076e65d50e5fbaf4dd72781051bb77297ffffffffffffffff01000000000000009869762418c5b643eee70e6f20d4d555d5997087d7a686a9"
+			);
+		});
+
+	
+	
+	
+	});
 	describe('seclet lock transaction', () => {});
 
 });//symbol-sdk
