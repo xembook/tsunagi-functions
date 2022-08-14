@@ -243,8 +243,6 @@
     "name": "HashLockInfo", 
     "comments": "binary layout for hash lock transaction info"
   },
-
-
   {
     "values": [
       {
@@ -629,8 +627,6 @@
         "name": "deadline", 
         "comments": "transaction deadline"
       }, 
-
-
       {
         "type": "UnresolvedMosaic", 
         "name": "mosaic", 
@@ -646,8 +642,6 @@
         "name": "hash", 
         "comments": "hash"
       }
-
-
     ], 
     "factory_type": "Transaction", 
     "comments": "Send mosaics and messages between two accounts.", 
@@ -731,8 +725,6 @@
         "name": "type", 
         "comments": "transaction type"
       }, 
-
-
       {
         "type": "UnresolvedMosaic", 
         "name": "mosaic", 
@@ -748,7 +740,6 @@
         "name": "hash", 
         "comments": "hash"
       }
-
     ], 
     "factory_type": "EmbeddedTransaction", 
     "comments": "Embedded version of TransferTransaction.", 
