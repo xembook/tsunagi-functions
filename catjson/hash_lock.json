@@ -645,7 +645,7 @@
     ], 
     "factory_type": "Transaction", 
     "comments": "Send mosaics and messages between two accounts.", 
-    "name": "TransferTransaction", 
+    "name": "HashLockTransaction", 
     "initializers": [
       {
         "target_property_name": "version", 
@@ -743,7 +743,7 @@
     ], 
     "factory_type": "EmbeddedTransaction", 
     "comments": "Embedded version of TransferTransaction.", 
-    "name": "EmbeddedTransferTransaction", 
+    "name": "EmbeddedHashLockTransaction", 
     "initializers": [
       {
         "target_property_name": "version", 
