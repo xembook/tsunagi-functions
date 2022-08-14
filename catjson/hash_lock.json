@@ -645,7 +645,7 @@
         "type": "Hash256", 
         "name": "hash", 
         "comments": "hash"
-      }, 
+      }
 
 
     ], 
@@ -747,7 +747,7 @@
         "type": "Hash256", 
         "name": "hash", 
         "comments": "hash"
-      }, 
+      }
 
     ], 
     "factory_type": "EmbeddedTransaction", 
