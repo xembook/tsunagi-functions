@@ -50,6 +50,8 @@ async function prepareTransaction(tx,layout,network){
 	let preparedTx = Object.assign({}, tx);
 	preparedTx.network = network.network;
 	preparedTx.version = network.version;
+	
+/*	
 	if('recipient_address' in preparedTx){
 		preparedTx.recipient_address = buffer.Buffer(base32.decode(tx.recipient_address + "A").slice(0, -1)).toString("hex");
 	}
@@ -62,7 +64,7 @@ async function prepareTransaction(tx,layout,network){
 	if('source_address' in preparedTx){
 		preparedTx.source_address = buffer.Buffer(base32.decode(tx.source_address + "A").slice(0, -1)).toString("hex");
 	}
-
+*/
 	if('message' in preparedTx){
 		preparedTx.message = buffer.Buffer.from([0,...(new TextEncoder('utf-8')).encode(tx.message)]).toString("hex");
 	}
@@ -128,7 +130,7 @@ async function prepareTransaction(tx,layout,network){
 		}
 		preparedTx.transactions = txes;
 	}
-
+/*
 	if('address_additions' in tx){
 		let address_additions = [];
 		for(let address of tx.address_additions){
@@ -167,7 +169,7 @@ async function prepareTransaction(tx,layout,network){
 			preparedTx.restriction_deletions = restriction_deletions;
 		}		
 	}
-
+*/
 	
 	console.log(preparedTx);
 	return preparedTx;
@@ -524,7 +526,7 @@ const generateAddressId = address => {
 };
 
 //generateAliasId("xembook").toString(16);
-//generateDecodedAddress("TCO7HLVDQUX6V7C737BCM3VYJ3MKP6REE2EKROA")
+//generateAddressId("TCO7HLVDQUX6V7C737BCM3VYJ3MKP6REE2EKROA")
 
 
 
