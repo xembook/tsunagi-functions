@@ -50,6 +50,9 @@ async function prepareTransaction(tx,layout,network){
 	let preparedTx = Object.assign({}, tx);
 	preparedTx.network = network.network;
 	preparedTx.version = network.version;
+
+
+
 	
 /*	
 	if('recipient_address' in preparedTx){
@@ -117,6 +120,9 @@ async function prepareTransaction(tx,layout,network){
 			}
 			preparedTx[layer.size] = size;
 		}
+
+
+
 	}
 	if('transactions' in tx){
 		let txes = [];
@@ -194,6 +200,8 @@ async function parseTransaction(tx,layout,catjson,network){
 
 		if(layerDisposition === "const"){
 			continue;
+
+
 		}else if(layerType === "EmbeddedTransaction"){
 			
 			let txLayer = Object.assign({}, layer);
@@ -221,6 +229,14 @@ async function parseTransaction(tx,layout,catjson,network){
 			builtTx.push(txLayer);			  
 			continue;
 
+		}else if(layerType === "UnresolvedAddress"){
+			//アドレスに30個の0が続く場合はネームスペースとみなします。
+			if(tx[layer.name] !== undefined  && tx[layer.name].indexOf("000000000000000000000000000000")>=0){
+				let prefix = (catjson.find(cf=>cf.name==="NetworkType").values.find(vf=>vf.name===tx.network).value + 1).toString(16);
+				tx[layer.name] =  prefix + tx[layer.name];
+				
+			}
+			//TODO 配列型でUnresolvedAddressを指定する場合の処理を追記する必要あり。
 		}else if(catitem.type === "enum"){
 			if(catitem.name.indexOf('Flags') != -1){
 
@@ -514,10 +530,13 @@ function cosignTransaction(txhash,priKey){
 	return signature; 
 }
 
+
 //ネームスペースを16進数のIDにデコード
-const generateAliasId = fullyQualifiedName => {
-	const path = generateNamespacePath(fullyQualifiedName);
-	return path[path.length - 1];
+const generateAddressAliasId = fullyQualifiedName => {
+	
+	return buffer.Buffer.from(new BigInt64Array([generateMosaicAliasId(fullyQualifiedName)]).buffer).toString("hex") + "000000000000000000000000000000";
+
+
 };
 
 //アドレスを16進数のIDにデコード
