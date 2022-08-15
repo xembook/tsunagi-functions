@@ -512,7 +512,24 @@ function cosignTransaction(txhash,priKey){
 	return signature; 
 }
 
-charMapping = {
+//ネームスペースを16進数のIDにデコード
+const generateAliasId = fullyQualifiedName => {
+	const path = generateNamespacePath(fullyQualifiedName);
+	return path[path.length - 1];
+};
+
+//アドレスを16進数のIDにデコード
+const generateAddressId = address => {
+	return buffer.Buffer(base32.decode(address + "A").slice(0, -1)).toString("hex");
+};
+
+//generateAliasId("xembook").toString(16);
+//generateDecodedAddress("TCO7HLVDQUX6V7C737BCM3VYJ3MKP6REE2EKROA")
+
+
+
+//https://github.com/symbol/symbol/blob/dev/sdk/javascript/src/utils/charMapping.js
+const charMapping = {
 	createBuilder: () => {
 		const map = {};
 		return {
@@ -529,17 +546,35 @@ charMapping = {
 };
 
 //https://github.com/symbol/symbol/blob/dev/sdk/javascript/src/utils/base32.js
-DECODED_BLOCK_SIZE = 5;
-ENCODED_BLOCK_SIZE = 8;
+const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
+const DECODED_BLOCK_SIZE = 5;
+const ENCODED_BLOCK_SIZE = 8;
 
-Char_To_Decoded_Char_Map = (() => {
+// region encode
+
+const encodeBlock = (input, inputOffset, output, outputOffset) => {
+	output[outputOffset + 0] = ALPHABET[input[inputOffset + 0] >> 3];
+	output[outputOffset + 1] = ALPHABET[((input[inputOffset + 0] & 0x07) << 2) | (input[inputOffset + 1] >> 6)];
+	output[outputOffset + 2] = ALPHABET[(input[inputOffset + 1] & 0x3E) >> 1];
+	output[outputOffset + 3] = ALPHABET[((input[inputOffset + 1] & 0x01) << 4) | (input[inputOffset + 2] >> 4)];
+	output[outputOffset + 4] = ALPHABET[((input[inputOffset + 2] & 0x0F) << 1) | (input[inputOffset + 3] >> 7)];
+	output[outputOffset + 5] = ALPHABET[(input[inputOffset + 3] & 0x7F) >> 2];
+	output[outputOffset + 6] = ALPHABET[((input[inputOffset + 3] & 0x03) << 3) | (input[inputOffset + 4] >> 5)];
+	output[outputOffset + 7] = ALPHABET[input[inputOffset + 4] & 0x1F];
+};
+
+// endregion
+
+// region decode
+
+const Char_To_Decoded_Char_Map = (() => {
 	const builder = charMapping.createBuilder();
 	builder.addRange('A', 'Z', 0);
 	builder.addRange('2', '7', 26);
 	return builder.map;
 })();
 
-decodeChar = c => {
+const decodeChar = c => {
 	const decodedChar = Char_To_Decoded_Char_Map[c];
 	if (undefined !== decodedChar)
 		return decodedChar;
@@ -547,7 +582,7 @@ decodeChar = c => {
 	throw Error(`illegal base32 character ${c}`);
 };
 
-decodeBlock = (input, inputOffset, output, outputOffset) => {
+const decodeBlock = (input, inputOffset, output, outputOffset) => {
 	const bytes = new Uint8Array(ENCODED_BLOCK_SIZE);
 	for (let i = 0; i < ENCODED_BLOCK_SIZE; ++i)
 		bytes[i] = decodeChar(input[inputOffset + i]);
@@ -559,8 +594,30 @@ decodeBlock = (input, inputOffset, output, outputOffset) => {
 	output[outputOffset + 4] = ((bytes[6] & 0x07) << 5) | bytes[7];
 };
 
-base32 = {
+// endregion
 
+const base32 = {
+	/**
+	 * Base32 encodes a binary buffer.
+	 * @param {Uint8Array} data Binary data to encode.
+	 * @returns {string} Base32 encoded string corresponding to the input data.
+	 */
+	encode: data => {
+		if (0 !== data.length % DECODED_BLOCK_SIZE)
+			throw Error(`decoded size must be multiple of ${DECODED_BLOCK_SIZE}`);
+
+		const output = new Array(data.length / DECODED_BLOCK_SIZE * ENCODED_BLOCK_SIZE);
+		for (let i = 0; i < data.length / DECODED_BLOCK_SIZE; ++i)
+			encodeBlock(data, i * DECODED_BLOCK_SIZE, output, i * ENCODED_BLOCK_SIZE);
+
+		return output.join('');
+	},
+
+	/**
+	 * Base32 decodes a base32 encoded string.
+	 * @param {string} encoded Base32 encoded string to decode.
+	 * @returns {Uint8Array} Binary data corresponding to the input string.
+	 */
 	decode: encoded => {
 		if (0 !== encoded.length % ENCODED_BLOCK_SIZE)
 			throw Error(`encoded size must be multiple of ${ENCODED_BLOCK_SIZE}`);
@@ -572,3 +629,107 @@ base32 = {
 		return output;
 	}
 };
+
+//https://github.com/symbol/symbol/blob/dev/sdk/javascript/src/symbol/idGenerator.js
+const NAMESPACE_FLAG = 1n << 63n;
+
+const uint32ToBytes = value => new Uint8Array([
+	value & 0xFF,
+	(value >> 8) & 0xFF,
+	(value >> 16) & 0xFF,
+	(value >> 24) & 0xFF
+]);
+
+const digestToBigInt = digest => {
+	let result = 0n;
+	for (let i = 0; 8 > i; ++i)
+		result += (BigInt(digest[i]) << BigInt(8 * i));
+
+	return result;
+};
+
+/**
+ * Generates a mosaic id from an owner address and a nonce.
+ * @param {Address} ownerAddress Owner address.
+ * @param {number} nonce Nonce.
+ * @returns {BigInt} Computed mosaic id.
+ */
+const generateMosaicId = (ownerAddress, nonce) => {
+	const hasher = sha3_256.create();
+	hasher.update(uint32ToBytes(nonce));
+	hasher.update(ownerAddress.bytes);
+	const digest = hasher.digest();
+
+	let result = digestToBigInt(digest);
+	if (result & NAMESPACE_FLAG)
+		result -= NAMESPACE_FLAG;
+
+	return result;
+};
+
+/**
+ * Generates a namespace id from a name and an optional parent namespace id.
+ * @param {string} name Namespace name.
+ * @param {BigInt} parentNamespaceId Parent namespace id.
+ * @returns {BigInt} Computed namespace id.
+ */
+const generateNamespaceId = (name, parentNamespaceId = 0n) => {
+	const hasher = sha3_256.create();
+	hasher.update(uint32ToBytes(Number(parentNamespaceId & 0xFFFFFFFFn)));
+	hasher.update(uint32ToBytes(Number((parentNamespaceId >> 32n) & 0xFFFFFFFFn)));
+	hasher.update(name);
+	const digest = new Uint8Array(hasher.digest());
+
+	const result = digestToBigInt(digest);
+	return result | NAMESPACE_FLAG;
+};
+
+/**
+ * Returns true if a name is a valid namespace name.
+ * @param {string} name Namespace name to check.
+ * @returns {boolean} true if the specified name is valid.
+ */
+const isValidNamespaceName = name => {
+	const isAlphanum = character => ('a' <= character && 'z' >= character) || ('0' <= character && '9' >= character);
+	if (!name || !isAlphanum(name[0]))
+		return false;
+
+	for (let i = 0; i < name.length; ++i) {
+		const ch = name[i];
+		if (!isAlphanum(ch) && '_' !== ch && '-' !== ch)
+			return false;
+	}
+
+	return true;
+};
+
+/**
+ * Parses a fully qualified namespace name into a path.
+ * @param {string} fullyQualifiedName Fully qualified namespace name.
+ * @returns {array<BigInt>} Computed namespace path.
+ */
+const generateNamespacePath = fullyQualifiedName => {
+	const path = [];
+	let parentNamespaceId = 0n;
+	fullyQualifiedName.split('.').forEach(name => {
+		if (!isValidNamespaceName(name))
+			throw Error(`fully qualified name is invalid due to invalid part name (${fullyQualifiedName})`);
+
+		path.push(generateNamespaceId(name, parentNamespaceId));
+		parentNamespaceId = path[path.length - 1];
+	});
+
+	return path;
+};
+
+/**
+ * Generates a mosaic id from a fully qualified mosaic alias name.
+ * @param {string} fullyQualifiedName Fully qualified mosaic name.
+ * @returns {BigInt} Computed mosaic id.
+ */
+const generateMosaicAliasId = fullyQualifiedName => {
+	const path = generateNamespacePath(fullyQualifiedName);
+	return path[path.length - 1];
+};
+
+
