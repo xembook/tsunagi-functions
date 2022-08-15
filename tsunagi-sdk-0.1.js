@@ -51,27 +51,9 @@ async function prepareTransaction(tx,layout,network){
 	preparedTx.network = network.network;
 	preparedTx.version = network.version;
 
-
-
-	
-/*	
-	if('recipient_address' in preparedTx){
-		preparedTx.recipient_address = buffer.Buffer(base32.decode(tx.recipient_address + "A").slice(0, -1)).toString("hex");
-	}
-	if('address' in preparedTx){
-		preparedTx.address = buffer.Buffer(base32.decode(tx.address + "A").slice(0, -1)).toString("hex");
-	}
-	if('target_address' in preparedTx){
-		preparedTx.target_address = buffer.Buffer(base32.decode(tx.target_address + "A").slice(0, -1)).toString("hex");
-	}
-	if('source_address' in preparedTx){
-		preparedTx.source_address = buffer.Buffer(base32.decode(tx.source_address + "A").slice(0, -1)).toString("hex");
-	}
-*/
 	if('message' in preparedTx){
 		preparedTx.message = buffer.Buffer.from([0,...(new TextEncoder('utf-8')).encode(tx.message)]).toString("hex");
 	}
-	//TODO:recipient_addressがネームスペースだった場合の変換も必要
 
 	if('name' in preparedTx){
 		preparedTx.name = buffer.Buffer.from((new TextEncoder('utf-8')).encode(tx.name)).toString("hex");
@@ -100,12 +82,6 @@ async function prepareTransaction(tx,layout,network){
 			if("element_disposition" in layer && layer.name in preparedTx){
 				size = preparedTx[layer.name].length / (layer.element_disposition.size * 2);
 
-
-			//いらないかもしれない
-			//それ以外は、TX内の実データサイズ数を指定する。
-//			}else if('sort_key' in layer){//暫定 sort_key できるsize値はカウント数を入れると解釈
-//				size = preparedTx[layer.name].length;
-
 			}else if(layer.size.indexOf('_count') != -1){//暫定 sizeにcountという文字列が含まれている場合はサイズ値を指定する項目が含まれると考える
 				
 				if(layer.name in preparedTx){
@@ -120,9 +96,6 @@ async function prepareTransaction(tx,layout,network){
 			}
 			preparedTx[layer.size] = size;
 		}
-
-
-
 	}
 	if('transactions' in tx){
 		let txes = [];
@@ -136,46 +109,6 @@ async function prepareTransaction(tx,layout,network){
 		}
 		preparedTx.transactions = txes;
 	}
-/*
-	if('address_additions' in tx){
-		let address_additions = [];
-		for(let address of tx.address_additions){
-
-			address_additions.push(buffer.Buffer(base32.decode(address + "A").slice(0, -1)).toString("hex"));
-		}
-		preparedTx.address_additions = address_additions;
-	}
-
-	if('address_deletions' in tx){
-		let address_deletions = [];
-		for(let address of tx.address_deletions){
-
-			address_deletions.push(buffer.Buffer(base32.decode(address + "A").slice(0, -1)).toString("hex"));
-		}
-		preparedTx.address_deletions = address_deletions;
-	}
-
-
-	if(tx.type === "ACCOUNT_ADDRESS_RESTRICTION"){
-		if('restriction_additions' in tx){
-			let restriction_additions = [];
-			for(let address of tx.restriction_additions){
-
-				restriction_additions.push(buffer.Buffer(base32.decode(address + "A").slice(0, -1)).toString("hex"));
-			}
-			preparedTx.restriction_additions = restriction_additions;
-		}
-
-		if('restriction_deletions' in tx){
-			let restriction_deletions = [];
-			for(let address of tx.restriction_deletions){
-
-				restriction_deletions.push(buffer.Buffer(base32.decode(address + "A").slice(0, -1)).toString("hex"));
-			}
-			preparedTx.restriction_deletions = restriction_deletions;
-		}		
-	}
-*/
 	
 	console.log(preparedTx);
 	return preparedTx;
@@ -226,7 +159,7 @@ async function parseTransaction(tx,layout,catjson,network){
 				items.push(itemBuiltTx);
 			}
 			txLayer.layout = items;
-			builtTx.push(txLayer);			  
+			builtTx.push(txLayer);
 			continue;
 
 		}else if(layerType === "UnresolvedAddress"){
@@ -234,9 +167,7 @@ async function parseTransaction(tx,layout,catjson,network){
 			if(tx[layer.name] !== undefined  && tx[layer.name].indexOf("000000000000000000000000000000")>=0){
 				let prefix = (catjson.find(cf=>cf.name==="NetworkType").values.find(vf=>vf.name===tx.network).value + 1).toString(16);
 				tx[layer.name] =  prefix + tx[layer.name];
-				
 			}
-			//TODO 配列型でUnresolvedAddressを指定する場合の処理を追記する必要あり。
 		}else if(catitem.type === "enum"){
 			if(catitem.name.indexOf('Flags') != -1){
 
@@ -258,6 +189,7 @@ async function parseTransaction(tx,layout,catjson,network){
 				catitem.value = catitem.values.find(cvf=>cvf.name === tx[layer.name]).value;
 			}
 		}
+
 		//layerの配置
 		if(layerDisposition !== undefined && layerDisposition.indexOf('array') != -1){ // "array sized","array fill"
 
@@ -285,10 +217,17 @@ async function parseTransaction(tx,layout,catjson,network){
 
 				let subLayout = Object.assign({}, layer);
 				let items = [];
-//				for(let count = 0; count < size; count++){
 				for(let txItem of tx[layer.name]){
 					let txLayer = Object.assign({}, catjson.find(cj=>cj.name === layerType));
 					txLayer.value = txItem;
+					
+					if(layerType === "UnresolvedAddress"){
+						//アドレスに30個の0が続く場合はネームスペースとみなします。
+						if(txItem.indexOf("000000000000000000000000000000") >= 0){
+							let prefix = (catjson.find(cf=>cf.name==="NetworkType").values.find(vf=>vf.name===tx.network).value + 1).toString(16);
+							txLayer.value =  prefix + txLayer.value;
+						}
+					}			
 					items.push([txLayer]);
 				}
 				subLayout.layout = items;
@@ -310,7 +249,7 @@ async function parseTransaction(tx,layout,catjson,network){
 
 			//txに指定されている場合上書き(enumパラメータは上書きしない)
 			if(layer.name in tx && catitem.type !== "enum"){
-				txLayer.value = tx[layer.name]; 			   
+				txLayer.value = tx[layer.name];
 			}else{
 				/* そのままtxLayerを追加 */
 				console.log(layer.name);
