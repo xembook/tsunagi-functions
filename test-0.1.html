@@ -393,7 +393,6 @@ describe('tsunagi-sdk.0.1',() => {
 
 	}); // aggregate complete transaction
 
-
 	describe('aggregate bonded transaction', () => {
 
 		it('resolves hash lock', async () => {
@@ -572,7 +571,6 @@ describe('tsunagi-sdk.0.1',() => {
 
 	}); // aggregate bonded transaction
 
-
 	describe('transfer transaction', () => {
 
 		it('resolves 2 mosaic transfer', async () => {
@@ -658,25 +656,7 @@ describe('tsunagi-sdk.0.1',() => {
 				message:"",
 			}
 
-			let catjson = await loadCatjson(tx1,this.network);
-			let layout = await loadLayout(tx1,catjson,false); //isEmbedded false
-
-			let preparedTx = await prepareTransaction(tx1,layout,this.network); //TX事前準備
-			let parsedTx   = await parseTransaction(preparedTx,layout,catjson,this.network); //TX解析
-			let builtTx    = buildTransaction(parsedTx); //TX構築
-
-			let signature = signTransaction(builtTx,this.privateKey,this.network);
-			builtTx = updateTransaction(builtTx,"signature","value",signature);
-
-			//トランザクションハッシュ作成
-			let txHash = hashTransaction(tx1.signer_public_key,signature,builtTx,this.network);
-
-			let payload = hexlifyTransaction(builtTx);
-
-			console.log(payload);
-			console.log(txHash);
-
-			expect(payload)
+			expect(await this.getPayload(tx1))
 			.toEqual(
 				"c100000000000000c086746240315084735ebee633ff541056c5ba0f17c4d924a4b59c9531aa72243eaa7b76e5e0a9e32a15fb475be49a2f1ff1e380c763bcb2ab3ef5d83125b40d5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb0000000001985441a86100000000000000dd6d0000000000989df3aea3852feafc5fdfc2266eb84ed8a7fa242688a8b80100020000000000c2347909f9b7092a0100000000000000c8b6532ddb16843a640000000000000000"
 			);
@@ -698,22 +678,7 @@ describe('tsunagi-sdk.0.1',() => {
 				],
 			}
 
-			let catjson = await loadCatjson(tx1,this.network);
-			let layout = await loadLayout(tx1,catjson,false); //isEmbedded false
-
-			let preparedTx = await prepareTransaction(tx1,layout,this.network); //TX事前準備
-			let parsedTx   = await parseTransaction(preparedTx,layout,catjson,this.network); //TX解析
-			let builtTx    = buildTransaction(parsedTx); //TX構築
-
-			let signature = signTransaction(builtTx,this.privateKey,this.network);
-			builtTx = updateTransaction(builtTx,"signature","value",signature);
-
-			//トランザクションハッシュ作成
-			let txHash = hashTransaction(tx1.signer_public_key,signature,builtTx,this.network);
-
-			let payload = hexlifyTransaction(builtTx);
-			console.log(payload)
-			expect(payload)
+			expect(await this.getPayload(tx1))
 			.toEqual(
 				"c000000000000000fee4646022be8647455bc876a8f7f303233d297a5755cd1eb41999ae6c8cca2f0225e2b93c4aa793c68657c230578dc3af26c3ef32acae96ea1ae10c438278055f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb0000000001985441a86100000000000000dd6d0000000000989df3aea3852feafc5fdfc2266eb84ed8a7fa242688a8b80000020000000000c2347909f9b7092a0100000000000000c8b6532ddb16843a6400000000000000"
 			);
@@ -732,24 +697,7 @@ describe('tsunagi-sdk.0.1',() => {
 				message:"Hello Tsunagi(Catjson) SDK!",
 			}
 
-			let catjson = await loadCatjson(tx1,this.network);
-			let layout = await loadLayout(tx1,catjson,false); //isEmbedded false
-
-			let preparedTx = await prepareTransaction(tx1,layout,this.network); //TX事前準備
-			let parsedTx   = await parseTransaction(preparedTx,layout,catjson,this.network); //TX解析
-			let builtTx    = buildTransaction(parsedTx); //TX構築
-
-			let signature = signTransaction(builtTx,this.privateKey,this.network);
-			builtTx = updateTransaction(builtTx,"signature","value",signature);
-
-			//トランザクションハッシュ作成
-			let txHash = hashTransaction(tx1.signer_public_key,signature,builtTx,this.network);
-
-			let payload = hexlifyTransaction(builtTx);
-			console.log(payload);
-			console.log(txHash);
-
-			expect(payload)
+			expect(await this.getPayload(tx1))
 			.toEqual(
 				"bc00000000000000cd5b93e94f053a07a5a132d7f59708b6818d88840c150d6f6dc38a2ca2408fff0e7e3ee39599d1242a0e4a5869dec8a2847b05fb698fa39db2bf1c3bf46ce2005f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb0000000001985441a86100000000000000dd6d0000000000989df3aea3852feafc5fdfc2266eb84ed8a7fa242688a8b81c000000000000000048656c6c6f205473756e616769284361746a736f6e292053444b21"
 			);
@@ -768,24 +716,7 @@ describe('tsunagi-sdk.0.1',() => {
 				mosaics:[],
 			}
 
-			let catjson = await loadCatjson(tx1,this.network);
-			let layout = await loadLayout(tx1,catjson,false); //isEmbedded false
-
-			let preparedTx = await prepareTransaction(tx1,layout,this.network); //TX事前準備
-			let parsedTx   = await parseTransaction(preparedTx,layout,catjson,this.network); //TX解析
-			let builtTx    = buildTransaction(parsedTx); //TX構築
-
-			let signature = signTransaction(builtTx,this.privateKey,this.network);
-			builtTx = updateTransaction(builtTx,"signature","value",signature);
-
-			//トランザクションハッシュ作成
-			let txHash = hashTransaction(tx1.signer_public_key,signature,builtTx,this.network);
-
-			let payload = hexlifyTransaction(builtTx);
-			console.log(payload);
-			console.log(txHash);
-
-			expect(payload)
+			expect(await this.getPayload(tx1))
 			.toEqual(
 				"a0000000000000002c271a17d41832515a9ad0e995a524a4859a001436a990370c4b53eaa63677b4d69edde0831171a10defc157ea01f1d5528a562c423e38c725fc5b37af35ee055f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb0000000001985441a86100000000000000dd6d0000000000989df3aea3852feafc5fdfc2266eb84ed8a7fa242688a8b80000000000000000"
 			);
@@ -804,23 +735,7 @@ describe('tsunagi-sdk.0.1',() => {
 				message:""
 			}
 
-			let catjson = await loadCatjson(tx1,this.network);
-			let layout = await loadLayout(tx1,catjson,false); //isEmbedded false
-
-			let preparedTx = await prepareTransaction(tx1,layout,this.network); //TX事前準備
-			let parsedTx   = await parseTransaction(preparedTx,layout,catjson,this.network); //TX解析
-			let builtTx    = buildTransaction(parsedTx); //TX構築
-
-			let signature = signTransaction(builtTx,this.privateKey,this.network);
-			builtTx = updateTransaction(builtTx,"signature","value",signature);
-
-			//トランザクションハッシュ作成
-			let txHash = hashTransaction(tx1.signer_public_key,signature,builtTx,this.network);
-
-			let payload = hexlifyTransaction(builtTx);
-			console.log(payload);
-			console.log(txHash);
-			expect(payload)
+			expect(await this.getPayload(tx1))
 			.toEqual(
 				"a100000000000000786d46993afe584dd4e1fd2904d8eb0ea67e27ca3c7ef81fd208a6f27c1450807234093f9be03bbda0b02d96a69bd2766595ac4ab59fbc5119d247181b5596065f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb0000000001985441a86100000000000000dd6d0000000000989df3aea3852feafc5fdfc2266eb84ed8a7fa242688a8b8010000000000000000"
 			);
@@ -1670,9 +1585,61 @@ describe('tsunagi-sdk.0.1',() => {
 			);
 
 		});
-	
-	
-	
+
+
+		it('resolves secret lock with aggregate', async () => {
+
+			let tx1 = {
+				type:'SECRET_LOCK',
+				signer_public_key:"5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
+				recipient_address:generateAddressId("TBUXMJAYYW3EH3XHBZXSBVGVKXKZS4EH26TINKI"),
+				secret:"0debb816347a49c5121b07c1ec2e9f7443eef6451d260cc646f32520237fa68c",
+				mosaic:[{mosaic_id: 0x3A8416DB2D53B6C8n, amount: 10000000n}],
+				duration: 480n,
+				hash_algorithm:"SHA3_256"
+			}
+
+			let aggTx = {
+				type:'AGGREGATE_COMPLETE',
+				signer_public_key:"5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
+				fee:1000000n,
+				deadline:this.deadline,
+				transactions:[tx1],
+			}
+
+			expect(await this.getPayload(aggTx))
+			.toEqual(
+				"3001000000000000185b61702bbf8298e2c117f0b262f644f59269ceaf7dbce9851543a62a01f726a08a3409da1d6ecd9ed30d6aa56289c3cfeba7377e66dbc36751493cdc28920e5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb000000000198414140420f000000000000dd6d0000000000944643651ac8d446192f0dcbe1c370610552ddd0be94a9ba77ce7063e693cb29880000000000000081000000000000005f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb00000000019852419869762418c5b643eee70e6f20d4d555d5997087d7a686a90debb816347a49c5121b07c1ec2e9f7443eef6451d260cc646f32520237fa68cc8b6532ddb16843a8096980000000000e0010000000000000000000000000000"
+			);
+		});
+
+
+		it('resolves secret proof with aggregate', async () => {
+
+			let tx1 = {
+				type:'SECRET_PROOF',
+				signer_public_key:"5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
+				recipient_address:generateAddressId("TBUXMJAYYW3EH3XHBZXSBVGVKXKZS4EH26TINKI"),
+				secret:"0debb816347a49c5121b07c1ec2e9f7443eef6451d260cc646f32520237fa68c",
+				hash_algorithm:"SHA3_256",
+				proof:"d91a8258175a6213225bd4ec240f1971c8742dca"
+			}
+
+
+			let aggTx = {
+				type:'AGGREGATE_COMPLETE',
+				signer_public_key:"5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
+				fee:1000000n,
+				deadline:this.deadline,
+				transactions:[tx1],
+			}
+
+			expect(await this.getPayload(aggTx))
+			.toEqual(
+				"2801000000000000b26c51b84114750e4005ab6002c5d6646f6de025bdf1fadbe429953044be5e61c1ecf6adaaf4cba51f0748a1cb17f82c9adf091eb7c05f4f5b5b226ead64f9065f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb000000000198414140420f000000000000dd6d0000000000bd584e6eb97627993d2157bc630a4c95ec783e201678539ce671e3d36367372c80000000000000007f000000000000005f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb00000000019852429869762418c5b643eee70e6f20d4d555d5997087d7a686a90debb816347a49c5121b07c1ec2e9f7443eef6451d260cc646f32520237fa68c140000d91a8258175a6213225bd4ec240f1971c8742dca00"
+			);
+		});
+
 	});
 
 });//symbol-sdk
