@@ -1640,6 +1640,48 @@ describe('tsunagi-sdk.0.1',() => {
 			);
 		});
 
+		it('resolves secret lock by namespace', async () => {
+
+			let tx1 = {
+				type:'SECRET_LOCK',
+				signer_public_key:"5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
+				fee:25000n,
+				deadline:this.deadline,
+				recipient_address:generateAddressAliasId("xembook"),
+				secret:"760b4407e82970bc86f5a3063b445c0cfec35c6720cbf1f8b5ca643d51bb5a00",
+				mosaic:[{mosaic_id: generateMosaicAliasId("symbol.xym"), amount: 10000000n}],
+				duration: 480n,
+				hash_algorithm:"SHA3_256"
+
+			}
+
+			expect(await this.getPayload(tx1))
+			.toEqual(
+				"d100000000000000936ffff90a654017eb900af35ea4f5a687b38b111190e2c1f9992e542c5be0bb25f22c14440b67442149de0cf5c7ea0e9642f19badcbc8b6aec8bda707c4a2075f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb0000000001985241a86100000000000000dd6d00000000009985738c26eb1534a4000000000000000000000000000000760b4407e82970bc86f5a3063b445c0cfec35c6720cbf1f8b5ca643d51bb5a00eeaff441ba994be78096980000000000e00100000000000000"
+			);
+
+		});
+
+		it('resolves secret proof by namespace', async () => {
+
+			let tx1 = {
+				type:'SECRET_PROOF',
+				signer_public_key:"5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
+				fee:25000n,
+				deadline:this.deadline,
+				recipient_address:generateAddressAliasId("xembook"),
+				secret:"760b4407e82970bc86f5a3063b445c0cfec35c6720cbf1f8b5ca643d51bb5a00",
+				hash_algorithm:"SHA3_256",
+				proof:"336b7e682903606a2fef4c91d83c4af7da3e7486"
+			}
+
+			expect(await this.getPayload(tx1))
+			.toEqual(
+				"cf0000000000000043d7a84b4c20435ffdd50644a2a0eaaed667326975d8af93015013899f5b4741f92d66ea7b2d23ad57fb5cd8d71344ffe34dd9654dbc58d9a447aaab70814d0b5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb0000000001985242a86100000000000000dd6d00000000009985738c26eb1534a4000000000000000000000000000000760b4407e82970bc86f5a3063b445c0cfec35c6720cbf1f8b5ca643d51bb5a00140000336b7e682903606a2fef4c91d83c4af7da3e7486"
+			);
+
+		});
+
 	});
 
 });//symbol-sdk
