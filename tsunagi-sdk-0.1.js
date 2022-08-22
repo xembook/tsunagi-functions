@@ -116,7 +116,7 @@ async function prepareTransaction(tx,layout,network){
 
 async function parseTransaction(tx,layout,catjson,network){
 
-	let builtTx = []; //return
+	let parsedTx = []; //return
 	for(let layer of layout){
 
 		let layerType = layer.type;
@@ -142,11 +142,11 @@ async function parseTransaction(tx,layout,catjson,network){
 			for(let eTx of tx.transactions){ //小文字のeはembeddedの略
 				let eCatjson = await loadCatjson(eTx,network);//catjsonの更新
 				let eLayout = await loadLayout(eTx,eCatjson,true); //isEmbedded:true
-				let eBuiltTx = await parseTransaction(eTx,eLayout,eCatjson); //再帰
-				items.push(eBuiltTx);
+				let eParsedTx = await parseTransaction(eTx,eLayout,eCatjson); //再帰
+				items.push(eParsedTx);
 			}
 			txLayer.layout = items;
-			builtTx.push(txLayer);
+			parsedTx.push(txLayer);
 			continue;
 
 		}else if("layout" in catitem && layer.name in tx){ // else:byte,struct
@@ -155,11 +155,11 @@ async function parseTransaction(tx,layout,catjson,network){
 			let items = [];
 			for(let item of tx[layer.name]){
 
-				let itemBuiltTx = await parseTransaction(item,catjson.find(cj=>cj.name === layerType).layout,catjson,network); //再帰
-				items.push(itemBuiltTx);
+				let itemParsedTx = await parseTransaction(item,catjson.find(cj=>cj.name === layerType).layout,catjson,network); //再帰
+				items.push(itemParsedTx);
 			}
 			txLayer.layout = items;
-			builtTx.push(txLayer);
+			parsedTx.push(txLayer);
 			continue;
 
 		}else if(layerType === "UnresolvedAddress"){
@@ -210,7 +210,7 @@ async function parseTransaction(tx,layout,catjson,network){
 						items.push([txLayer]);
 					}
 					subLayout.layout = items;
-					builtTx.push(subLayout);
+					parsedTx.push(subLayout);
 
 				}else{console.error("not yet");}
 			}else if(layer.name in tx){
@@ -231,7 +231,7 @@ async function parseTransaction(tx,layout,catjson,network){
 					items.push([txLayer]);
 				}
 				subLayout.layout = items;
-				builtTx.push(subLayout);
+				parsedTx.push(subLayout);
 
 
 			}// else{console.log("not yet");}
@@ -254,17 +254,17 @@ async function parseTransaction(tx,layout,catjson,network){
 				/* そのままtxLayerを追加 */
 				console.log(layer.name);
 			}
-			builtTx.push(txLayer);
+			parsedTx.push(txLayer);
 		}
 	}
 
-	let layerSize = builtTx.find(lf=>lf.name === "size");
+	let layerSize = parsedTx.find(lf=>lf.name === "size");
 	if(layerSize !== undefined && "size" in layerSize){
-		layerSize.value = countSize(builtTx);
+		layerSize.value = countSize(parsedTx);
 	}
 
-	console.log(builtTx);
-	return builtTx;
+	console.log(parsedTx);
+	return parsedTx;
 }
 
 
