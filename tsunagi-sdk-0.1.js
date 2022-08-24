@@ -64,7 +64,7 @@ async function prepareTransaction(tx,layout,network){
 	}
 
 	if("mosaics" in tx){
-		tx.mosaics = tx.mosaics.sort(function(a,b){
+		preparedTx.mosaics = tx.mosaics.sort(function(a,b){
 			if(a.mosaic_id < b.mosaic_id) return -1;
 			if(a.mosaic_id > b.mosaic_id) return 1;
 			return 0;
