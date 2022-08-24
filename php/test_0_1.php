@@ -56,6 +56,8 @@ class test_0_1 extends \PHPUnit\Framework\TestCase {
 		$catjson = load_catjson($tx1,$network);
 		$layout = load_layout($tx1,$catjson,false); //isEmbedded false
 		var_dump($layout);
+		$prepared_tx = prepare_transaction($tx1,$layout,$network); //TX事前準備
+
 
         $meal = 100;
         $tax = 10;
