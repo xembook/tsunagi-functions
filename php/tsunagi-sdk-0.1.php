@@ -99,58 +99,23 @@ function prepare_transaction($tx,$layout,$network) {
 				//その他のsize値はPayloadの長さを入れるため現時点では不明
 			}
 			$prepared_tx[$layer["size"]] = $size;
-
-
 		}
 	}
 
-/*
-	//レイアウト層ごとの処理
-	for(let layer of layout){
+	if(isset($tx["transactions"])){
+		$txes = [];
+		foreach($tx["transactions"] as $e_tx){
 
-		//size定義の調査
-		if(layer.size !== undefined && isNaN(layer.size)){
-
-			let size = 0;
-			//element_dispositionが定義されている場合は、TX内の実データをそのサイズ数で分割する。
-			if("element_disposition" in layer && layer.name in preparedTx){
-				size = preparedTx[layer.name].length / (layer.element_disposition.size * 2);
-
-			}else if(layer.size.indexOf('_count') != -1){//暫定 sizeにcountという文字列が含まれている場合はサイズ値を指定する項目が含まれると考える
-				
-				if(layer.name in preparedTx){
-					size = preparedTx[layer.name].length;
-				}else{
-					size = 0;
-				}
-
-
-			}else{
-				//その他のsize値はPayloadの長さを入れるため現時点では不明
-			}
-			preparedTx[layer.size] = size;
-		}
-	}
-	if('transactions' in tx){
-		let txes = [];
-		for(let eTx of tx.transactions){
-
-			let eCatjson = await loadCatjson(eTx,network);
-			let eLayout = await loadLayout(eTx,eCatjson,true);
+			$e_catjson = $load_catjson($e_tx,$network);
+			$e_layout = $load_layout($e_tx,$e_catjson,true);
 			//再帰処理
-			ePreparedTx = await prepareTransaction(eTx,eLayout,network);
-			txes.push(ePreparedTx);
+			$e_prepared_tx = $prepare_transaction($e_tx,$e_layout,$network);
+			array_push($txes,$e_prepared_tx);
 		}
-		preparedTx.transactions = txes;
+		$prepared_tx["transactions"] = $txes;
 	}
-	
-	console.log(preparedTx);
-	return preparedTx;
-*/
-
-
-
-    return 0;
+	print_r($prepared_tx);
+	return $prepared_tx;
 }
 
 
