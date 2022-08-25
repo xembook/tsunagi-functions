@@ -142,7 +142,7 @@ async function parseTransaction(tx,layout,catjson,network){
 			for(let eTx of tx.transactions){ //小文字のeはembeddedの略
 				let eCatjson = await loadCatjson(eTx,network);//catjsonの更新
 				let eLayout = await loadLayout(eTx,eCatjson,true); //isEmbedded:true
-				let eParsedTx = await parseTransaction(eTx,eLayout,eCatjson); //再帰
+				let eParsedTx = await parseTransaction(eTx,eLayout,eCatjson,network); //再帰
 				items.push(eParsedTx);
 			}
 			txLayer.layout = items;
