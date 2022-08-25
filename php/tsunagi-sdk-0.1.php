@@ -379,7 +379,11 @@ function count_size($item,$alignment) {
 			//console.log(item.name + ":" + item.size);
 		}else{print_r("no size:" + $item["name"]);}
 	}
+
+print_r("------------------------------");
+
 	print_r($total_size);
+print_r("------------------------------");
 	return $total_size;
 
 
