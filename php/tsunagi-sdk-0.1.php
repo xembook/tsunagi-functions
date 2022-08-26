@@ -77,7 +77,7 @@ function prepare_transaction($tx,$layout,$network) {
 	}
 
 	foreach($layout as $layer){
-		print_r($layer);
+//		print_r($layer);
 		if(isset($layer["size"]) && !is_numeric($layer["size"])){
 			$size = 0;
 
@@ -105,7 +105,7 @@ function prepare_transaction($tx,$layout,$network) {
 		$txes = [];
 		foreach($tx["transactions"] as $e_tx){
 
-			print_r($e_tx);
+//			print_r($e_tx);
 
 			$e_catjson = load_catjson($e_tx,$network);
 			$e_layout = load_layout($e_tx,$e_catjson,true);
@@ -115,7 +115,7 @@ function prepare_transaction($tx,$layout,$network) {
 		}
 		$prepared_tx["transactions"] = $txes;
 	}
-	print_r($prepared_tx);
+//	print_r($prepared_tx);
 	return $prepared_tx;
 }
 
@@ -123,39 +123,60 @@ function prepare_transaction($tx,$layout,$network) {
 
 function parse_transaction($tx,$layout,$catjson,$network) {
 
-print_r("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
 	$parsed_tx = []; //return
 	foreach($layout as $layer){
 
+		print_r("================================================".PHP_EOL);
+		print_r($layer["name"]. ":" .$layer["type"] .PHP_EOL);
+
 		$layer_type = $layer["type"];
-		$layer_disposition;
+		$layer_disposition = "";
 		if(isset($layer["disposition"])){
 			$layer_disposition = $layer["disposition"];
 		}
-		print_r($layer_type . "\n");
-		$catitem = array_filter($catjson, function($cj) use($layer_type){
+		$filter_item = array_filter($catjson, function($cj) use($layer_type){
 			return $cj["name"] === $layer_type;
 		});
-//		$catitem = array_values($filter_item)[0];
+		$catitem = array_values($filter_item);
+
+		print_r("catitem");
+		print_r($catitem);
 
 		if(isset($layer["condition"])){
 			if($layer["condition_operation"] === "equals"){
 				if($layer["condition_value"] !== $tx[$layer["condition"]]){
+
+					print_r("condition->continue" .PHP_EOL);
 					continue;
 				}
 			}
 		}
 
+
+		if($layer["name"] === "mosaics"){
+
+			print_r("■■■■■■■■■■■■■■■■■■");
+			print_r($tx[$layer["name"]]);
+//			print_r($catitem["layout"]);
+		}
+
+
 		if($layer_disposition === "const"){
+			print_r("const->continue" .PHP_EOL);
+			print_r($layer);
 			continue;
 
 		}else if($layer_type === "EmbeddedTransaction"){
+			print_r('$layer_type === "EmbeddedTransaction"'.PHP_EOL);
+
 			
 			$tx_layer = $layer;
 			$items = [];
 			foreach($tx["transactions"] as $e_tx){ //小文字のeはembeddedの略
 				$e_catjson = load_catjson($e_tx,$network);//catjsonの更新
 				$e_layout = load_layout($e_tx,$e_catjson,true); //isEmbedded:true
+				print_r("transactions->recursive" .PHP_EOL);
+
 				$e_parsed_tx = parse_transaction($e_tx,$e_layout,$e_catjson,$network); //再帰
 				array_push($items,$e_parsed_tx);
 			}
@@ -163,7 +184,8 @@ print_r("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
 			array_push($parsed_tx,$tx_layer);
 			continue;
 
-		}else if(isset($catitem["layout"]) && isset($tx[$layer["name"]]) ){ // else:byte,struct
+		}else if(isset($catitem["layout"]) && isset($tx[$layer["name"]]) ){
+			print_r('isset($tx[$layer["name"]]'.PHP_EOL);
 
 			$tx_layer = $layer;
 			$items = [];
@@ -172,7 +194,10 @@ print_r("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
 				$filter_layer = array_filter($catjson, function($cj) use($layer_type){
 					return $cj["name"] === $layer_type;
 				});
+				print_r('filter_layer'.PHP_EOL);
+				print_r($filter_layer);
 
+				print_r("layout->recursive" .PHP_EOL);
 				$item_parsed_tx = parse_transaction($item,$filter_layer["layout"],$catjson,$network); //再帰
 				array_push($items,$item_parsed_tx);
 			}
@@ -234,6 +259,7 @@ print_r("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
 
 		//サブルーチンにまとめる構想
 		//$parsed_tx = build_layer($layer_disposition,$tx,$layer);
+		print_r("build layer" .PHP_EOL);
 
 		//layerの配置
 		if(isset($layer_disposition) && strpos($layer_disposition,'array') !== false ){
@@ -328,31 +354,43 @@ print_r("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
 				$tx_layer["value"] = $tx[$layer["name"]];
 			}else{
 				// そのままtxLayerを追加 
-				print_r($layer["name"]);
+//				print_r($layer["name"]);
 			}
 			array_push($parsed_tx,$tx_layer);
 		}
+
+		print_r("------------------------------------------------".PHP_EOL);
+
 	}
+
+	print_r("size_count START".PHP_EOL);
+
 
 	$layer_size = array_filter($parsed_tx, function($pf){
 		return $pf["name"] === "size";
-	});
+	} );
 
-
-	if(isset($layer_size) && isset($layer_size["size"])){
-		$layer_size["value"] = count_size($parsed_tx);
+	print_r($layer_size);
+	if(isset($layer_size) && isset($layer_size[0]["size"])){
+		$layer_size[0]["value"] = count_size($parsed_tx,0);
 	}
+	print_r($layer_size);
 
-	print_r($parsed_tx);
+	print_r("size_count END".PHP_EOL);
+//	print_r($parsed_tx);
 	return $parsed_tx;
 }
 
 function count_size($item,$alignment) {
 
+	print_r("===================".PHP_EOL);
 	$total_size = 0;
 	
 	//レイアウトサイズの取得
 	if(isset($item)  && isset($item["layout"])){
+
+		print_r("11111".PHP_EOL);
+
 		foreach( $item["layout"] as $layer){
 			$item_alignment;
 			if(isset($item["alignment"])){
@@ -363,32 +401,57 @@ function count_size($item,$alignment) {
 			$total_size += count_size($layer,$item_alignment); //再帰
 		}
 	//レイアウトを構成するレイヤーサイズの取得
-	}else if(is_array($item)){
+//	}else if(is_array($item)){
+	}else if(array_values($item) === $item){
+
+
+		print_r("2222".PHP_EOL);
+
 		$layout_size = 0;
-		foreach($item as $layout){
-			$layout_size += count_size($layout,$alignment);
+		foreach($item as $key => $value){
+
+			print_r("recursive".PHP_EOL);
+			print_r($item[$key]);
+
+//			$layout_size += count_size($value,$alignment);
+//			count_size2($item[$key],$alignment);
+			$layout_size += count_size($item[$key],$alignment);
+
 		}		 
 		if(isset($alignment)  && $alignment > 0){
 			$layout_size = floor(($layout_size  + $alignment - 1) / $alignment ) * $alignment;
 		}
 		$total_size += $layout_size;
+		print_r("sum:");
+		print_r($total_size);
+
+
 	
 	}else{
+		print_r("3333".PHP_EOL);
+//		print_r($item.PHP_EOL);
+
 		if(isset($item["size"])){
+			print_r("in size".PHP_EOL);
+
+
 			$total_size += $item["size"];
 			//console.log(item.name + ":" + item.size);
-		}else{print_r("no size:" + $item["name"]);}
+		}else{
+//			print_r("else size");
+
+//			print_r("no size:" + $item["name"]);
+		}
 	}
 
-print_r("------------------------------");
 
-	print_r($total_size);
-print_r("------------------------------");
+	print_r("total_size:" . $total_size .PHP_EOL);
 	return $total_size;
 
 
 //    return 0;
 }
+
 
 function build_transaction() {
     return 0;
