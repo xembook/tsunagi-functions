@@ -16,7 +16,7 @@ class test_0_1 extends \PHPUnit\Framework\TestCase {
         $result = restaurant_check($meal, $tax, $tip);
         $this->assertEquals(130, $result);
     }
-*/
+
     public function testWithTaxAndTip2() {
 
 		$network = [
@@ -66,7 +66,8 @@ class test_0_1 extends \PHPUnit\Framework\TestCase {
         $this->assertEquals(130, $result);
 
     }
-/*
+*/
+
     public function testWithTaxAndTip3() {
 
 		$network = [
@@ -125,7 +126,7 @@ class test_0_1 extends \PHPUnit\Framework\TestCase {
         $this->assertEquals(130, $result);
 
     }
-*/
+
 
 }
 ?>
