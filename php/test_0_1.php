@@ -118,6 +118,8 @@ class test_0_1 extends \PHPUnit\Framework\TestCase {
 //		var_dump($layout);
 		$prepared_tx = prepare_transaction($agg_tx,$layout,$network); //TX事前準備
 		$parsed_tx = parse_transaction($prepared_tx,$layout,$catjson,$network);
+		$built_tx    = build_transaction($parsed_tx); //TX構築
+
 
         $meal = 100;
         $tax = 10;

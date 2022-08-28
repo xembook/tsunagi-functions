@@ -412,9 +412,160 @@ function count_size($item,$alignment) {
 }
 
 
-function build_transaction() {
-    return 0;
+function build_transaction($parsed_tx) {
+    
+
+
+
+
+	$built_tx = $parsed_tx;
+	
+
+
+
+	$layer_payload_size = array_filter($built_tx, function($bf){
+		return $bf["name"] === "payload_size";
+	});
+
+
+	if(count($layer_payload_size) > 0 ){
+
+		$filter_transactions =  array_filter($built_tx, function($bf){
+			return $bf["name"] === "transactions";
+		});
+		$transactions = array_values($filter_transactions)[0];
+
+
+		$built_tx[array_keys($layer_payload_size)[0]]["value"] = count_size($transactions,$transactions["alignment"]);
+
+
+	}
+
+
+	//Merkle Hash Builder
+	$layer_transactions_hash =  array_filter($built_tx, function($bf){
+		return $bf["name"] === "transactions_hash";
+	});
+
+	if(count($layer_transactions_hash) > 0){
+
+		$hashes = [];
+		$filter_transactions =  array_filter($built_tx, function($bf){
+			return $bf["name"] === "transactions";
+		});
+
+		
+		$transactions = array_values($filter_transactions)[0];
+		foreach($transactions["layout"] as $e_tx){
+
+			print_r("■■■■■■■■■");
+			print_r($e_tx);
+
+			$digest = hash('sha3-256',
+				sodium_hex2bin(
+					hexlify_transaction($e_tx,0)
+				)
+			);
+			array_push($hashes,$digest);
+		}
+
+
+		$num_remaining_hashes = count($hashes);
+		while (1 < $num_remaining_hashes) {
+			$i = 0;
+			while ($i < $num_remaining_hashes) {
+				$hasher = hash_init('sha3_256');
+				hash_update($hasher,hashes[$i]);
+
+				if ($i + 1 < $num_remaining_hashes) {
+					hash_update($hasher,hashes[$i+1]);
+				} else {
+					// if there is an odd number of hashes, duplicate the last one
+					hash_update($hasher,hashes[$i]);
+					$num_remaining_hashes += 1;
+				}
+				$hashes[intval(i / 2)] = hash_final($hasher,false);
+				$i += 2;
+			}
+			$num_remaining_hashes = intval($num_remaining_hashes / 2);
+		}
+		$built_tx[array_keys($layer_transactions_hash)[0]]["value"] = $hashes[0];
+	}
+
+
+	return $built_tx;
 }
+
+function hexlify_transaction($item,$alignment) {
+
+
+	$hex = "";
+//	if(isset($item) && isset($item["layout"])){
+	if(isset($item["layout"])){
+		foreach($item["layout"] as $layer){
+			$item_alignment;
+			if(isset($item["alignment"])){
+				$item_alignment = $item["alignment"];
+			}else{
+				$item_alignment = 0;
+			}
+			$hex .= hexlify_transaction($layer,$item_alignment); //再帰
+		}
+//	}else if(Array.isArray(item)){
+	}else if(array_values($item) === $item){
+
+		$sub_layout_hex = "";
+		foreach($item as $sub_layout){
+			$sub_layout_hex .= hexlify_transaction($sub_layout,$alignment);//再帰
+			$hex_length = strlen($sub_layout_hex);
+		}		 
+		if(isset($alignment) && $alignment > 0){
+			$aligned_size = floor(( strlen($sub_layout_hex) + ($alignment * 2) - 2)/ ($alignment * 2) ) * ($alignment * 2);
+			$sub_layout_hex = $sub_layout_hex . str_repeat ("0",$aligned_size - $hex_length);
+		}
+		$hex .= $sub_layout_hex;
+	}else{
+		$size = $item["size"];
+		if(!isset($item["value"])){
+			if($size >= 24){
+				$item["value"] = str_repeat("00",$size);
+			}else{
+				$item["value"] = 0;
+			}
+		}
+
+			print_r("===========================================".PHP_EOL);
+			print_r($size);
+print_r(PHP_EOL);
+print_r($item["value"].PHP_EOL);
+
+
+		if($size==1){
+			if($item["name"] === "element_disposition"){
+				$hex = $item["value"];
+			}else{
+//				$hex = buffer.Buffer.from(new Uint8Array([item.value]).buffer).toString("hex");
+				$hex = bin2hex(pack('C', $item["value"]));
+			}	 
+		}else if($size==2){
+//			hex = buffer.Buffer.from(new Uint16Array([item.value]).buffer).toString("hex");
+			$hex = bin2hex(pack('v', $item["value"]));
+		}else if($size==4){
+//			hex = buffer.Buffer.from(new Uint32Array([item.value]).buffer).toString("hex");
+			$hex = bin2hex(pack('V', $item["value"]));
+		}else if($size==8){
+//			hex = buffer.Buffer.from(new BigInt64Array([item.value]).buffer).toString("hex");
+			$hex = bin2hex(pack('P', $item["value"]));
+		}else if($size==24 || $size==32 || $size==64){
+			$hex = $item["value"];
+		}else{
+			print_r("unknown size order");
+		}
+	}
+	print_r($hex.PHP_EOL);
+	return $hex;
+}
+
 
 function get_verifiable_data() {
     return 0;
@@ -431,9 +582,7 @@ function update_transaction() {
 
 
 
-function hexlify_transaction() {
-    return 0;
-}
+
 
 function sign_transaction() {
     return 0;
