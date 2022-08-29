@@ -566,9 +566,40 @@ print_r($item["value"].PHP_EOL);
 	return $hex;
 }
 
+function sign_transaction($built_tx,$private_key,$network) {
 
-function get_verifiable_data() {
-    return 0;
+
+	$sign_secret = sodium_hex2bin($private_key);
+//	$sign_public = sodium_crypto_sign_publickey_from_secretkey($sign_secret);
+
+	$verifiable_data = get_verifiable_data($built_tx);
+	$payload = $network["generationHash"] . hexlify_transaction($verifiable_data,0);
+
+	$signature = sodium_bin2hex(sodium_crypto_sign_detached(sodium_hex2bin($payload), $sign_secret));
+
+
+	print_r($signature);
+	return $signature; 
+}
+
+
+
+function get_verifiable_data($built_tx) {
+
+//	$type_layer = $built_tx.find(bf=>bf.name==="type");
+	$filter_layer = array_filter($built_tx,function($fb){
+		return $fb["name"] === "type";
+	});
+	$type_layer = array_values($filter_layer)[0];
+
+	print_r($type_layer);
+
+	if(in_array($type_layer["value"], [16705,16961])){
+		return array_slice($built_tx,5,11);
+	}else{
+		return array_slice($built_tx,5);
+
+	}
 }
 
 
@@ -584,9 +615,6 @@ function update_transaction() {
 
 
 
-function sign_transaction() {
-    return 0;
-}
 
 function cosign_transaction() {
     return 0;

@@ -119,6 +119,10 @@ class test_0_1 extends \PHPUnit\Framework\TestCase {
 		$prepared_tx = prepare_transaction($agg_tx,$layout,$network); //TX事前準備
 		$parsed_tx = parse_transaction($prepared_tx,$layout,$catjson,$network);
 		$built_tx    = build_transaction($parsed_tx); //TX構築
+		$private_key = "94ee0f4d7fe388ac4b04a6a6ae2ba969617879b83616e4d25710d688a89d80c75f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb";
+		$signature = sign_transaction($built_tx,$private_key,$network);
+
+
 
 
         $meal = 100;
