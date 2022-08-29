@@ -6,8 +6,6 @@ function restaurant_check($meal, $tax, $tip) {
     return $total_amount;
 }
 
-
-
 function load_catjson($tx,$network) {
 
 	$jsonFile;
@@ -50,7 +48,6 @@ function load_layout($tx,$catjson,$is_embedded) {
 function to_camel_case($str) {
 
 	return str_replace(' ', '', ucwords(str_replace('_', ' ', $str)));
-
 }
 
 function prepare_transaction($tx,$layout,$network) {
@@ -102,8 +99,6 @@ function prepare_transaction($tx,$layout,$network) {
 	if(isset($tx["transactions"])){
 		$txes = [];
 		foreach($tx["transactions"] as $e_tx){
-
-//			print_r($e_tx);
 
 			$e_catjson = load_catjson($e_tx,$network);
 			$e_layout = load_layout($e_tx,$e_catjson,true);
@@ -173,7 +168,6 @@ function parse_transaction($tx,$layout,$catjson,$network) {
 					return $cj["name"] === $layer_type;
 				});
 				$filter_layer = array_values($filter_value)[0];
-
 
 				$item_parsed_tx = parse_transaction($item,$filter_layer["layout"],$catjson,$network); //再帰
 				array_push($items,$item_parsed_tx);
@@ -261,7 +255,6 @@ function parse_transaction($tx,$layout,$catjson,$network) {
 						$tx_layer["size"] = $layer["element_disposition"]["size"];
 						$tx_layer["value"] = substr($tx[$layer["name"]],$count * 2, 2);
 						$tx_layer["type"] = $layer_type;
-//						array_push($items,[$tx_layer]);
 						array_push($items,$tx_layer);
 					}
 					$sub_layout["layout"] = $items;
@@ -327,7 +320,6 @@ function parse_transaction($tx,$layout,$catjson,$network) {
 			}
 
 			//txに指定されている場合上書き(enumパラメータは上書きしない)
-//			if(isset($layer["name"]) && isset($catitem["type"]) && $catitem["type"] !== "enum"){
 			if(isset($layer["name"]) && isset($catitem["type"]) && isset($tx[$layer["name"]]) && $catitem["type"] !== "enum"){
 
 				$tx_layer["value"] = $tx[$layer["name"]];
@@ -337,22 +329,15 @@ function parse_transaction($tx,$layout,$catjson,$network) {
 			}
 			array_push($parsed_tx,$tx_layer);
 		}
-
-
 	}
 
 	$layer_size = array_filter($parsed_tx, function($pf){
 		return $pf["name"] === "size";
 	} );
 
-	
-
 	if(isset($layer_size) && isset($layer_size[0]["size"])){
-//		$layer_size[0]["value"] = count_size($parsed_tx,0);
-//		print_r(array_keys($layer_size)[0]);
 		$parsed_tx[array_keys($layer_size)[0]]["value"] = count_size($parsed_tx,0);
 	}
-	print_r($parsed_tx);
 	return $parsed_tx;
 }
 
@@ -374,14 +359,11 @@ function count_size($item,$alignment) {
 			$total_size += count_size($layer,$item_alignment); //再帰
 		}
 	//レイアウトを構成するレイヤーサイズの取得
-//	}else if(is_array($item)){
 	}else if(array_values($item) === $item){
 
 		$layout_size = 0;
 		foreach($item as $key => $value){
 
-//			$layout_size += count_size($value,$alignment);
-//			count_size2($item[$key],$alignment);
 			$layout_size += count_size($item[$key],$alignment);
 
 		}		 
@@ -395,38 +377,22 @@ function count_size($item,$alignment) {
 		if(isset($item["size"])){
 
 			$total_size += $item["size"];
-			//console.log(item.name + ":" + item.size);
 		}else{
-//			print_r("else size");
-
-//			print_r("no size:" + $item["name"]);
+			print_r("no size:" + $item["name"]);
 		}
 	}
 
-
-	print_r("total_size:" . $total_size .PHP_EOL);
 	return $total_size;
-
-
-//    return 0;
 }
 
 
 function build_transaction($parsed_tx) {
-    
-
-
-
 
 	$built_tx = $parsed_tx;
-	
-
-
 
 	$layer_payload_size = array_filter($built_tx, function($bf){
 		return $bf["name"] === "payload_size";
 	});
-
 
 	if(count($layer_payload_size) > 0 ){
 
@@ -434,13 +400,8 @@ function build_transaction($parsed_tx) {
 			return $bf["name"] === "transactions";
 		});
 		$transactions = array_values($filter_transactions)[0];
-
-
 		$built_tx[array_keys($layer_payload_size)[0]]["value"] = count_size($transactions,$transactions["alignment"]);
-
-
 	}
-
 
 	//Merkle Hash Builder
 	$layer_transactions_hash =  array_filter($built_tx, function($bf){
@@ -454,12 +415,8 @@ function build_transaction($parsed_tx) {
 			return $bf["name"] === "transactions";
 		});
 
-		
 		$transactions = array_values($filter_transactions)[0];
 		foreach($transactions["layout"] as $e_tx){
-
-			print_r("■■■■■■■■■");
-			print_r($e_tx);
 
 			$digest = hash('sha3-256',
 				sodium_hex2bin(
@@ -469,22 +426,21 @@ function build_transaction($parsed_tx) {
 			array_push($hashes,$digest);
 		}
 
-
 		$num_remaining_hashes = count($hashes);
 		while (1 < $num_remaining_hashes) {
 			$i = 0;
 			while ($i < $num_remaining_hashes) {
-				$hasher = hash_init('sha3_256');
-				hash_update($hasher,hashes[$i]);
+				$hasher = hash_init('sha3-256');
+				hash_update($hasher,$hashes[$i]);
 
 				if ($i + 1 < $num_remaining_hashes) {
-					hash_update($hasher,hashes[$i+1]);
+					hash_update($hasher,$hashes[$i+1]);
 				} else {
 					// if there is an odd number of hashes, duplicate the last one
-					hash_update($hasher,hashes[$i]);
+					hash_update($hasher,$hashes[$i]);
 					$num_remaining_hashes += 1;
 				}
-				$hashes[intval(i / 2)] = hash_final($hasher,false);
+				$hashes[intval($i / 2)] = hash_final($hasher,false);
 				$i += 2;
 			}
 			$num_remaining_hashes = intval($num_remaining_hashes / 2);
@@ -492,12 +448,10 @@ function build_transaction($parsed_tx) {
 		$built_tx[array_keys($layer_transactions_hash)[0]]["value"] = $hashes[0];
 	}
 
-
 	return $built_tx;
 }
 
 function hexlify_transaction($item,$alignment) {
-
 
 	$hex = "";
 //	if(isset($item) && isset($item["layout"])){
@@ -511,7 +465,6 @@ function hexlify_transaction($item,$alignment) {
 			}
 			$hex .= hexlify_transaction($layer,$item_alignment); //再帰
 		}
-//	}else if(Array.isArray(item)){
 	}else if(array_values($item) === $item){
 
 		$sub_layout_hex = "";
@@ -534,27 +487,17 @@ function hexlify_transaction($item,$alignment) {
 			}
 		}
 
-			print_r("===========================================".PHP_EOL);
-			print_r($size);
-print_r(PHP_EOL);
-print_r($item["value"].PHP_EOL);
-
-
 		if($size==1){
 			if($item["name"] === "element_disposition"){
 				$hex = $item["value"];
 			}else{
-//				$hex = buffer.Buffer.from(new Uint8Array([item.value]).buffer).toString("hex");
 				$hex = bin2hex(pack('C', $item["value"]));
 			}	 
 		}else if($size==2){
-//			hex = buffer.Buffer.from(new Uint16Array([item.value]).buffer).toString("hex");
 			$hex = bin2hex(pack('v', $item["value"]));
 		}else if($size==4){
-//			hex = buffer.Buffer.from(new Uint32Array([item.value]).buffer).toString("hex");
 			$hex = bin2hex(pack('V', $item["value"]));
 		}else if($size==8){
-//			hex = buffer.Buffer.from(new BigInt64Array([item.value]).buffer).toString("hex");
 			$hex = bin2hex(pack('P', $item["value"]));
 		}else if($size==24 || $size==32 || $size==64){
 			$hex = $item["value"];
@@ -562,62 +505,63 @@ print_r($item["value"].PHP_EOL);
 			print_r("unknown size order");
 		}
 	}
-	print_r($hex.PHP_EOL);
 	return $hex;
 }
 
 function sign_transaction($built_tx,$private_key,$network) {
 
-
 	$sign_secret = sodium_hex2bin($private_key);
-//	$sign_public = sodium_crypto_sign_publickey_from_secretkey($sign_secret);
-
 	$verifiable_data = get_verifiable_data($built_tx);
 	$payload = $network["generationHash"] . hexlify_transaction($verifiable_data,0);
-
 	$signature = sodium_bin2hex(sodium_crypto_sign_detached(sodium_hex2bin($payload), $sign_secret));
 
-
-	print_r($signature);
 	return $signature; 
 }
 
-
-
 function get_verifiable_data($built_tx) {
 
-//	$type_layer = $built_tx.find(bf=>bf.name==="type");
 	$filter_layer = array_filter($built_tx,function($fb){
 		return $fb["name"] === "type";
 	});
 	$type_layer = array_values($filter_layer)[0];
 
-	print_r($type_layer);
-
 	if(in_array($type_layer["value"], [16705,16961])){
 		return array_slice($built_tx,5,11);
 	}else{
 		return array_slice($built_tx,5);
-
 	}
 }
 
+function hash_transaction($signer,$signature,$built_tx,$network) {
 
-function hash_transaction() {
-    return 0;
+	$hasher = hash_init('sha3-256');
+	hash_update($hasher,$signature);
+	hash_update($hasher,$signer);
+	hash_update($hasher,$network["generationHash"]);
+	hash_update($hasher,hexlify_transaction(get_verifiable_data($built_tx),0));
+
+	$tx_hash = hash_final($hasher,false);
+
+	return $tx_hash;
 }
 
-function update_transaction() {
-    return 0;
+function update_transaction($built_tx,$name,$type,$value) {
+
+	$layer = array_filter($built_tx,function($fb) use($name){
+		return $fb["name"] === $name;
+	});
+
+	$built_tx[array_keys($layer)[0]][$type] = $value;
+	return $built_tx;
 }
 
 
+function cosign_transaction($tx_hash,$private_key) {
 
+	$sign_secret = sodium_hex2bin($private_key);
+	$signature = sodium_bin2hex(sodium_crypto_sign_detached(sodium_hex2bin($tx_hash), $sign_secret));
 
-
-
-function cosign_transaction() {
-    return 0;
+	return $signature; 
 }
 
 function generate_address_alias_id() {
@@ -627,8 +571,6 @@ function generate_address_alias_id() {
 function generate_address_id() {
     return 0;
 }
-
-
 
 ?>
 
