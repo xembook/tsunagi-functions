@@ -6,6 +6,7 @@ function restaurant_check($meal, $tax, $tip) {
     return $total_amount;
 }
 
+//catjson取得
 function load_catjson($tx,$network) {
 
 	$jsonFile;
@@ -21,6 +22,7 @@ function load_catjson($tx,$network) {
 	return $catjson;
 }
 
+//トランザクションレイアウト取得
 function load_layout($tx,$catjson,$is_embedded) {
 
 	$prefix;
@@ -45,11 +47,13 @@ function load_layout($tx,$catjson,$is_embedded) {
 	return array_values($factory)[0]["layout"];
 }
 
+//キャメルケースへ変換
 function to_camel_case($str) {
 
 	return str_replace(' ', '', ucwords(str_replace('_', ' ', $str)));
 }
 
+//トランザクション構築準備
 function prepare_transaction($tx,$layout,$network) {
 
 	$prepared_tx = $tx;
@@ -112,6 +116,7 @@ function prepare_transaction($tx,$layout,$network) {
 	return $prepared_tx;
 }
 
+//トランザクション解析
 function parse_transaction($tx,$layout,$catjson,$network) {
 
 	$parsed_tx = []; //return
@@ -198,7 +203,6 @@ function parse_transaction($tx,$layout,$catjson,$network) {
 				$value = 0;
 				foreach($catitem["values"] as $item_layer){
 
-
 					if(strpos($tx[$layer["name"]],$item_layer["name"]) !== false){
 
 						$value += $item_layer["value"];
@@ -229,10 +233,6 @@ function parse_transaction($tx,$layout,$catjson,$network) {
 				$catitem["value"] = array_values($filter_value)[0]["value"];
 			}
 		}
-
-		//サブルーチンにまとめる構想
-		//$parsed_tx = build_layer($layer_disposition,$tx,$layer);
-		//print_r("build layer" .PHP_EOL);
 
 		//layerの配置
 		if(isset($layer_disposition) && strpos($layer_disposition,'array') !== false ){
@@ -289,7 +289,6 @@ function parse_transaction($tx,$layout,$catjson,$network) {
 							$tx_layer["value"] =  $prefix + $tx_layer["value"];
 						}
 					}			
-//					array_push($items,[$tx_layer]);
 					array_push($items,$tx_layer);
 				}
 				$sub_layout["layout"] = $items;
@@ -304,7 +303,6 @@ function parse_transaction($tx,$layout,$catjson,$network) {
 				//catjsonのデータを使う
 				if(isset($catitem["signedness"])){
 					$tx_layer["signedness"]	= $catitem["signedness"];
-
 				}
 				if(isset($catitem["size"])){
 					$tx_layer["size"]  = $catitem["size"];
@@ -320,13 +318,11 @@ function parse_transaction($tx,$layout,$catjson,$network) {
 			}
 
 			//txに指定されている場合上書き(enumパラメータは上書きしない)
-//			if(isset($layer["name"]) && isset($catitem["type"]) && isset($tx[$layer["name"]]) && $catitem["type"] !== "enum"){
 			if(isset($layer["name"]) && isset($tx[$layer["name"]]) ){
 				if(isset($catitem["type"]) && $catitem["type"] === "enum"){
 
 				}else{
 					$tx_layer["value"] = $tx[$layer["name"]];
-
 				}
 			}else{
 
@@ -340,13 +336,12 @@ function parse_transaction($tx,$layout,$catjson,$network) {
 	} );
 
 	if(isset($layer_size) && isset($layer_size[0]["size"])){
-//		print_r($parsed_tx);
 		$parsed_tx[array_keys($layer_size)[0]]["value"] = count_size($parsed_tx,0);
 	}
-//		print_r($parsed_tx);
 	return $parsed_tx;
 }
 
+//サイズ計算
 function count_size($item,$alignment) {
 
 	$total_size = 0;
@@ -369,8 +364,7 @@ function count_size($item,$alignment) {
 		foreach($item as $key => $value){
 
 			$layout_size += count_size($item[$key],$alignment);//再帰
-
-		}		 
+		}
 
 		if(isset($alignment)  && $alignment > 0){
 			$layout_size = floor(($layout_size  + $alignment - 1) / $alignment ) * $alignment;
@@ -381,7 +375,6 @@ function count_size($item,$alignment) {
 
 		if(isset($item["size"])){
 
-
 			$total_size += $item["size"];
 		}else{
 			print_r("no size:" + $item["name"]);
@@ -391,7 +384,7 @@ function count_size($item,$alignment) {
 	return $total_size;
 }
 
-
+//トランザクション構築
 function build_transaction($parsed_tx) {
 
 	$built_tx = $parsed_tx;
@@ -406,7 +399,6 @@ function build_transaction($parsed_tx) {
 			return $bf["name"] === "transactions";
 		});
 		$transactions = array_values($filter_transactions)[0];
-//		$built_tx[array_keys($layer_payload_size)[0]]["value"] = count_size($transactions,$transactions["alignment"]);
 		$built_tx[array_keys($layer_payload_size)[0]]["value"] = count_size($transactions,0);
 	}
 
@@ -414,8 +406,6 @@ function build_transaction($parsed_tx) {
 	$layer_transactions_hash =  array_filter($built_tx, function($bf){
 		return $bf["name"] === "transactions_hash";
 	});
-
-//	print_r($layer_transactions_hash);
 
 	if(count($layer_transactions_hash) > 0){
 
@@ -425,8 +415,6 @@ function build_transaction($parsed_tx) {
 		});
 
 		$transactions = array_values($filter_transactions)[0];
-
-//		print_r($transactions);
 		foreach($transactions["layout"] as $e_tx){
 
 
@@ -439,9 +427,7 @@ function build_transaction($parsed_tx) {
 		}
 
 		$num_remaining_hashes = count($hashes);
-
 		while (1 < $num_remaining_hashes) {
-
 
 			$i = 0;
 			while ($i < $num_remaining_hashes) {
@@ -463,17 +449,14 @@ function build_transaction($parsed_tx) {
 		}
 		$built_tx[array_keys($layer_transactions_hash)[0]]["value"] = $hashes[0];
 	}
-//			print_r("■■■■■■".PHP_EOL);
-//			print_r($hashes[0]);
-//			print_r(PHP_EOL . "■■■■■■".PHP_EOL);
 
 	return $built_tx;
 }
 
+//トランザクションを16進数でシリアライズ
 function hexlify_transaction($item,$alignment) {
 
 	$hex = "";
-//	if(isset($item) && isset($item["layout"])){
 	if(isset($item["layout"])){
 		foreach($item["layout"] as $layer){
 			$item_alignment;
@@ -527,14 +510,11 @@ function hexlify_transaction($item,$alignment) {
 	return $hex;
 }
 
+//トランザクション署名
 function sign_transaction($built_tx,$private_key,$network) {
 
 	$sign_secret = sodium_hex2bin($private_key);
 	$verifiable_data = get_verifiable_data($built_tx);
-
-//			print_r("■■■■■■".PHP_EOL);
-//			print_r(hexlify_transaction($verifiable_data,0));
-//			print_r(PHP_EOL . "■■■■■■".PHP_EOL);
 
 	$payload = $network["generationHash"] . hexlify_transaction($verifiable_data,0);
 	$signature = sodium_bin2hex(sodium_crypto_sign_detached(sodium_hex2bin($payload), $sign_secret));
@@ -542,6 +522,7 @@ function sign_transaction($built_tx,$private_key,$network) {
 	return $signature; 
 }
 
+//検証データ取得
 function get_verifiable_data($built_tx) {
 
 	$filter_layer = array_filter($built_tx,function($fb){
@@ -549,17 +530,14 @@ function get_verifiable_data($built_tx) {
 	});
 	$type_layer = array_values($filter_layer)[0];
 
-//	print_r(in_array($type_layer["value"], [16705,16961]));
 	if(in_array($type_layer["value"], [16705,16961])){
-
-
-//		print_r(array_slice($built_tx,5,6));
 		return array_slice($built_tx,5,6);
 	}else{
 		return array_slice($built_tx,5);
 	}
 }
 
+//トランザクションのハッシュ値計算
 function hash_transaction($signer,$signature,$built_tx,$network) {
 
 	$hasher = hash_init('sha3-256');
@@ -573,6 +551,7 @@ function hash_transaction($signer,$signature,$built_tx,$network) {
 	return $tx_hash;
 }
 
+//トランザクション更新
 function update_transaction($built_tx,$name,$type,$value) {
 
 	$layer = array_filter($built_tx,function($fb) use($name){
@@ -580,24 +559,11 @@ function update_transaction($built_tx,$name,$type,$value) {
 	});
 
 	$built_tx[array_keys($layer)[0]][$type] = $value;
-
-///////////////////////////////////後付け
-//
-//	//サイズ修正
-//	$layout_size = array_filter($built_tx, function($pf){
-//		return $pf["name"] === "size";
-//	} );
-//
-//
-//	if(isset($layout_size) && isset($layout_size[0]["size"])){
-//		$built_tx[array_keys($layout_size)[0]]["value"] = count_size($built_tx,0);
-//	}
-////////////////////////////////////
-
 	return $built_tx;
 }
 
 
+//連署
 function cosign_transaction($tx_hash,$private_key) {
 
 	$sign_secret = sodium_hex2bin($private_key);
@@ -606,13 +572,32 @@ function cosign_transaction($tx_hash,$private_key) {
 	return $signature; 
 }
 
-function generate_address_alias_id() {
-    return 0;
-}
 
 function generate_address_id() {
     return 0;
 }
+
+function generate_namespace_id(){
+
+	return 0;
+}
+
+function generate_mosaic_id(){
+	return 0;
+}
+
+function convert_address_alias_id(){
+	return 0;
+}
+
+function uint32_to_bytes(){
+
+}
+
+function  digest_to_bigint(){
+
+};
+
 
 ?>
 

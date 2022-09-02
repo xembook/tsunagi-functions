@@ -6,6 +6,50 @@ use Base32\Base32;
 
 class test_0_1 extends \PHPUnit\Framework\TestCase {
 
+	public function testTransfer(){
+		$this->markTestIncomplete();
+	}
+
+	public function testAggregateComplete(){
+		$this->markTestIncomplete();
+	}
+
+	public function testAggregateBoded(){
+		$this->markTestIncomplete();
+	}
+
+	public function testMosaic(){
+		$this->markTestIncomplete();
+	}
+
+	public function testNamespace(){
+		$this->markTestIncomplete();
+	}
+
+	public function testMetadata(){
+		$this->markTestIncomplete();
+	}
+
+	public function testMultisig(){
+		$this->markTestIncomplete();
+	}
+
+	public function testAccountRestriction(){
+		$this->markTestIncomplete();
+	}
+
+	public function testGlobalMosaicRestriction(){
+		$this->markTestIncomplete();
+	}
+
+	public function testMosaicSupplyRevocation(){
+		$this->markTestIncomplete();
+	}
+
+	public function testSecret(){
+		$this->markTestIncomplete();
+	}
+
 
 /*
 
@@ -144,14 +188,6 @@ class test_0_1 extends \PHPUnit\Framework\TestCase {
 		$built_tx = update_transaction($built_tx,"signature","value",$signature);
 
 		$tx_hash = hash_transaction($agg_tx["signer_public_key"],$signature,$built_tx,$network);
-
-
-
-
-
-
-
-
 
 		$payload = hexlify_transaction($built_tx,0);
 		print_r($payload);
