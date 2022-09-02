@@ -603,10 +603,11 @@ describe('tsunagi-sdk.0.1',() => {
 				signer_public_key:"5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
 				fee:25000n,
 				deadline:this.deadline,
-				recipient_address:generateAddressAliasId("xembook"),
+				recipient_address:convertAddressAliasId(generateNamespaceId("xembook")),
+
 				mosaics:[
-					{mosaic_id: generateMosaicAliasId("symbol.xym"), amount: 100n},
-					{mosaic_id: generateMosaicAliasId("xembook.tomato"), amount: 1n},
+					{mosaic_id: generateNamespaceId("xym",generateNamespaceId("symbol")), amount: 100n},
+					{mosaic_id: generateNamespaceId("tomato",generateNamespaceId("xembook")), amount: 1n},
 				],
 				message:"Hello Tsunagi(Catjson) SDK!",
 			}
@@ -857,7 +858,7 @@ describe('tsunagi-sdk.0.1',() => {
 				duration: 86400n,
 				registration_type: "ROOT",
 				name:"xembook",
-				id:generateMosaicAliasId("xembook") //0xA43415EB268C7385n, //BigInt((new sym.NamespaceId("xembook")).id.toString())
+				id:generateNamespaceId("xembook") //0xA43415EB268C7385n, //BigInt((new sym.NamespaceId("xembook")).id.toString())
 			}
 
 			expect(await this.getPayload(tx1))
@@ -873,10 +874,10 @@ describe('tsunagi-sdk.0.1',() => {
 				signer_public_key:"5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
 				fee:25000n,
 				deadline:this.deadline,
-				parent_id: generateMosaicAliasId("xembook"), //0xA43415EB268C7385n, //BigInt((new sym.NamespaceId("xembook")).id.toString())
+				parent_id: generateNamespaceId("xembook"), //0xA43415EB268C7385n, //BigInt((new sym.NamespaceId("xembook")).id.toString())
 				registration_type: "CHILD",
 				name:"tomato",
-				id:generateMosaicAliasId("xembook.tomato") //0xFA547FD28C836431n, //BigInt((new sym.NamespaceId("xembook.tomato")).id.toString())
+				id:generateNamespaceId("tomato",generateNamespaceId("xembook")) //0xFA547FD28C836431n, //BigInt((new sym.NamespaceId("xembook.tomato")).id.toString())
 			}
 
 			expect(await this.getPayload(tx1))
@@ -892,7 +893,7 @@ describe('tsunagi-sdk.0.1',() => {
 				signer_public_key:"5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
 				fee:25000n,
 				deadline:this.deadline,
-				namespace_id:generateMosaicAliasId("xembook"), //0xA43415EB268C7385n, //BigInt((new sym.NamespaceId("xembook")).id.toString()),
+				namespace_id:generateNamespaceId("xembook"), //0xA43415EB268C7385n, //BigInt((new sym.NamespaceId("xembook")).id.toString()),
 				address:generateAddressId("TBUXMJAYYW3EH3XHBZXSBVGVKXKZS4EH26TINKI"),
 				alias_action:"LINK"
 			}
@@ -910,7 +911,7 @@ describe('tsunagi-sdk.0.1',() => {
 				signer_public_key:"5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
 				fee:25000n,
 				deadline:this.deadline,
-				namespace_id:generateMosaicAliasId("xembook.tomato"), //0xFA547FD28C836431n, //BigInt((new sym.NamespaceId("xembook.tomato")).id.toString())
+				namespace_id:generateNamespaceId("tomato",generateNamespaceId("xembook")), //0xFA547FD28C836431n, //BigInt((new sym.NamespaceId("xembook.tomato")).id.toString())
 				mosaic_id:0x4DAFFBE5505DE676n,
 				alias_action:"LINK"
 			}
@@ -1066,7 +1067,7 @@ describe('tsunagi-sdk.0.1',() => {
 				fee:1000000n,
 				deadline:this.deadline,
 				target_address:generateAddressId("TBUXMJAYYW3EH3XHBZXSBVGVKXKZS4EH26TINKI"),
-				target_namespace_id:0xA43415EB268C7385n, //xembook
+				target_namespace_id:generateNamespaceId("xembook"), //xembook
 				scoped_metadata_key:generateKey("key_namespace"), //0x8B6A8A370873D0D9n, //"key_namespace"
 				value_size_delta:27,
 				value:"Hello Tsunagi(Catjson) SDK!",
@@ -1113,7 +1114,7 @@ describe('tsunagi-sdk.0.1',() => {
 				fee:1000000n,
 				deadline:this.deadline,
 				target_address:generateAddressId("TBUXMJAYYW3EH3XHBZXSBVGVKXKZS4EH26TINKI"),
-				target_namespace_id:0xA43415EB268C7385n, //xembook
+				target_namespace_id:generateNamespaceId("xembook"), //xembook
 				scoped_metadata_key:generateKey("key_namespace"), //0x8B6A8A370873D0D9n, //"key_namespace"
 				value_size_delta:27,
 				value:"Hello Tsunagi(Catjson) SDK!",
@@ -1366,7 +1367,12 @@ describe('tsunagi-sdk.0.1',() => {
 				fee:25000n,
 				deadline:this.deadline,
 				restriction_flags:"ADDRESS BLOCK OUTGOING",
-				restriction_additions:[generateAddressAliasId("xembook.bob"),generateAddressId("TDZBCWHAVA62R4JFZJJUXQWXLIRTUK5KZHFR5AQ")],
+				restriction_additions:[
+
+					convertAddressAliasId(
+						generateNamespaceId("bob",generateNamespaceId("xembook"))
+					),
+					generateAddressId("TDZBCWHAVA62R4JFZJJUXQWXLIRTUK5KZHFR5AQ")],
 				restriction_deletions:[]
 			}
 
@@ -1647,9 +1653,9 @@ describe('tsunagi-sdk.0.1',() => {
 				signer_public_key:"5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
 				fee:25000n,
 				deadline:this.deadline,
-				recipient_address:generateAddressAliasId("xembook"),
+				recipient_address:convertAddressAliasId(generateNamespaceId("xembook")),
 				secret:"760b4407e82970bc86f5a3063b445c0cfec35c6720cbf1f8b5ca643d51bb5a00",
-				mosaic:[{mosaic_id: generateMosaicAliasId("symbol.xym"), amount: 10000000n}],
+				mosaic:[{mosaic_id: generateNamespaceId("xym",generateNamespaceId("symbol")), amount: 10000000n}],
 				duration: 480n,
 				hash_algorithm:"SHA3_256"
 
@@ -1669,7 +1675,7 @@ describe('tsunagi-sdk.0.1',() => {
 				signer_public_key:"5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
 				fee:25000n,
 				deadline:this.deadline,
-				recipient_address:generateAddressAliasId("xembook"),
+				recipient_address:convertAddressAliasId(generateNamespaceId("xembook")),
 				secret:"760b4407e82970bc86f5a3063b445c0cfec35c6720cbf1f8b5ca643d51bb5a00",
 				hash_algorithm:"SHA3_256",
 				proof:"336b7e682903606a2fef4c91d83c4af7da3e7486"

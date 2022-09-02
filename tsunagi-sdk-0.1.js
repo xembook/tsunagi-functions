@@ -470,11 +470,12 @@ function cosignTransaction(txhash,priKey){
 }
 
 
-//ネームスペースを16進数のIDにデコード
-const generateAddressAliasId = fullyQualifiedName => {
+//ネームスペースを16進数のIDにコンバート
+const convertAddressAliasId = namespaceId => {
 	
-	return buffer.Buffer.from(new BigInt64Array([generateMosaicAliasId(fullyQualifiedName)]).buffer).toString("hex") + "000000000000000000000000000000";
+	return buffer.Buffer.from(new BigInt64Array([namespaceId]).buffer).toString("hex") + "000000000000000000000000000000";
 };
+
 
 //BASE32アドレスを16進数のIDにデコード
 const generateAddressId = address => {
@@ -488,11 +489,6 @@ const generateKey = (name) => {
 	const result = digestToBigInt(digest);
 	return result | NAMESPACE_FLAG;
 };
-
-//generateAliasId("xembook").toString(16);
-//generateAddressId("TCO7HLVDQUX6V7C737BCM3VYJ3MKP6REE2EKROA")
-
-
 
 //https://github.com/symbol/symbol/blob/dev/sdk/javascript/src/utils/charMapping.js
 const charMapping = {
