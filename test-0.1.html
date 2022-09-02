@@ -748,15 +748,15 @@ describe('tsunagi-sdk.0.1',() => {
 
 		//Failure_Mosaic_Modification_Disallowed
 		it('resolves mosaic definition', async () => {
-
+			let nonce = 1700836761;
 			let tx1 = {
 				type:'MOSAIC_DEFINITION',
 				signer_public_key:"5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
 				fee:25000n,
 				deadline:this.deadline,
 				duration: 0n,
-				id:0x4DAFFBE5505DE676n,
-				nonce: 1700836761,
+				id:generateMosaicId(generateAddressId("TBUXMJAYYW3EH3XHBZXSBVGVKXKZS4EH26TINKI"),nonce), //0x4DAFFBE5505DE676n,
+				nonce: nonce,
 				flags: 'TRANSFERABLE RESTRICTABLE',
 				divisibility: 2
 			}
@@ -768,13 +768,13 @@ describe('tsunagi-sdk.0.1',() => {
 		});
 
 		it('resolves mosaic supply change', async () => {
-
+			let nonce = 1700836761;
 			let tx1 = {
 				type: 'MOSAIC_SUPPLY_CHANGE',
 				signer_public_key:"5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
 				fee:25000n,
 				deadline:this.deadline,
-				mosaic_id:0x4DAFFBE5505DE676n,
+				mosaic_id:generateMosaicId(generateAddressId("TBUXMJAYYW3EH3XHBZXSBVGVKXKZS4EH26TINKI"),nonce), //0x4DAFFBE5505DE676n,
 				delta: 1000n * 100n, // assuming divisibility = 2
 				action: 'INCREASE'
 			}
@@ -790,12 +790,12 @@ describe('tsunagi-sdk.0.1',() => {
 			//buffer.Buffer.from(nonce.nonce).readUInt32LE();
 			//buffer.Buffer.from(new Uint32Array([699275411]).buffer).toString("hex");
 			//sym.MosaicId.createFromNonce(nonce, alice.address).toHex();
-
+			let nonce = 1700836761;
 			let tx1 = {
 				type:'MOSAIC_DEFINITION',
 				signer_public_key:"5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
 				duration: 0n,
-				id:0x4DAFFBE5505DE676n,
+				id:generateMosaicId(generateAddressId("TBUXMJAYYW3EH3XHBZXSBVGVKXKZS4EH26TINKI"),nonce), //0x4DAFFBE5505DE676n,
 				nonce: 1700836761,
 				flags: 'TRANSFERABLE RESTRICTABLE',
 				divisibility: 2
@@ -804,7 +804,7 @@ describe('tsunagi-sdk.0.1',() => {
 			let tx2 = {
 				type: 'MOSAIC_SUPPLY_CHANGE',
 				signer_public_key:"5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
-				mosaic_id:0x4DAFFBE5505DE676n,
+				mosaic_id:generateMosaicId(generateAddressId("TBUXMJAYYW3EH3XHBZXSBVGVKXKZS4EH26TINKI"),nonce), //0x4DAFFBE5505DE676n,
 				delta: 1000n * 100n, // assuming divisibility = 2
 				action: 'INCREASE'
 
@@ -857,7 +857,7 @@ describe('tsunagi-sdk.0.1',() => {
 				duration: 86400n,
 				registration_type: "ROOT",
 				name:"xembook",
-				id:0xA43415EB268C7385n, //BigInt((new sym.NamespaceId("xembook")).id.toString())
+				id:generateMosaicAliasId("xembook") //0xA43415EB268C7385n, //BigInt((new sym.NamespaceId("xembook")).id.toString())
 			}
 
 			expect(await this.getPayload(tx1))
@@ -873,10 +873,10 @@ describe('tsunagi-sdk.0.1',() => {
 				signer_public_key:"5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
 				fee:25000n,
 				deadline:this.deadline,
-				parent_id: 0xA43415EB268C7385n, //BigInt((new sym.NamespaceId("xembook")).id.toString())
+				parent_id: generateMosaicAliasId("xembook"), //0xA43415EB268C7385n, //BigInt((new sym.NamespaceId("xembook")).id.toString())
 				registration_type: "CHILD",
 				name:"tomato",
-				id:0xFA547FD28C836431n, //BigInt((new sym.NamespaceId("xembook.tomato")).id.toString())
+				id:generateMosaicAliasId("xembook.tomato") //0xFA547FD28C836431n, //BigInt((new sym.NamespaceId("xembook.tomato")).id.toString())
 			}
 
 			expect(await this.getPayload(tx1))
@@ -892,7 +892,7 @@ describe('tsunagi-sdk.0.1',() => {
 				signer_public_key:"5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
 				fee:25000n,
 				deadline:this.deadline,
-				namespace_id:0xA43415EB268C7385n, //BigInt((new sym.NamespaceId("xembook")).id.toString()),
+				namespace_id:generateMosaicAliasId("xembook"), //0xA43415EB268C7385n, //BigInt((new sym.NamespaceId("xembook")).id.toString()),
 				address:generateAddressId("TBUXMJAYYW3EH3XHBZXSBVGVKXKZS4EH26TINKI"),
 				alias_action:"LINK"
 			}
@@ -910,7 +910,7 @@ describe('tsunagi-sdk.0.1',() => {
 				signer_public_key:"5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
 				fee:25000n,
 				deadline:this.deadline,
-				namespace_id:0xFA547FD28C836431n, //BigInt((new sym.NamespaceId("xembook.tomato")).id.toString()),
+				namespace_id:generateMosaicAliasId("xembook.tomato"), //0xFA547FD28C836431n, //BigInt((new sym.NamespaceId("xembook.tomato")).id.toString())
 				mosaic_id:0x4DAFFBE5505DE676n,
 				alias_action:"LINK"
 			}
@@ -932,7 +932,7 @@ describe('tsunagi-sdk.0.1',() => {
 				type:'ACCOUNT_METADATA',
 				signer_public_key:"5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
 				target_address:generateAddressId("TBUXMJAYYW3EH3XHBZXSBVGVKXKZS4EH26TINKI"),
-				scoped_metadata_key:0x9772B71B058127D7n, //"key_account"
+				scoped_metadata_key:generateKey("key_account"), //0x9772B71B058127D7n, //"key_account"
 				value_size_delta:27,
 				value:"Hello Tsunagi(Catjson) SDK!",
 			}
@@ -978,7 +978,7 @@ describe('tsunagi-sdk.0.1',() => {
 				fee:1000000n,
 				deadline:this.deadline,
 				target_address:generateAddressId("TBUXMJAYYW3EH3XHBZXSBVGVKXKZS4EH26TINKI"),
-				scoped_metadata_key:0x9772B71B058127D7n, //"key_account"
+				scoped_metadata_key:generateKey("key_account"), //0x9772B71B058127D7n, //"key_account"
 				value_size_delta:27,
 				value:"Hello Tsunagi(Catjson) SDK!",
 			}
@@ -999,7 +999,7 @@ describe('tsunagi-sdk.0.1',() => {
 				deadline:this.deadline,
 				target_address:generateAddressId("TBUXMJAYYW3EH3XHBZXSBVGVKXKZS4EH26TINKI"),
 				target_mosaic_id:0x4DAFFBE5505DE676n,
-				scoped_metadata_key:0xCF217E116AA422E2n, //"key_mosaic"
+				scoped_metadata_key:generateKey("key_mosaic"), //0xCF217E116AA422E2n, //"key_mosaic"
 				value_size_delta:27,
 				value:"Hello Tsunagi(Catjson) SDK!",
 			};
@@ -1046,7 +1046,7 @@ describe('tsunagi-sdk.0.1',() => {
 				deadline:this.deadline,
 				target_address:generateAddressId("TBUXMJAYYW3EH3XHBZXSBVGVKXKZS4EH26TINKI"),
 				target_mosaic_id:0x4DAFFBE5505DE676n,
-				scoped_metadata_key:0xCF217E116AA422E2n, //"key_mosaic"
+				scoped_metadata_key:generateKey("key_mosaic"), //0xCF217E116AA422E2n, //"key_mosaic"
 				value_size_delta:27,
 				value:"Hello Tsunagi(Catjson) SDK!",
 			};
@@ -1067,7 +1067,7 @@ describe('tsunagi-sdk.0.1',() => {
 				deadline:this.deadline,
 				target_address:generateAddressId("TBUXMJAYYW3EH3XHBZXSBVGVKXKZS4EH26TINKI"),
 				target_namespace_id:0xA43415EB268C7385n, //xembook
-				scoped_metadata_key:0x8B6A8A370873D0D9n, //"key_namespace"
+				scoped_metadata_key:generateKey("key_namespace"), //0x8B6A8A370873D0D9n, //"key_namespace"
 				value_size_delta:27,
 				value:"Hello Tsunagi(Catjson) SDK!",
 			}
@@ -1114,7 +1114,7 @@ describe('tsunagi-sdk.0.1',() => {
 				deadline:this.deadline,
 				target_address:generateAddressId("TBUXMJAYYW3EH3XHBZXSBVGVKXKZS4EH26TINKI"),
 				target_namespace_id:0xA43415EB268C7385n, //xembook
-				scoped_metadata_key:0x8B6A8A370873D0D9n, //"key_namespace"
+				scoped_metadata_key:generateKey("key_namespace"), //0x8B6A8A370873D0D9n, //"key_namespace"
 				value_size_delta:27,
 				value:"Hello Tsunagi(Catjson) SDK!",
 			}

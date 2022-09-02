@@ -474,13 +474,19 @@ function cosignTransaction(txhash,priKey){
 const generateAddressAliasId = fullyQualifiedName => {
 	
 	return buffer.Buffer.from(new BigInt64Array([generateMosaicAliasId(fullyQualifiedName)]).buffer).toString("hex") + "000000000000000000000000000000";
-
-
 };
 
-//アドレスを16進数のIDにデコード
+//BASE32アドレスを16進数のIDにデコード
 const generateAddressId = address => {
 	return buffer.Buffer(base32.decode(address + "A").slice(0, -1)).toString("hex");
+};
+
+const generateKey = (name) => {
+	const hasher = sha3_256.create();
+	hasher.update(name);
+	const digest = new Uint8Array(hasher.digest());
+	const result = digestToBigInt(digest);
+	return result | NAMESPACE_FLAG;
 };
 
 //generateAliasId("xembook").toString(16);
@@ -617,7 +623,7 @@ const digestToBigInt = digest => {
 const generateMosaicId = (ownerAddress, nonce) => {
 	const hasher = sha3_256.create();
 	hasher.update(uint32ToBytes(nonce));
-	hasher.update(ownerAddress.bytes);
+	hasher.update(buffer.Buffer(ownerAddress,"hex"));
 	const digest = hasher.digest();
 
 	let result = digestToBigInt(digest);
