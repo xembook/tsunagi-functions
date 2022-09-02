@@ -175,10 +175,11 @@ describe('tsunagi-sdk.0.1',() => {
 			//トランザクションハッシュ作成
 			let txHash = hashTransaction(aggTx.signer_public_key,signature,builtTx,this.network);
 
-			//連署
-			cosignature1.signature = cosignTransaction(txHash,this.bobPrivateKey);
-			cosignature2.signature = cosignTransaction(txHash,this.carolPrivateKey);
 
+			//連署
+			preparedTx.cosignatures[0].signature = cosignTransaction(txHash,this.bobPrivateKey);
+			preparedTx.cosignatures[1].signature = cosignTransaction(txHash,this.carolPrivateKey);
+			
 			let cosignaturesLayout = layout.find(lf=>lf.name === "cosignatures");
 			let parsedCosignatures = await parseTransaction(preparedTx,[cosignaturesLayout],catjson,network); //構築
 			builtTx = updateTransaction(builtTx,"cosignatures","layout",parsedCosignatures[0].layout);
@@ -263,8 +264,8 @@ describe('tsunagi-sdk.0.1',() => {
 			let txHash = hashTransaction(aggTx.signer_public_key,signature,builtTx,this.network);
 
 			//連署
-			cosignature1.signature = cosignTransaction(txHash,this.bobPrivateKey);
-			cosignature2.signature = cosignTransaction(txHash,this.carolPrivateKey);
+			preparedTx.cosignatures[0].signature = cosignTransaction(txHash,this.carolPrivateKey);
+			preparedTx.cosignatures[1].signature = cosignTransaction(txHash,this.bobPrivateKey);
 
 			let cosignaturesLayout = layout.find(lf=>lf.name === "cosignatures");
 			let parsedCosignatures = await parseTransaction(preparedTx,[cosignaturesLayout],catjson,network); //構築
@@ -552,7 +553,7 @@ describe('tsunagi-sdk.0.1',() => {
 
 
 			//連署
-			cosignature1.signature = cosignTransaction(txHash,this.bobPrivateKey);
+			preparedTx.cosignatures[0].signature = cosignTransaction(txHash,this.bobPrivateKey);
 
 			let cosignaturesLayout = layout.find(lf=>lf.name === "cosignatures");
 			let parsedCosignatures = await parseTransaction(preparedTx,[cosignaturesLayout],catjson,network); //構築
@@ -1180,8 +1181,8 @@ describe('tsunagi-sdk.0.1',() => {
 			let txHash = hashTransaction(aggTx.signer_public_key,signature,builtTx,this.network);
 
 			//連署
-			cosignature1.signature = cosignTransaction(txHash,"94ee0f4d7fe388ac4b04a6a6ae2ba969617879b83616e4d25710d688a89d80c7");
-			cosignature2.signature = cosignTransaction(txHash,"fa6373f4f497773c5cc55c103e348b139461d61fd4b45387e69d08a68000e06b");
+			preparedTx.cosignatures[0].signature = cosignTransaction(txHash,"94ee0f4d7fe388ac4b04a6a6ae2ba969617879b83616e4d25710d688a89d80c7");
+			preparedTx.cosignatures[1].signature = cosignTransaction(txHash,"fa6373f4f497773c5cc55c103e348b139461d61fd4b45387e69d08a68000e06b");
 
 			let cosignaturesLayout = layout.find(lf=>lf.name === "cosignatures");
 			let parsedCosignatures = await parseTransaction(preparedTx,[cosignaturesLayout],catjson,network); //構築
@@ -1279,7 +1280,8 @@ describe('tsunagi-sdk.0.1',() => {
 			let txHash = hashTransaction(aggTx.signer_public_key,signature,builtTx,this.network);
 
 			//連署
-			cosignature2.signature = cosignTransaction(txHash,"fa6373f4f497773c5cc55c103e348b139461d61fd4b45387e69d08a68000e06b");
+			preparedTx.cosignatures[0].signature = cosignTransaction(txHash,"fa6373f4f497773c5cc55c103e348b139461d61fd4b45387e69d08a68000e06b");
+
 			let cosignaturesLayout = layout.find(lf=>lf.name === "cosignatures");
 			let parsedCosignatures = await parseTransaction(preparedTx,[cosignaturesLayout],catjson,network); //構築
 			builtTx = updateTransaction(builtTx,"cosignatures","layout",parsedCosignatures[0].layout);

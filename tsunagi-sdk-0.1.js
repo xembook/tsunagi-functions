@@ -333,10 +333,13 @@ function hashTransaction(signer,signature,builtTx,network){
 }
 
 function updateTransaction(builtTx,name,type,value){
-	let layer = builtTx.find(bf=>bf.name === name);
+
+	let updatedTx = Object.assign([], builtTx);
+
+	let layer = updatedTx.find(bf=>bf.name === name);
 	layer[type] = value;
 	console.log(layer);
-	return builtTx;
+	return updatedTx;
 }
 
 
