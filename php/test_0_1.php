@@ -19,6 +19,8 @@ class test_0_1 extends \PHPUnit\Framework\TestCase {
 
     public function testWithTaxAndTip2() {
 
+		$deadline_time = ((time()  + 7200) - 1637848847) * 1000;
+
 		$network = [
 			"version" => 1,
 			"network" => "TESTNET",
@@ -41,7 +43,7 @@ class test_0_1 extends \PHPUnit\Framework\TestCase {
 			"type" => "TRANSFER",
 			"signer_public_key" => "5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
 			"fee" => 25000,
-			"deadline" => 0,
+			"deadline" => $deadline_time,
 			"recipient_address" => bin2hex(Base32::decode("TCO7HLVDQUX6V7C737BCM3VYJ3MKP6REE2EKROA")),
 			"mosaics" => [
 				["mosaic_id" =>  0x2A09B7F9097934C2, "amount" => 1],
@@ -59,6 +61,23 @@ class test_0_1 extends \PHPUnit\Framework\TestCase {
 		$prepared_tx = prepare_transaction($tx1,$layout,$network); //TX事前準備
 		$parsed_tx = parse_transaction($prepared_tx,$layout,$catjson,$network);
 
+		$built_tx    = build_transaction($parsed_tx); //TX構築
+		$private_key = "94ee0f4d7fe388ac4b04a6a6ae2ba969617879b83616e4d25710d688a89d80c75f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb";
+		$signature = sign_transaction($built_tx,$private_key,$network);
+		$built_tx = update_transaction($built_tx,"signature","value",$signature);
+
+		$tx_hash = hash_transaction($tx1["signer_public_key"],$signature,$built_tx,$network);
+
+
+
+
+		$payload = hexlify_transaction($built_tx,0);
+		print_r($payload);
+
+//		print_r($built_tx);
+
+
+
         $meal = 100;
         $tax = 10;
         $tip = 20;
@@ -67,7 +86,8 @@ class test_0_1 extends \PHPUnit\Framework\TestCase {
 
     }
 
-
+*/
+/*
     public function testWithTaxAndTip3() {
 
 		$network = [
@@ -121,8 +141,20 @@ class test_0_1 extends \PHPUnit\Framework\TestCase {
 		$built_tx    = build_transaction($parsed_tx); //TX構築
 		$private_key = "94ee0f4d7fe388ac4b04a6a6ae2ba969617879b83616e4d25710d688a89d80c75f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb";
 		$signature = sign_transaction($built_tx,$private_key,$network);
+		$built_tx = update_transaction($built_tx,"signature","value",$signature);
 
 		$tx_hash = hash_transaction($agg_tx["signer_public_key"],$signature,$built_tx,$network);
+
+
+
+
+
+
+
+
+
+		$payload = hexlify_transaction($built_tx,0);
+		print_r($payload);
 
 
 
@@ -136,6 +168,7 @@ class test_0_1 extends \PHPUnit\Framework\TestCase {
 */
 
     public function testWithTaxAndTip4() {
+
 
 		$network = [
 			"version" => 1,
@@ -153,6 +186,9 @@ class test_0_1 extends \PHPUnit\Framework\TestCase {
 			]
 		];
 
+		$deadline_time = ((time()  + 7200) - 1637848847) * 1000;
+//		$now = $network["epochAdjustment"] * 1000;
+//		$deadline_time = ((intval($now/1000)  + 7200) - 1637848847) * 1000;
 
 		//Alice->Bob
 		$tx1 = [
@@ -211,7 +247,7 @@ class test_0_1 extends \PHPUnit\Framework\TestCase {
 			"type" => 'AGGREGATE_COMPLETE',
 			"signer_public_key" => "5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
 			"fee" => 1000000,
-			"deadline" => 0,
+			"deadline" => $deadline_time,
 			"transactions" => [$tx1,$tx2,$tx3],
 			"cosignatures" => [$cosignature1,$cosignature2]
 
@@ -233,19 +269,22 @@ class test_0_1 extends \PHPUnit\Framework\TestCase {
 		$bob_private_key = "fa6373f4f497773c5cc55c103e348b139461d61fd4b45387e69d08a68000e06b6199BAE3B241DF60418E258D046C22C8C1A5DE2F4F325753554E7FD9C650AFEC";
 		$carol_private_key = "1e090b2a266877a9f88a510af2eb0945a63dc69dbce674ccd83272717d4175cf886ADFBD4213576D63EA7E7A4BECE61C6933C27CD2FF36F85155C8FEBFB6EB4E";
 
+		$prepared_tx["cosignatures"][0]["signature"] = cosign_transaction($tx_hash,$bob_private_key);
+		$prepared_tx["cosignatures"][1]["signature"] = cosign_transaction($tx_hash,$carol_private_key);
 
-		$cosignature1["signature"] = cosign_transaction($tx_hash,$bob_private_key);
-		$cosignature2["signature"] = cosign_transaction($tx_hash,$carol_private_key);
 
 		$filter_layout = array_filter($layout,function($fl){
 			return $fl["name"] === "cosignatures";
 		});
 		$cosignatures_layout = array_values($filter_layout);
+
 		$parsed_cosignatures = parse_transaction($prepared_tx,$cosignatures_layout,$catjson,$network); //連署TXの構築
 		$built_tx = update_transaction($built_tx,"cosignatures","layout",$parsed_cosignatures[0]["layout"]);
 
 		$payload = hexlify_transaction($built_tx,0);
-		print_r($payload);
+		print_r($payload . PHP_EOL);
+
+		print_r($tx_hash);
 
         $meal = 100;
         $tax = 10;
@@ -254,6 +293,7 @@ class test_0_1 extends \PHPUnit\Framework\TestCase {
         $this->assertEquals(130, $result);
 
     }
+
 }
 ?>
 

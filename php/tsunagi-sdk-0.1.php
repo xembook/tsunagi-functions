@@ -320,12 +320,16 @@ function parse_transaction($tx,$layout,$catjson,$network) {
 			}
 
 			//txに指定されている場合上書き(enumパラメータは上書きしない)
-			if(isset($layer["name"]) && isset($catitem["type"]) && isset($tx[$layer["name"]]) && $catitem["type"] !== "enum"){
+//			if(isset($layer["name"]) && isset($catitem["type"]) && isset($tx[$layer["name"]]) && $catitem["type"] !== "enum"){
+			if(isset($layer["name"]) && isset($tx[$layer["name"]]) ){
+				if(isset($catitem["type"]) && $catitem["type"] === "enum"){
 
-				$tx_layer["value"] = $tx[$layer["name"]];
+				}else{
+					$tx_layer["value"] = $tx[$layer["name"]];
+
+				}
 			}else{
-				// そのままtxLayerを追加 
-//				print_r($layer["name"]);
+
 			}
 			array_push($parsed_tx,$tx_layer);
 		}
@@ -336,8 +340,10 @@ function parse_transaction($tx,$layout,$catjson,$network) {
 	} );
 
 	if(isset($layer_size) && isset($layer_size[0]["size"])){
+//		print_r($parsed_tx);
 		$parsed_tx[array_keys($layer_size)[0]]["value"] = count_size($parsed_tx,0);
 	}
+//		print_r($parsed_tx);
 	return $parsed_tx;
 }
 
@@ -347,8 +353,6 @@ function count_size($item,$alignment) {
 	
 	//レイアウトサイズの取得
 	if(isset($item)  && isset($item["layout"])){
-
-
 		foreach( $item["layout"] as $layer){
 			$item_alignment;
 			if(isset($item["alignment"])){
@@ -364,9 +368,10 @@ function count_size($item,$alignment) {
 		$layout_size = 0;
 		foreach($item as $key => $value){
 
-			$layout_size += count_size($item[$key],$alignment);
+			$layout_size += count_size($item[$key],$alignment);//再帰
 
 		}		 
+
 		if(isset($alignment)  && $alignment > 0){
 			$layout_size = floor(($layout_size  + $alignment - 1) / $alignment ) * $alignment;
 		}
@@ -375,6 +380,7 @@ function count_size($item,$alignment) {
 	}else{
 
 		if(isset($item["size"])){
+
 
 			$total_size += $item["size"];
 		}else{
@@ -400,13 +406,16 @@ function build_transaction($parsed_tx) {
 			return $bf["name"] === "transactions";
 		});
 		$transactions = array_values($filter_transactions)[0];
-		$built_tx[array_keys($layer_payload_size)[0]]["value"] = count_size($transactions,$transactions["alignment"]);
+//		$built_tx[array_keys($layer_payload_size)[0]]["value"] = count_size($transactions,$transactions["alignment"]);
+		$built_tx[array_keys($layer_payload_size)[0]]["value"] = count_size($transactions,0);
 	}
 
 	//Merkle Hash Builder
 	$layer_transactions_hash =  array_filter($built_tx, function($bf){
 		return $bf["name"] === "transactions_hash";
 	});
+
+//	print_r($layer_transactions_hash);
 
 	if(count($layer_transactions_hash) > 0){
 
@@ -416,7 +425,10 @@ function build_transaction($parsed_tx) {
 		});
 
 		$transactions = array_values($filter_transactions)[0];
+
+//		print_r($transactions);
 		foreach($transactions["layout"] as $e_tx){
+
 
 			$digest = hash('sha3-256',
 				sodium_hex2bin(
@@ -427,26 +439,33 @@ function build_transaction($parsed_tx) {
 		}
 
 		$num_remaining_hashes = count($hashes);
+
 		while (1 < $num_remaining_hashes) {
+
+
 			$i = 0;
 			while ($i < $num_remaining_hashes) {
 				$hasher = hash_init('sha3-256');
-				hash_update($hasher,$hashes[$i]);
+				hash_update($hasher,sodium_hex2bin($hashes[$i]));
 
 				if ($i + 1 < $num_remaining_hashes) {
-					hash_update($hasher,$hashes[$i+1]);
+					hash_update($hasher,sodium_hex2bin($hashes[$i+1]));
 				} else {
 					// if there is an odd number of hashes, duplicate the last one
-					hash_update($hasher,$hashes[$i]);
+					hash_update($hasher,sodium_hex2bin($hashes[$i]));
 					$num_remaining_hashes += 1;
 				}
 				$hashes[intval($i / 2)] = hash_final($hasher,false);
 				$i += 2;
 			}
 			$num_remaining_hashes = intval($num_remaining_hashes / 2);
+
 		}
 		$built_tx[array_keys($layer_transactions_hash)[0]]["value"] = $hashes[0];
 	}
+//			print_r("■■■■■■".PHP_EOL);
+//			print_r($hashes[0]);
+//			print_r(PHP_EOL . "■■■■■■".PHP_EOL);
 
 	return $built_tx;
 }
@@ -512,6 +531,11 @@ function sign_transaction($built_tx,$private_key,$network) {
 
 	$sign_secret = sodium_hex2bin($private_key);
 	$verifiable_data = get_verifiable_data($built_tx);
+
+//			print_r("■■■■■■".PHP_EOL);
+//			print_r(hexlify_transaction($verifiable_data,0));
+//			print_r(PHP_EOL . "■■■■■■".PHP_EOL);
+
 	$payload = $network["generationHash"] . hexlify_transaction($verifiable_data,0);
 	$signature = sodium_bin2hex(sodium_crypto_sign_detached(sodium_hex2bin($payload), $sign_secret));
 
@@ -525,8 +549,12 @@ function get_verifiable_data($built_tx) {
 	});
 	$type_layer = array_values($filter_layer)[0];
 
+//	print_r(in_array($type_layer["value"], [16705,16961]));
 	if(in_array($type_layer["value"], [16705,16961])){
-		return array_slice($built_tx,5,11);
+
+
+//		print_r(array_slice($built_tx,5,6));
+		return array_slice($built_tx,5,6);
 	}else{
 		return array_slice($built_tx,5);
 	}
@@ -535,10 +563,10 @@ function get_verifiable_data($built_tx) {
 function hash_transaction($signer,$signature,$built_tx,$network) {
 
 	$hasher = hash_init('sha3-256');
-	hash_update($hasher,$signature);
-	hash_update($hasher,$signer);
-	hash_update($hasher,$network["generationHash"]);
-	hash_update($hasher,hexlify_transaction(get_verifiable_data($built_tx),0));
+	hash_update($hasher,sodium_hex2bin($signature));
+	hash_update($hasher,sodium_hex2bin($signer));
+	hash_update($hasher,sodium_hex2bin($network["generationHash"]));
+	hash_update($hasher,sodium_hex2bin(hexlify_transaction(get_verifiable_data($built_tx),0)));
 
 	$tx_hash = hash_final($hasher,false);
 
@@ -552,6 +580,20 @@ function update_transaction($built_tx,$name,$type,$value) {
 	});
 
 	$built_tx[array_keys($layer)[0]][$type] = $value;
+
+///////////////////////////////////後付け
+//
+//	//サイズ修正
+//	$layout_size = array_filter($built_tx, function($pf){
+//		return $pf["name"] === "size";
+//	} );
+//
+//
+//	if(isset($layout_size) && isset($layout_size[0]["size"])){
+//		$built_tx[array_keys($layout_size)[0]]["value"] = count_size($built_tx,0);
+//	}
+////////////////////////////////////
+
 	return $built_tx;
 }
 
