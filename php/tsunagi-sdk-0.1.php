@@ -336,13 +336,13 @@ function parse_transaction($tx,$layout,$catjson,$network) {
 	} );
 
 	if(isset($layer_size) && isset($layer_size[0]["size"])){
-		$parsed_tx[array_keys($layer_size)[0]]["value"] = count_size($parsed_tx,0);
+		$parsed_tx[array_keys($layer_size)[0]]["value"] = count_size($parsed_tx);
 	}
 	return $parsed_tx;
 }
 
 //サイズ計算
-function count_size($item,$alignment) {
+function count_size($item,$alignment = 0) {
 
 	$total_size = 0;
 	
@@ -399,7 +399,7 @@ function build_transaction($parsed_tx) {
 			return $bf["name"] === "transactions";
 		});
 		$transactions = array_values($filter_transactions)[0];
-		$built_tx[array_keys($layer_payload_size)[0]]["value"] = count_size($transactions,0);
+		$built_tx[array_keys($layer_payload_size)[0]]["value"] = count_size($transactions);
 	}
 
 	//Merkle Hash Builder
@@ -420,7 +420,7 @@ function build_transaction($parsed_tx) {
 
 			$digest = hash('sha3-256',
 				sodium_hex2bin(
-					hexlify_transaction($e_tx,0)
+					hexlify_transaction($e_tx)
 				)
 			);
 			array_push($hashes,$digest);
@@ -454,7 +454,7 @@ function build_transaction($parsed_tx) {
 }
 
 //トランザクションを16進数でシリアライズ
-function hexlify_transaction($item,$alignment) {
+function hexlify_transaction($item,$alignment = 0) {
 
 	$hex = "";
 	if(isset($item["layout"])){
@@ -516,7 +516,7 @@ function sign_transaction($built_tx,$private_key,$network) {
 	$sign_secret = sodium_hex2bin($private_key);
 	$verifiable_data = get_verifiable_data($built_tx);
 
-	$payload = $network["generationHash"] . hexlify_transaction($verifiable_data,0);
+	$payload = $network["generationHash"] . hexlify_transaction($verifiable_data);
 	$signature = sodium_bin2hex(sodium_crypto_sign_detached(sodium_hex2bin($payload), $sign_secret));
 
 	return $signature; 
@@ -544,7 +544,7 @@ function hash_transaction($signer,$signature,$built_tx,$network) {
 	hash_update($hasher,sodium_hex2bin($signature));
 	hash_update($hasher,sodium_hex2bin($signer));
 	hash_update($hasher,sodium_hex2bin($network["generationHash"]));
-	hash_update($hasher,sodium_hex2bin(hexlify_transaction(get_verifiable_data($built_tx),0)));
+	hash_update($hasher,sodium_hex2bin(hexlify_transaction(get_verifiable_data($built_tx))));
 
 	$tx_hash = hash_final($hasher,false);
 
@@ -577,9 +577,50 @@ function generate_address_id() {
     return 0;
 }
 
-function generate_namespace_id(){
+function generate_namespace_id($name, $parent_namespace_id = 0){
 
-	return 0;
+	$NAMESPACE_FLAG = 1 << 63;
+
+	$hasher = hash_init('sha3-256');
+
+	print_r(bin2hex(pack('V', $parent_namespace_id & 0xFFFFFFFF)) . PHP_EOL);
+	print_r(bin2hex(pack('V', ($parent_namespace_id >> 32) & 0xFFFFFFFF)) . PHP_EOL);
+
+	hash_update($hasher,pack('V', $parent_namespace_id & 0xFFFFFFFF));
+	hash_update($hasher,pack('V', ($parent_namespace_id >> 32) & 0xFFFFFFFF));
+	hash_update($hasher,$name);
+
+	$result = hash_final($hasher,false);
+	$ar = unpack("C*", hex2bin($result));
+
+//	$h = dechex(hexbin($result)|$NAMESPACE_FLAG);
+
+	print_r($ar);
+//85738c26eb1534a4c4a38decd175461e4624c0b4c61e021fb82f985eaae3d911
+
+
+//	print_r(hexdec($result)|$NAMESPACE_FLAG);
+
+//	print_r(dechex(hex2bin($result)|$NAMESPACE_FLAG));
+
+
+
+	return dechex($result);
+
+
+/*
+	const hasher = sha3_256.create();
+	hasher.update(uint32ToBytes(Number(parentNamespaceId & 0xFFFFFFFFn)));
+	hasher.update(uint32ToBytes(Number((parentNamespaceId >> 32n) & 0xFFFFFFFFn)));
+	hasher.update(name);
+	const digest = new Uint8Array(hasher.digest());
+
+	const result = digestToBigInt(digest);
+	return result | NAMESPACE_FLAG;
+*/
+
+
+//	return 0;
 }
 
 function generate_mosaic_id(){

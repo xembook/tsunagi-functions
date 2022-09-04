@@ -11,11 +11,10 @@ class helper{
         $this->network = $network;
     }
 
-    public function bar(){
-        echo 'bar';
-    }
-
 	public	function get_payload($tx1){
+
+		generate_namespace_id("xembook");
+		$private_key = "94ee0f4d7fe388ac4b04a6a6ae2ba969617879b83616e4d25710d688a89d80c75f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb";
 	
 		$catjson = load_catjson($tx1,$this->network);
 		$layout = load_layout($tx1,$catjson,false); //isEmbedded false
@@ -23,11 +22,10 @@ class helper{
 		$parsed_tx = parse_transaction($prepared_tx,$layout,$catjson,$this->network);
 
 		$built_tx    = build_transaction($parsed_tx); //TX構築
-		$private_key = "94ee0f4d7fe388ac4b04a6a6ae2ba969617879b83616e4d25710d688a89d80c75f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb";
 		$signature = sign_transaction($built_tx,$private_key,$this->network);
 		$built_tx = update_transaction($built_tx,"signature","value",$signature);
 		$tx_hash = hash_transaction($tx1["signer_public_key"],$signature,$built_tx,$this->network);
-		$payload = hexlify_transaction($built_tx,0);
+		$payload = hexlify_transaction($built_tx);
 		print_r($payload);
 		print_r($tx_hash);
 
@@ -39,6 +37,7 @@ class test_0_1 extends \PHPUnit\Framework\TestCase {
 
 
 	protected function setUp() :void{
+
 
 		$this->network = [
 			"version" => 1,
