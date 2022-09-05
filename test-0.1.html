@@ -103,7 +103,7 @@ describe('tsunagi-sdk.0.1',() => {
 		
 	});
 
-	describe('aggregate complete transaction', () => {
+	xdescribe('aggregate complete transaction', () => {
 
 		it('resolves 3 account transfer', async () => {
 
@@ -396,7 +396,7 @@ describe('tsunagi-sdk.0.1',() => {
 
 	describe('aggregate bonded transaction', () => {
 
-		it('resolves hash lock', async () => {
+		xit('resolves hash lock', async () => {
 
 			let tx1 = {
 				type:'HASH_LOCK',
@@ -413,10 +413,53 @@ describe('tsunagi-sdk.0.1',() => {
 			.toEqual(
 				"b8000000000000008f0e4dc6dc42be7428219f820718d723803b0dde5455adec3f8ed1871318656ccd7fb4aab539ff722384b0cccf2d66603d5458a12ea01e12ffdd7bbbca9c5a0a5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb0000000001984841a86100000000000000dd6d0000000000c8b6532ddb16843a8096980000000000e001000000000000a3ed27ee26592f6c501349a7de3427fc729e8d625ed214a6331c11b981f59f78"
 			);
+		});
+
+
+		it('resolves hash lock by aggregate', async () => {
+
+			let tx1 = {
+				type:'HASH_LOCK',
+				signer_public_key:"5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
+				mosaic:[{mosaic_id: 0x3A8416DB2D53B6C8n, amount: 10000000n}],
+				duration: 480n,
+				hash:"4ecd6d1830d46f21d03906885a25c30d6df48418746105201a77dad65287985c"
+
+			}
+			
+			let aggTx = {
+				type:'AGGREGATE_COMPLETE',
+				signer_public_key:"5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
+				fee:1000000n,
+				deadline:this.deadline,
+				transactions:[tx1],
+			}
+
+
+			let catjson = await loadCatjson(aggTx,this.network);
+			let layout = await loadLayout(aggTx,catjson,false); //isEmbedded false
+
+			let preparedTx = await prepareTransaction(aggTx,layout,this.network); //TX事前準備
+			let parsedTx   = await parseTransaction(preparedTx,layout,catjson,this.network); //TX解析
+			let builtTx    = buildTransaction(parsedTx); //TX構築
+
+			let signature = signTransaction(builtTx,this.privateKey,this.network);
+			builtTx = updateTransaction(builtTx,"signature","value",signature);
+
+			//トランザクションハッシュ作成
+			let txHash = hashTransaction(aggTx.signer_public_key,signature,builtTx,this.network);
+
+			let payload = hexlifyTransaction(builtTx);
+			console.log(payload);
+			console.log(txHash);
+			expect(payload)
+			.toEqual(
+				"1001000000000000c2941402f941376e3b58c9931c45cd768334fe6ac65e9b746fe484e8ec8067795f5ba4b895ff582395a5d74e8f79a861c6239495b3b38e6215d9d9eef699ac055f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb000000000198414140420f000000000000dd6d000000000064b515ba0d874c0e0db27687514491d0bb74969cb82b767dde37a0b330a9f3ee680000000000000068000000000000005f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb0000000001984841c8b6532ddb16843a8096980000000000e0010000000000004ecd6d1830d46f21d03906885a25c30d6df48418746105201a77dad65287985c"
+			);
 
 		});
 
-		it('resolves 3 account transfer', async () => {
+		xit('resolves 3 account transfer', async () => {
 
 
 			//Alice->Bob
@@ -486,7 +529,7 @@ describe('tsunagi-sdk.0.1',() => {
 		});
 
 
-		it('resolves 3 account transfer partial complete', async () => {
+		xit('resolves 3 account transfer partial complete', async () => {
 
 
 			//Alice->Bob
@@ -572,7 +615,7 @@ describe('tsunagi-sdk.0.1',() => {
 
 	}); // aggregate bonded transaction
 
-	describe('transfer transaction', () => {
+	xdescribe('transfer transaction', () => {
 
 		it('resolves 2 mosaic transfer', async () => {
 
@@ -746,7 +789,7 @@ describe('tsunagi-sdk.0.1',() => {
 
 	});
 
-	describe('mosaic transaction', () => {
+	xdescribe('mosaic transaction', () => {
 
 		//Failure_Mosaic_Modification_Disallowed
 		it('resolves mosaic definition', async () => {
@@ -847,7 +890,7 @@ describe('tsunagi-sdk.0.1',() => {
 
 	});
 
-	describe('namespace transaction', () => {
+	xdescribe('namespace transaction', () => {
 
 		it('resolves root namespace regisration', async () => {
 
@@ -926,7 +969,7 @@ describe('tsunagi-sdk.0.1',() => {
 
 	});
 	
-	describe('metadata transaction', () => {
+	xdescribe('metadata transaction', () => {
 
 		it('resolves account metadata', async () => {
 
@@ -1129,7 +1172,7 @@ describe('tsunagi-sdk.0.1',() => {
 
 	});
 
-	describe('multisig transaction', () => {
+	xdescribe('multisig transaction', () => {
 	
 
 		it('resolves multisig account modification address_additions', async () => {
@@ -1340,7 +1383,7 @@ describe('tsunagi-sdk.0.1',() => {
 	
 	});
 
-	describe('account restriction transaction', () => {
+	xdescribe('account restriction transaction', () => {
 	
 	
 		it('resolves 2 address restriction_additions transfer', async () => {
@@ -1479,7 +1522,7 @@ describe('tsunagi-sdk.0.1',() => {
 	
 	});
 
-	describe('global mosaic restriction transaction', () => {
+	xdescribe('global mosaic restriction transaction', () => {
 	
 		it('resolves global mosaic restriction transfer', async () => {
 
@@ -1528,7 +1571,7 @@ describe('tsunagi-sdk.0.1',() => {
 	
 	});
 
-	describe('mosaic supply revocation transaction', () => {
+	xdescribe('mosaic supply revocation transaction', () => {
 	
 		it('resolves mosaic supply revocation', async () => {
 
@@ -1550,7 +1593,7 @@ describe('tsunagi-sdk.0.1',() => {
 	
 	});
 
-	describe('secret lock-proof transaction', () => {
+	xdescribe('secret lock-proof transaction', () => {
 	
 		it('resolves secret lock', async () => {
 
