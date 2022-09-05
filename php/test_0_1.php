@@ -58,7 +58,6 @@ class test_0_1 extends \PHPUnit\Framework\TestCase {
 		$this->deadline_time = ((intval($now/1000)  + 7200) - 1637848847) * 1000;
 	}
 
-/*
 	public function testTransfer(){
 
 		$helper = new helper($this->network);
@@ -231,6 +230,8 @@ class test_0_1 extends \PHPUnit\Framework\TestCase {
 	}
 
 	public function testAggregateComplete(){
+
+		$helper = new helper($this->network);
 
 		//resolves 3 account transfer
 
@@ -455,24 +456,13 @@ class test_0_1 extends \PHPUnit\Framework\TestCase {
 			"cosignatures" => []
 		];
 
-		$catjson = load_catjson($agg_tx,$this->network);
-		$layout = load_layout($agg_tx,$catjson,false); //isEmbedded false
-		$prepared_tx = prepare_transaction($agg_tx,$layout,$this->network); //TX事前準備
-		$parsed_tx = parse_transaction($prepared_tx,$layout,$catjson,$this->network);
-		$built_tx    = build_transaction($parsed_tx); //TX構築
-		$private_key = "94ee0f4d7fe388ac4b04a6a6ae2ba969617879b83616e4d25710d688a89d80c75f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb";
-		$signature = sign_transaction($built_tx,$private_key,$this->network);
-		$built_tx = update_transaction($built_tx,"signature","value",$signature);
-
-		$tx_hash = hash_transaction($agg_tx["signer_public_key"],$signature,$built_tx,$this->network);
-
-		$payload = hexlify_transaction($built_tx);
-		print_r($payload . PHP_EOL);
+		$payload = $helper->get_payload($agg_tx);
+		print_r($payload);
 
 		$this->assertEquals(
 			"c80100000000000083de0648e05d23036b302e5249554f6fc164917021d4cf07f1d19dfefaea34bfb8679fde237115d5ac3885ef4d4d76c16d4a930429970edbc1fb32a967d0d5025f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb000000000198414140420f000000000000dd6d000000000000de2f57a150d1073330b9d3273c651b675ed9ce2f200cac1d29717dffe6fe3120010000000000008c000000000000005f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb0000000001985441989df3aea3852feafc5fdfc2266eb84ed8a7fa242688a8b81c00020000000000c2347909f9b7092a0100000000000000c8b6532ddb16843a64000000000000000048656c6c6f205473756e616769284361746a736f6e292053444b21000000008c000000000000005f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb000000000198544198f21158e0a83da8f125ca534bc2d75a233a2baac9cb1e821c00020000000000c2347909f9b7092a0100000000000000c8b6532ddb16843a64000000000000000048656c6c6f204361726f6c21205468697320697320416c6963652e00000000"
 			, $payload
-		);	
+		);
 
 
 		//resolves undefined cosignature
@@ -509,26 +499,15 @@ class test_0_1 extends \PHPUnit\Framework\TestCase {
 			"transactions" => [$tx1,$tx2],
 		];
 
-		$catjson = load_catjson($agg_tx,$this->network);
-		$layout = load_layout($agg_tx,$catjson,false); //isEmbedded false
-		$prepared_tx = prepare_transaction($agg_tx,$layout,$this->network); //TX事前準備
-		$parsed_tx = parse_transaction($prepared_tx,$layout,$catjson,$this->network);
-		$built_tx    = build_transaction($parsed_tx); //TX構築
-		$private_key = "94ee0f4d7fe388ac4b04a6a6ae2ba969617879b83616e4d25710d688a89d80c75f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb";
-		$signature = sign_transaction($built_tx,$private_key,$this->network);
-		$built_tx = update_transaction($built_tx,"signature","value",$signature);
-
-		$tx_hash = hash_transaction($agg_tx["signer_public_key"],$signature,$built_tx,$this->network);
-
-		$payload = hexlify_transaction($built_tx);
-		print_r($payload . PHP_EOL);
+		$payload = $helper->get_payload($agg_tx);
+		print_r($payload);
 
 		$this->assertEquals(
 			"c80100000000000083de0648e05d23036b302e5249554f6fc164917021d4cf07f1d19dfefaea34bfb8679fde237115d5ac3885ef4d4d76c16d4a930429970edbc1fb32a967d0d5025f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb000000000198414140420f000000000000dd6d000000000000de2f57a150d1073330b9d3273c651b675ed9ce2f200cac1d29717dffe6fe3120010000000000008c000000000000005f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb0000000001985441989df3aea3852feafc5fdfc2266eb84ed8a7fa242688a8b81c00020000000000c2347909f9b7092a0100000000000000c8b6532ddb16843a64000000000000000048656c6c6f205473756e616769284361746a736f6e292053444b21000000008c000000000000005f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb000000000198544198f21158e0a83da8f125ca534bc2d75a233a2baac9cb1e821c00020000000000c2347909f9b7092a0100000000000000c8b6532ddb16843a64000000000000000048656c6c6f204361726f6c21205468697320697320416c6963652e00000000"
 			, $payload
-		);	
+		);
+
 	}
-*/
 	public function testAggregateBoded(){
 
 		$helper = new helper($this->network);
@@ -552,7 +531,6 @@ class test_0_1 extends \PHPUnit\Framework\TestCase {
 			"b8000000000000008f0e4dc6dc42be7428219f820718d723803b0dde5455adec3f8ed1871318656ccd7fb4aab539ff722384b0cccf2d66603d5458a12ea01e12ffdd7bbbca9c5a0a5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb0000000001984841a86100000000000000dd6d0000000000c8b6532ddb16843a8096980000000000e001000000000000a3ed27ee26592f6c501349a7de3427fc729e8d625ed214a6331c11b981f59f78"
 			, $payload
 		);
-
 
 		//resolves hash lock by aggregate
 		$tx1 = [
@@ -628,17 +606,8 @@ class test_0_1 extends \PHPUnit\Framework\TestCase {
 
 		];
 
-		$catjson = load_catjson($agg_tx,$this->network);
-		$layout = load_layout($agg_tx,$catjson,false); //isEmbedded false
-		$prepared_tx = prepare_transaction($agg_tx,$layout,$this->network); //TX事前準備
-		$parsed_tx = parse_transaction($prepared_tx,$layout,$catjson,$this->network);
-		$built_tx    = build_transaction($parsed_tx); //TX構築
-		$private_key = "94ee0f4d7fe388ac4b04a6a6ae2ba969617879b83616e4d25710d688a89d80c75f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb";
-		$signature = sign_transaction($built_tx,$private_key,$this->network);
-		$built_tx = update_transaction($built_tx,"signature","value",$signature);
-		$tx_hash = hash_transaction($agg_tx["signer_public_key"],$signature,$built_tx,$this->network);
-		$payload = hexlify_transaction($built_tx);
-		print_r($payload . PHP_EOL);
+		$payload = $helper->get_payload($agg_tx);
+		print_r($payload);
 
 		$this->assertEquals(
 			"5802000000000000ffd1ebcc029c4997d904586292aa1aab8c87e992cd736c074d639419aeae7adc82ce4782f1276f2504b0c4548777dd48616754205c7741af5b2a248f89b4c4035f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb000000000198414240420f000000000000dd6d0000000000ae67220a53b24a241f2da951ba6cfe044aedc42a0afb5f2742c5a454e3c9c6e1b0010000000000008c000000000000005f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb0000000001985441989df3aea3852feafc5fdfc2266eb84ed8a7fa242688a8b81c00020000000000c2347909f9b7092a0100000000000000c8b6532ddb16843a64000000000000000048656c6c6f205473756e616769284361746a736f6e292053444b21000000008a000000000000006199bae3b241df60418e258d046c22c8c1a5de2f4f325753554e7fd9c650afec000000000198544198f21158e0a83da8f125ca534bc2d75a233a2baac9cb1e821a00020000000000c2347909f9b7092a0100000000000000c8b6532ddb16843a64000000000000000048656c6c6f204361726f6c21205468697320697320426f622e0000000000008c00000000000000886adfbd4213576d63ea7e7a4bece61c6933c27cd2ff36f85155c8febfb6eb4e00000000019854419869762418c5b643eee70e6f20d4d555d5997087d7a686a91c00020000000000c2347909f9b7092a0100000000000000c8b6532ddb16843a64000000000000000048656c6c6f20416c6963652c2054686973206973204361726f6c2e00000000"
