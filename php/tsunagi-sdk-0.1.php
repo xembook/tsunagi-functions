@@ -185,16 +185,21 @@ function parse_transaction($tx,$layout,$catjson,$network) {
 			//アドレスに30個の0が続く場合はネームスペースとみなします。
 			if(strpos($tx[$layer["name"]],'000000000000000000000000000000') !== false){
 
-				$network_type = array_filter($catjson, function($cj){
+				$filter_value = array_filter($catjson, function($cj){
 					return $cj["name"] === "NetworkType";
 				});
 
-				$network_value = array_filter($network_type["values"], function($cj) use($tx){
-					return $cj["name"] === $tx["network"];
-				})["value"];
+				$network_type = array_values($filter_value)[0];
+				print_r($network_type);
+				print_r($tx["network"]);
 
-				$prefix = bin2hex($network_value + 1);
-				$tx[$layer["name"]] =  $prefix + $tx[$layer["name"]];
+				$filter_network = array_filter($network_type["values"], function($cj) use($tx){
+					return $cj["name"] === $tx["network"];
+				});
+				$network_value = array_values($filter_network)[0]["value"];
+
+				$prefix = dechex($network_value + 1);
+				$tx[$layer["name"]] =  $prefix . $tx[$layer["name"]];
 			}
 		}else if(isset($catitem["type"]) && $catitem["type"] === "enum"){
 
@@ -577,67 +582,66 @@ function generate_address_id() {
     return 0;
 }
 
+
 function generate_namespace_id($name, $parent_namespace_id = 0){
 
 	$NAMESPACE_FLAG = 1 << 63;
 
 	$hasher = hash_init('sha3-256');
 
-	print_r(bin2hex(pack('V', $parent_namespace_id & 0xFFFFFFFF)) . PHP_EOL);
-	print_r(bin2hex(pack('V', ($parent_namespace_id >> 32) & 0xFFFFFFFF)) . PHP_EOL);
-
 	hash_update($hasher,pack('V', $parent_namespace_id & 0xFFFFFFFF));
 	hash_update($hasher,pack('V', ($parent_namespace_id >> 32) & 0xFFFFFFFF));
 	hash_update($hasher,$name);
 
-	$result = hash_final($hasher,false);
-	$ar = unpack("C*", hex2bin($result));
+	$digest = unpack("C*", hex2bin(hash_final($hasher,false)));
+	$result = digest_to_bigint($digest);
 
-//	$h = dechex(hexbin($result)|$NAMESPACE_FLAG);
+	//85738c26eb1534a4c4a38decd175461e4624c0b4c61e021fb82f985eaae3d911 xembook
 
-	print_r($ar);
-//85738c26eb1534a4c4a38decd175461e4624c0b4c61e021fb82f985eaae3d911
-
-
-//	print_r(hexdec($result)|$NAMESPACE_FLAG);
-
-//	print_r(dechex(hex2bin($result)|$NAMESPACE_FLAG));
-
-
-
-	return dechex($result);
-
-
-/*
-	const hasher = sha3_256.create();
-	hasher.update(uint32ToBytes(Number(parentNamespaceId & 0xFFFFFFFFn)));
-	hasher.update(uint32ToBytes(Number((parentNamespaceId >> 32n) & 0xFFFFFFFFn)));
-	hasher.update(name);
-	const digest = new Uint8Array(hasher.digest());
-
-	const result = digestToBigInt(digest);
-	return result | NAMESPACE_FLAG;
-*/
-
-
-//	return 0;
+	return $result | $NAMESPACE_FLAG;
 }
 
 function generate_mosaic_id(){
 	return 0;
 }
 
-function convert_address_alias_id(){
-	return 0;
+function convert_address_alias_id($namespace_id){
+
+	return bin2hex(pack('P', $namespace_id)) . "000000000000000000000000000000";
+//	return buffer.Buffer.from(new BigInt64Array([namespaceId]).buffer).toString("hex") + "000000000000000000000000000000";
+
 }
 
 function uint32_to_bytes(){
 
 }
 
-function  digest_to_bigint(){
+function  digest_to_bigint($digest){
 
+	$result = 0;
+	for ($i = 0; $i < 8; $i++) {
+	    $result += $digest[$i + 1] << 8 * $i;
+	}
+	return $result;
 };
+
+
+/*
+const uint32ToBytes = value => new Uint8Array([
+	value & 0xFF,
+	(value >> 8) & 0xFF,
+	(value >> 16) & 0xFF,
+	(value >> 24) & 0xFF
+]);
+
+const digestToBigInt = digest => {
+	let result = 0n;
+	for (let i = 0; 8 > i; ++i)
+		result += (BigInt(digest[i]) << BigInt(8 * i));
+
+	return result;
+};
+*/
 
 
 ?>

@@ -13,7 +13,7 @@ class helper{
 
 	public	function get_payload($tx1){
 
-		generate_namespace_id("xembook");
+		generate_namespace_id("tomato",generate_namespace_id("xembook"));
 		$private_key = "94ee0f4d7fe388ac4b04a6a6ae2ba969617879b83616e4d25710d688a89d80c75f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb";
 	
 		$catjson = load_catjson($tx1,$this->network);
@@ -85,7 +85,26 @@ class test_0_1 extends \PHPUnit\Framework\TestCase {
 		);
 
 		//resolves 2 mosaic transfer by namespace
-		//TODO
+		$tx1 = [
+			"type" => "TRANSFER",
+			"signer_public_key" => "5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
+			"fee" => 25000,
+			"deadline" => $this->deadline_time,
+			"recipient_address" => convert_address_alias_id(generate_namespace_id("xembook")),
+			"mosaics" => [
+				["mosaic_id" =>  generate_namespace_id("tomato",generate_namespace_id("xembook")) , "amount" => 1],
+				["mosaic_id" =>  generate_namespace_id("xym",generate_namespace_id("symbol")) , "amount" => 100],
+			],
+			"message" => "Hello Tsunagi(Catjson) SDK!",
+		];
+
+		$payload = $helper->get_payload($tx1);
+		print_r($payload);
+
+		$this->assertEquals(
+			"dc00000000000000a1bcb56de796c45cd982e79748772cd9a616a084c95fc775a1d003b9f5f2dcbffa95e869e8a2d77873bbe3d26d5c2764e8299bded689037e4ede6095008cc2075f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb0000000001985441a86100000000000000dd6d00000000009985738c26eb1534a40000000000000000000000000000001c00020000000000eeaff441ba994be764000000000000003164838cd27f54fa01000000000000000048656c6c6f205473756e616769284361746a736f6e292053444b21"
+			, $payload
+		);
 
 		//resolves opposite mosaice order
 		$tx1 = [
