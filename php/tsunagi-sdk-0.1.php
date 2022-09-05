@@ -341,6 +341,8 @@ function parse_transaction($tx,$layout,$catjson,$network) {
 	} );
 
 	if(isset($layer_size) && isset($layer_size[0]["size"])){
+
+		//print_r($parsed_tx);
 		$parsed_tx[array_keys($layer_size)[0]]["value"] = count_size($parsed_tx);
 	}
 	return $parsed_tx;
@@ -348,7 +350,6 @@ function parse_transaction($tx,$layout,$catjson,$network) {
 
 //サイズ計算
 function count_size($item,$alignment = 0) {
-
 	$total_size = 0;
 	
 	//レイアウトサイズの取得

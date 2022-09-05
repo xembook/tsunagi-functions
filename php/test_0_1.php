@@ -58,6 +58,7 @@ class test_0_1 extends \PHPUnit\Framework\TestCase {
 		$this->deadline_time = ((intval($now/1000)  + 7200) - 1637848847) * 1000;
 	}
 
+/*
 	public function testTransfer(){
 
 		$helper = new helper($this->network);
@@ -527,20 +528,18 @@ class test_0_1 extends \PHPUnit\Framework\TestCase {
 			, $payload
 		);	
 	}
-
+*/
 	public function testAggregateBoded(){
 
 		$helper = new helper($this->network);
 
-		//resolves undefined message and null mosaic
+		//resolves hash lock
 		$tx1 = [
 			"type" => "HASH_LOCK",
 			"signer_public_key" => "5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
 			"fee" => 25000,
 			"deadline" => $this->deadline_time,
-			"mosaics" => [
-				["mosaic_id" =>  0x3A8416DB2D53B6C8, "amount" => 10000000],
-			],
+			"mosaic" => [["mosaic_id" =>  0x3A8416DB2D53B6C8, "amount" => 10000000]],
 			"duration" =>  480,
 			"hash" => "a3ed27ee26592f6c501349a7de3427fc729e8d625ed214a6331c11b981f59f78"
 
@@ -555,7 +554,182 @@ class test_0_1 extends \PHPUnit\Framework\TestCase {
 		);
 
 
+		//resolves hash lock by aggregate
+		$tx1 = [
+			"type" => "HASH_LOCK",
+			"signer_public_key" => "5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
+			"mosaic" => [["mosaic_id" =>  0x3A8416DB2D53B6C8, "amount" => 10000000]],
+			"duration" =>  480,
+			"hash" => "4ecd6d1830d46f21d03906885a25c30d6df48418746105201a77dad65287985c"
 
+		];
+
+		$agg_tx = [
+			"type" => 'AGGREGATE_COMPLETE',
+			"signer_public_key" => "5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
+			"fee" => 1000000,
+			"deadline" => $this->deadline_time,
+			"transactions" => [$tx1],
+		];
+
+		$payload = $helper->get_payload($agg_tx);
+		print_r($payload);
+
+		$this->assertEquals(
+			"1001000000000000c2941402f941376e3b58c9931c45cd768334fe6ac65e9b746fe484e8ec8067795f5ba4b895ff582395a5d74e8f79a861c6239495b3b38e6215d9d9eef699ac055f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb000000000198414140420f000000000000dd6d000000000064b515ba0d874c0e0db27687514491d0bb74969cb82b767dde37a0b330a9f3ee680000000000000068000000000000005f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb0000000001984841c8b6532ddb16843a8096980000000000e0010000000000004ecd6d1830d46f21d03906885a25c30d6df48418746105201a77dad65287985c"
+			, $payload
+		);
+
+		//resolves 3 account transfer
+
+		//Alice->Bob
+		$tx1 = [
+			"type" => "TRANSFER",
+			"signer_public_key" => "5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
+			"recipient_address" => bin2hex(Base32::decode("TCO7HLVDQUX6V7C737BCM3VYJ3MKP6REE2EKROA")),
+			"mosaics" => [
+				["mosaic_id" =>  0x2A09B7F9097934C2, "amount" => 1],
+				["mosaic_id" =>  0x3A8416DB2D53B6C8, "amount" => 100],
+			],
+			"message" => "Hello Tsunagi(Catjson) SDK!",
+		];
+
+		//Bob->Caroll
+		$tx2 = [
+			"type" => "TRANSFER",
+			"signer_public_key" => "6199bae3b241df60418e258d046c22c8c1a5de2f4f325753554e7fd9c650afec",
+			"recipient_address" => bin2hex(Base32::decode("TDZBCWHAVA62R4JFZJJUXQWXLIRTUK5KZHFR5AQ")),
+			"mosaics" => [
+				["mosaic_id" =>  0x3A8416DB2D53B6C8, "amount" => 100],
+				["mosaic_id" =>  0x2A09B7F9097934C2, "amount" => 1],
+			],
+			"message" => "Hello Carol! This is Bob.",
+		];
+
+		//Caroll->Alice
+		$tx3 = [
+			"type" => "TRANSFER",
+			"signer_public_key" => "886adfbd4213576d63ea7e7a4bece61c6933c27cd2ff36f85155c8febfb6eb4e",
+			"recipient_address" => bin2hex(Base32::decode("TBUXMJAYYW3EH3XHBZXSBVGVKXKZS4EH26TINKI")),
+			"mosaics" => [
+				["mosaic_id" =>  0x3A8416DB2D53B6C8, "amount" => 100],
+				["mosaic_id" =>  0x2A09B7F9097934C2, "amount" => 1],
+			],
+			"message" => "Hello Alice, This is Carol.",
+		];
+
+
+		$agg_tx = [
+			"type" => 'AGGREGATE_BONDED',
+			"signer_public_key" => "5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
+			"fee" => 1000000,
+			"deadline" => $this->deadline_time,
+			"transactions" => [$tx1,$tx2,$tx3],
+
+		];
+
+		$catjson = load_catjson($agg_tx,$this->network);
+		$layout = load_layout($agg_tx,$catjson,false); //isEmbedded false
+		$prepared_tx = prepare_transaction($agg_tx,$layout,$this->network); //TX事前準備
+		$parsed_tx = parse_transaction($prepared_tx,$layout,$catjson,$this->network);
+		$built_tx    = build_transaction($parsed_tx); //TX構築
+		$private_key = "94ee0f4d7fe388ac4b04a6a6ae2ba969617879b83616e4d25710d688a89d80c75f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb";
+		$signature = sign_transaction($built_tx,$private_key,$this->network);
+		$built_tx = update_transaction($built_tx,"signature","value",$signature);
+		$tx_hash = hash_transaction($agg_tx["signer_public_key"],$signature,$built_tx,$this->network);
+		$payload = hexlify_transaction($built_tx);
+		print_r($payload . PHP_EOL);
+
+		$this->assertEquals(
+			"5802000000000000ffd1ebcc029c4997d904586292aa1aab8c87e992cd736c074d639419aeae7adc82ce4782f1276f2504b0c4548777dd48616754205c7741af5b2a248f89b4c4035f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb000000000198414240420f000000000000dd6d0000000000ae67220a53b24a241f2da951ba6cfe044aedc42a0afb5f2742c5a454e3c9c6e1b0010000000000008c000000000000005f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb0000000001985441989df3aea3852feafc5fdfc2266eb84ed8a7fa242688a8b81c00020000000000c2347909f9b7092a0100000000000000c8b6532ddb16843a64000000000000000048656c6c6f205473756e616769284361746a736f6e292053444b21000000008a000000000000006199bae3b241df60418e258d046c22c8c1a5de2f4f325753554e7fd9c650afec000000000198544198f21158e0a83da8f125ca534bc2d75a233a2baac9cb1e821a00020000000000c2347909f9b7092a0100000000000000c8b6532ddb16843a64000000000000000048656c6c6f204361726f6c21205468697320697320426f622e0000000000008c00000000000000886adfbd4213576d63ea7e7a4bece61c6933c27cd2ff36f85155c8febfb6eb4e00000000019854419869762418c5b643eee70e6f20d4d555d5997087d7a686a91c00020000000000c2347909f9b7092a0100000000000000c8b6532ddb16843a64000000000000000048656c6c6f20416c6963652c2054686973206973204361726f6c2e00000000"
+			, $payload
+		);
+
+		//resolves 3 account transfer partial complete
+
+		//Alice->Bob
+		$tx1 = [
+			"type" => "TRANSFER",
+			"signer_public_key" => "5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
+			"recipient_address" => bin2hex(Base32::decode("TCO7HLVDQUX6V7C737BCM3VYJ3MKP6REE2EKROA")),
+			"mosaics" => [
+				["mosaic_id" =>  0x2A09B7F9097934C2, "amount" => 1],
+				["mosaic_id" =>  0x3A8416DB2D53B6C8, "amount" => 100],
+			],
+			"message" => "Hello Tsunagi(Catjson) SDK!",
+		];
+
+		//Bob->Caroll
+		$tx2 = [
+			"type" => "TRANSFER",
+			"signer_public_key" => "6199bae3b241df60418e258d046c22c8c1a5de2f4f325753554e7fd9c650afec",
+			"recipient_address" => bin2hex(Base32::decode("TDZBCWHAVA62R4JFZJJUXQWXLIRTUK5KZHFR5AQ")),
+			"mosaics" => [
+				["mosaic_id" =>  0x3A8416DB2D53B6C8, "amount" => 100],
+				["mosaic_id" =>  0x2A09B7F9097934C2, "amount" => 1],
+			],
+			"message" => "Hello Carol! This is Bob.",
+		];
+
+		//Caroll->Alice
+		$tx3 = [
+			"type" => "TRANSFER",
+			"signer_public_key" => "886adfbd4213576d63ea7e7a4bece61c6933c27cd2ff36f85155c8febfb6eb4e",
+			"recipient_address" => bin2hex(Base32::decode("TBUXMJAYYW3EH3XHBZXSBVGVKXKZS4EH26TINKI")),
+			"mosaics" => [
+				["mosaic_id" =>  0x3A8416DB2D53B6C8, "amount" => 100],
+				["mosaic_id" =>  0x2A09B7F9097934C2, "amount" => 1],
+			],
+			"message" => "Hello Alice, This is Carol.",
+		];
+
+		$cosignature1 = [
+			"version" => 0,
+			"signer_public_key" =>"6199bae3b241df60418e258d046c22c8c1a5de2f4f325753554e7fd9c650afec",
+			"signature"=>"",
+		];
+
+		$agg_tx = [
+			"type" => 'AGGREGATE_BONDED',
+			"signer_public_key" => "5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
+			"fee" => 1000000,
+			"deadline" => $this->deadline_time,
+			"transactions" => [$tx1,$tx2,$tx3],
+			"cosignatures" => [$cosignature1]
+
+		];
+
+		$catjson = load_catjson($agg_tx,$this->network);
+		$layout = load_layout($agg_tx,$catjson,false); //isEmbedded false
+		$prepared_tx = prepare_transaction($agg_tx,$layout,$this->network); //TX事前準備
+		$parsed_tx = parse_transaction($prepared_tx,$layout,$catjson,$this->network);
+		$built_tx    = build_transaction($parsed_tx); //TX構築
+		$private_key = "94ee0f4d7fe388ac4b04a6a6ae2ba969617879b83616e4d25710d688a89d80c75f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb";
+		$signature = sign_transaction($built_tx,$private_key,$this->network);
+		$built_tx = update_transaction($built_tx,"signature","value",$signature);
+
+		$tx_hash = hash_transaction($agg_tx["signer_public_key"],$signature,$built_tx,$this->network);
+
+		//連署
+		$bob_private_key = "fa6373f4f497773c5cc55c103e348b139461d61fd4b45387e69d08a68000e06b6199BAE3B241DF60418E258D046C22C8C1A5DE2F4F325753554E7FD9C650AFEC";
+
+		$prepared_tx["cosignatures"][0]["signature"] = cosign_transaction($tx_hash,$bob_private_key);
+
+		$filter_layout = array_filter($layout,function($fl){
+			return $fl["name"] === "cosignatures";
+		});
+		$cosignatures_layout = array_values($filter_layout);
+
+		$parsed_cosignatures = parse_transaction($prepared_tx,$cosignatures_layout,$catjson,$this->network); //連署TXの構築
+		$built_tx = update_transaction($built_tx,"cosignatures","layout",$parsed_cosignatures[0]["layout"]);
+
+		$payload = hexlify_transaction($built_tx);
+		print_r($payload . PHP_EOL);
+
+		$this->assertEquals(
+			"c002000000000000ffd1ebcc029c4997d904586292aa1aab8c87e992cd736c074d639419aeae7adc82ce4782f1276f2504b0c4548777dd48616754205c7741af5b2a248f89b4c4035f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb000000000198414240420f000000000000dd6d0000000000ae67220a53b24a241f2da951ba6cfe044aedc42a0afb5f2742c5a454e3c9c6e1b0010000000000008c000000000000005f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb0000000001985441989df3aea3852feafc5fdfc2266eb84ed8a7fa242688a8b81c00020000000000c2347909f9b7092a0100000000000000c8b6532ddb16843a64000000000000000048656c6c6f205473756e616769284361746a736f6e292053444b21000000008a000000000000006199bae3b241df60418e258d046c22c8c1a5de2f4f325753554e7fd9c650afec000000000198544198f21158e0a83da8f125ca534bc2d75a233a2baac9cb1e821a00020000000000c2347909f9b7092a0100000000000000c8b6532ddb16843a64000000000000000048656c6c6f204361726f6c21205468697320697320426f622e0000000000008c00000000000000886adfbd4213576d63ea7e7a4bece61c6933c27cd2ff36f85155c8febfb6eb4e00000000019854419869762418c5b643eee70e6f20d4d555d5997087d7a686a91c00020000000000c2347909f9b7092a0100000000000000c8b6532ddb16843a64000000000000000048656c6c6f20416c6963652c2054686973206973204361726f6c2e0000000000000000000000006199bae3b241df60418e258d046c22c8c1a5de2f4f325753554e7fd9c650afecbdde1c296d3e2e82bb1ae878586f832aa59080290b0f095f7e8d73921b6d2f67742e4588795f41b652500fdc1230ce4f45d2099fe37e182ebbe0f86121336e03"
+			, $payload
+		);
 
 	}
 
