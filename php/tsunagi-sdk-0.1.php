@@ -602,8 +602,28 @@ function generate_namespace_id($name, $parent_namespace_id = 0){
 	return $result | $NAMESPACE_FLAG;
 }
 
-function generate_mosaic_id(){
-	return 0;
+function generate_mosaic_id($owner_address, $nonce){
+
+	$NAMESPACE_FLAG = 1 << 63;
+
+	$hasher = hash_init('sha3-256');
+	hash_update($hasher,pack('V', $nonce));
+	hash_update($hasher,$owner_address);
+	$digest = unpack("C*", hex2bin(hash_final($hasher,false)));
+
+	$result = digest_to_bigint($digest);
+	print_r("==========" . PHP_EOL);
+	print_r($result);
+	print_r("==========" . PHP_EOL);
+
+	if ($result & $NAMESPACE_FLAG){
+		$result -= $NAMESPACE_FLAG;
+	}
+
+	print_r("==========" . PHP_EOL);
+	print_r($result);
+	print_r("==========" . PHP_EOL);
+	return $result;
 }
 
 function convert_address_alias_id($namespace_id){
