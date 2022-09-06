@@ -728,16 +728,213 @@ class test_0_1 extends \PHPUnit\Framework\TestCase {
 			"96000000000000008400ea1dd86f206c946ae4aacfdd2d9997ceb406028e3d3e67e0b20a2a0dae696d9084f7f38f64c56450a3d6cd305722cb37d60b462358bbe23b5d8e155a3f0f5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb0000000001984d41a86100000000000000dd6d000000000076e65d50e5fbaf4d000000000000000099b560650602"
 			, $payload
 		);
+
+		//resolves mosaic supply change
+
+		$tx1 = [
+			"type" => "MOSAIC_SUPPLY_CHANGE",
+			"signer_public_key" => "5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
+			"fee" => 25000,
+			"deadline" => $this->deadline_time,
+			"mosaic_id" => generate_mosaic_id(Base32::decode("TBUXMJAYYW3EH3XHBZXSBVGVKXKZS4EH26TINKI"),$nonce),
+			"delta" => 1000 * 100,
+			"action" => 'INCREASE',
+		];
+
+		$payload = $helper->get_payload($tx1);
+		print_r($payload);
+
+		$this->assertEquals(
+			"9100000000000000cbec54081f0a62d5c5f84748df4668670fad447b53b44062e58d5cab054a2c8bcd8ab13533231825eda6156d4c73ba98978eccb011b0107f9bc9a0f071888e035f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb0000000001984d42a86100000000000000dd6d000000000076e65d50e5fbaf4da08601000000000001"
+			, $payload
+		);
+
+
+		//resolves aggregate mosaic definition and supply change
+		$tx1 = [
+			"type" => "MOSAIC_DEFINITION",
+			"signer_public_key" => "5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
+			"duration" => 0,
+			"id" => generate_mosaic_id(Base32::decode("TBUXMJAYYW3EH3XHBZXSBVGVKXKZS4EH26TINKI"),$nonce),
+			"nonce" => $nonce,
+			"flags" => 'TRANSFERABLE RESTRICTABLE',
+			"divisibility" => 2,
+		];
+
+		$tx2 = [
+			"type" => "MOSAIC_SUPPLY_CHANGE",
+			"signer_public_key" => "5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
+			"duration" => 0,
+			"mosaic_id" => generate_mosaic_id(Base32::decode("TBUXMJAYYW3EH3XHBZXSBVGVKXKZS4EH26TINKI"),$nonce),
+			"delta" => 1000 * 100,
+			"action" => 'INCREASE',
+		];
+
+		$agg_tx = [
+			"type" => 'AGGREGATE_COMPLETE',
+			"signer_public_key" => "5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
+			"fee" => 1000000,
+			"deadline" => $this->deadline_time,
+			"transactions" => [$tx1,$tx2],
+
+		];
+
+		$payload = $helper->get_payload($agg_tx);
+		print_r($payload);
+
+		$this->assertEquals(
+			"3801000000000000c4b2ea423fd6eaa69407fb261cdb09b3d039923ad15a120ad1f1da61bcfd69db9b71cddc0bff730b3cd1b421b35f8cbc87a4765a204412b5efc34e221d50b20a5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb000000000198414140420f000000000000dd6d0000000000fc4405540b555f4dde5dc4ce67daeaf207e5485d8da24d5cfd6bf71fa064c9a5900000000000000046000000000000005f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb0000000001984d4176e65d50e5fbaf4d000000000000000099b560650602000041000000000000005f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb0000000001984d4276e65d50e5fbaf4da0860100000000000100000000000000"
+			, $payload
+		);
 	}
 
 	public function testNamespace(){
 		$helper = new helper($this->network);
-		$this->markTestIncomplete();
+
+		//resolves root namespace regisration
+		$tx1 = [
+			"type" => "NAMESPACE_REGISTRATION",
+			"signer_public_key" => "5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
+			"fee" => 25000,
+			"deadline" => $this->deadline_time,
+			"duration" => 86400,
+			"registration_type" => "ROOT",
+			"name" => "xembook",
+			"id" => generate_namespace_id("xembook"),
+		];
+
+		$payload = $helper->get_payload($tx1);
+		print_r($payload);
+
+		$this->assertEquals(
+			"99000000000000003983d675dd3affcab71fb09ee51cbddd4e8ee587335e030472dd50370333266ad571c4c94410262c7bb2ecc99b2b4b8eab71245046f41518d52ef6d5355792055f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb0000000001984e41a86100000000000000dd6d0000000000805101000000000085738c26eb1534a4000778656d626f6f6b"
+			, $payload
+		);
+
+
+		//resolves sub namespace regisration
+		$tx1 = [
+			"type" => "NAMESPACE_REGISTRATION",
+			"signer_public_key" => "5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
+			"fee" => 25000,
+			"deadline" => $this->deadline_time,
+			"parent_id" => generate_namespace_id("xembook"),
+			"registration_type" => "CHILD",
+			"name" => "tomato",
+			"id" => generate_namespace_id("tomato",generate_namespace_id("xembook")),
+		];
+
+		$payload = $helper->get_payload($tx1);
+		print_r($payload);
+
+		$this->assertEquals(
+			"9800000000000000942e0fe89a3471a075f2cbd06cc64d4d8af5cd8e58c437aa39fa05e47bb9230c9a259d9da70279c8656749792310585b138e19889b3b41e7e01c14a4cbea1b025f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb0000000001984e41a86100000000000000dd6d000000000085738c26eb1534a43164838cd27f54fa0106746f6d61746f"
+			, $payload
+		);
+
+		//resolves address alias
+		$tx1 = [
+			"type" => "ADDRESS_ALIAS",
+			"signer_public_key" => "5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
+			"fee" => 25000,
+			"deadline" => $this->deadline_time,
+			"namespace_id" => generate_namespace_id("xembook"),
+			"address" => bin2hex(Base32::decode("TBUXMJAYYW3EH3XHBZXSBVGVKXKZS4EH26TINKI")),
+			"alias_action" => "LINK"
+		];
+
+		$payload = $helper->get_payload($tx1);
+		print_r($payload);
+
+		$this->assertEquals(
+			"a1000000000000008f61856b455c0a57db652844aa761281c019511d7b0cd0ae9b54e4b22585f36f012116860ce9f5300fe0e91521be74d8434032bf73e008b2f52d5f0744ef13045f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb0000000001984e42a86100000000000000dd6d000000000085738c26eb1534a49869762418c5b643eee70e6f20d4d555d5997087d7a686a901"
+			, $payload
+		);
+
+		//resolves address alias
+		$tx1 = [
+			"type" => "MOSAIC_ALIAS",
+			"signer_public_key" => "5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
+			"fee" => 25000,
+			"deadline" => $this->deadline_time,
+			"namespace_id" => generate_namespace_id("tomato",generate_namespace_id("xembook")),
+			"mosaic_id" => 0x4DAFFBE5505DE676,
+			"alias_action" => "LINK"
+		];
+
+		$payload = $helper->get_payload($tx1);
+		print_r($payload);
+
+		$this->assertEquals(
+			"910000000000000041f45e3bbbc8073c14b6e05b71fa9299692d1eafc86300b59698207ef044c7db8e346870c57df722497803549e2e3f8d5777c5e1c98fdf27a562d814076acc035f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb0000000001984e43a86100000000000000dd6d00000000003164838cd27f54fa76e65d50e5fbaf4d01"
+			, $payload
+		);
 	}
 
 	public function testMetadata(){
 		$helper = new helper($this->network);
-		$this->markTestIncomplete();
+
+		//resolves mosaic metadata
+		//Alice->Bob
+		$tx1 = [
+			"type" => "MOSAIC_METADATA",
+			"signer_public_key" => "5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
+			"target_address" => bin2hex(Base32::decode("TBUXMJAYYW3EH3XHBZXSBVGVKXKZS4EH26TINKI")),
+			"target_mosaic_id" => 0x4DAFFBE5505DE676,
+			"scoped_metadata_key" => generate_key("key_mosaic"),
+			"value_size_delta" => 27,
+			"value" => "Hello Tsunagi(Catjson) SDK!",
+		];
+
+
+		$agg_tx = [
+			"type" => 'AGGREGATE_COMPLETE',
+			"signer_public_key" => "5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
+			"fee" => 1000000,
+			"deadline" => $this->deadline_time,
+			"transactions" => [$tx1],
+		];
+
+		$payload = $helper->get_payload($agg_tx);
+		print_r($payload);
+
+		$this->assertEquals(
+			"2001000000000000b6c125c94aed659dc1346151d03e72552dfe57c6882baa924310f3cddea39c2387bf238aba046b6a7a2f849802b38bb5f046de6b455e60a2fbaa5f22eb4d53005f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb000000000198414140420f000000000000dd6d0000000000eadc97a286bf8081b523c4d246cf6ca05f208835b82e1f97ad978a2d638386a2780000000000000077000000000000005f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb00000000019844429869762418c5b643eee70e6f20d4d555d5997087d7a686a9e222a46a117e21cf76e65d50e5fbaf4d1b001b0048656c6c6f205473756e616769284361746a736f6e292053444b2100"
+			, $payload
+		);
+
+		//resolves mosaic metadata without aggregate
+		$tx1 = [
+			"type" => "MOSAIC_METADATA",
+			"signer_public_key" => "5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
+			"fee" => 1000000,
+			"deadline" => $this->deadline_time,
+			"target_address" => bin2hex(Base32::decode("TBUXMJAYYW3EH3XHBZXSBVGVKXKZS4EH26TINKI")),
+			"target_mosaic_id" => 0x4DAFFBE5505DE676,
+			"scoped_metadata_key" => generate_key("key_mosaic"),
+			"value_size_delta" => 27,
+			"value" => "Hello Tsunagi(Catjson) SDK!",
+
+		];
+
+		$payload = $helper->get_payload($tx1);
+		print_r($payload);
+
+		$this->assertEquals(
+			"c700000000000000dc5ff39f1dc61eb4500f2d19dec8bc36f03dffcb65504e906e6f6e6eecb71022b9e88993f4f55de53ba969563ad48be7fb718aaf1021617a1fa6324814f9b0045f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb000000000198444240420f000000000000dd6d00000000009869762418c5b643eee70e6f20d4d555d5997087d7a686a9e222a46a117e21cf76e65d50e5fbaf4d1b001b0048656c6c6f205473756e616769284361746a736f6e292053444b21"
+			, $payload
+		);
+
+		//resolves namespace metadata
+
+
+
+
+
+
+
+
+//		$this->markTestIncomplete();
 	}
 
 	public function testMultisig(){
