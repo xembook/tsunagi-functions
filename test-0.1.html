@@ -394,9 +394,9 @@ describe('tsunagi-sdk.0.1',() => {
 
 	}); // aggregate complete transaction
 
-	describe('aggregate bonded transaction', () => {
+	xdescribe('aggregate bonded transaction', () => {
 
-		xit('resolves hash lock', async () => {
+		it('resolves hash lock', async () => {
 
 			let tx1 = {
 				type:'HASH_LOCK',
@@ -459,7 +459,7 @@ describe('tsunagi-sdk.0.1',() => {
 
 		});
 
-		xit('resolves 3 account transfer', async () => {
+		it('resolves 3 account transfer', async () => {
 
 
 			//Alice->Bob
@@ -529,7 +529,7 @@ describe('tsunagi-sdk.0.1',() => {
 		});
 
 
-		xit('resolves 3 account transfer partial complete', async () => {
+		it('resolves 3 account transfer partial complete', async () => {
 
 
 			//Alice->Bob
@@ -966,7 +966,56 @@ describe('tsunagi-sdk.0.1',() => {
 			);
 		});
 
+		it('resolves namespace by aggregate', async () => {
 
+			let tx1 = {
+				type:'NAMESPACE_REGISTRATION',
+				signer_public_key:"5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
+				duration: 86400n,
+				registration_type: "ROOT",
+				name:"xembook1",
+				id:generateNamespaceId("xembook1") //0xA43415EB268C7385n, //BigInt((new sym.NamespaceId("xembook")).id.toString())
+			}
+
+			let tx2 = {
+				type:'NAMESPACE_REGISTRATION',
+				signer_public_key:"5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
+				parent_id: generateNamespaceId("xembook1"), //0xA43415EB268C7385n, //BigInt((new sym.NamespaceId("xembook")).id.toString())
+				registration_type: "CHILD",
+				name:"tomato1",
+				id:generateNamespaceId("tomato1",generateNamespaceId("xembook1")) //0xFA547FD28C836431n, //BigInt((new sym.NamespaceId("xembook.tomato")).id.toString())
+			}
+
+			let tx3 = {
+				type:'ADDRESS_ALIAS',
+				signer_public_key:"5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
+				namespace_id:generateNamespaceId("xembook1"), //0xA43415EB268C7385n, //BigInt((new sym.NamespaceId("xembook")).id.toString()),
+				address:generateAddressId("TBUXMJAYYW3EH3XHBZXSBVGVKXKZS4EH26TINKI"),
+				alias_action:"LINK"
+			}
+
+			let tx4 = {
+				type:'MOSAIC_ALIAS',
+				signer_public_key:"5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
+				namespace_id:generateNamespaceId("tomato1",generateNamespaceId("xembook1")), //0xFA547FD28C836431n, //BigInt((new sym.NamespaceId("xembook.tomato")).id.toString())
+				mosaic_id:0x4DAFFBE5505DE676n,
+				alias_action:"LINK"
+			}
+
+
+			let aggTx = {
+				type:'AGGREGATE_COMPLETE',
+				signer_public_key:"5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
+				fee:1000000n,
+				deadline:this.deadline,
+				transactions:[tx1,tx2,tx3,tx4],
+			}
+
+			expect(await this.getPayload(aggTx))
+			.toEqual(
+				"e801000000000000989f5f8a026d6e5c45301ce06af70406bd9c3694604a9e0718c3bac4dff9b95494d397210817139ebf43306a7bb43242e200afc4205b9a3cb439ffb1e2a14c015f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb000000000198414140420f000000000000dd6d0000000000de415866cedcab9dda7baa97b5bb326ad2647bfafe69d8b3587a789bff9d073c40010000000000004a000000000000005f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb0000000001984e418051010000000000bd1cf9801594b9ed000878656d626f6f6b3100000000000049000000000000005f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb0000000001984e41bd1cf9801594b9edf47e2f57b78ec1920107746f6d61746f310000000000000051000000000000005f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb0000000001984e42bd1cf9801594b9ed9869762418c5b643eee70e6f20d4d555d5997087d7a686a9010000000000000041000000000000005f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb0000000001984e43f47e2f57b78ec19276e65d50e5fbaf4d0100000000000000"
+			);
+		});
 	});
 	
 	xdescribe('metadata transaction', () => {
@@ -982,7 +1031,6 @@ describe('tsunagi-sdk.0.1',() => {
 				value:"Hello Tsunagi(Catjson) SDK!",
 			}
 
-
 			let aggTx = {
 				type:'AGGREGATE_COMPLETE',
 				signer_public_key:"5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
@@ -991,24 +1039,7 @@ describe('tsunagi-sdk.0.1',() => {
 				transactions:[tx1],
 			}
 
-			let catjson = await loadCatjson(aggTx,this.network);
-			let layout = await loadLayout(aggTx,catjson,false); //isEmbedded false
-
-			let preparedTx = await prepareTransaction(aggTx,layout,this.network); //TX事前準備
-			let parsedTx   = await parseTransaction(preparedTx,layout,catjson,this.network); //TX解析
-			let builtTx    = buildTransaction(parsedTx); //TX構築
-
-			let signature = signTransaction(builtTx,this.privateKey,this.network);
-			builtTx = updateTransaction(builtTx,"signature","value",signature);
-
-			//トランザクションハッシュ作成
-			let txHash = hashTransaction(aggTx.signer_public_key,signature,builtTx,this.network);
-
-			let payload = hexlifyTransaction(builtTx);
-			console.log(payload);
-			console.log(txHash)
-
-			expect(payload)
+			expect(await this.getPayload(aggTx))
 			.toEqual(
 				"1801000000000000f6f159ba7929828c37c4c81987ffe73709c9cbf5c4139827236d780c0ce3d6cfae5d9d76619055ca31caeed995da7aafba3a2635da58af8820d6127fc1f96d025f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb000000000198414140420f000000000000dd6d0000000000765f150d97dd08f64258c5632403090fd6f36e7d4845b7d9c0a24c1c320e9b2b70000000000000006f000000000000005f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb00000000019844419869762418c5b643eee70e6f20d4d555d5997087d7a686a9d72781051bb772971b001b0048656c6c6f205473756e616769284361746a736f6e292053444b2100"
 			);
@@ -1057,29 +1088,11 @@ describe('tsunagi-sdk.0.1',() => {
 				transactions:[tx1],
 			}
 
-			let catjson = await loadCatjson(aggTx,this.network);
-			let layout = await loadLayout(aggTx,catjson,false); //isEmbedded false
-
-			let preparedTx = await prepareTransaction(aggTx,layout,this.network); //TX事前準備
-			let parsedTx   = await parseTransaction(preparedTx,layout,catjson,this.network); //TX解析
-			let builtTx    = buildTransaction(parsedTx); //TX構築
-
-			let signature = signTransaction(builtTx,this.privateKey,this.network);
-			builtTx = updateTransaction(builtTx,"signature","value",signature);
-
-			//トランザクションハッシュ作成
-			let txHash = hashTransaction(aggTx.signer_public_key,signature,builtTx,this.network);
-
-			let payload = hexlifyTransaction(builtTx);
-			console.log(payload);
-			console.log(txHash)
-
-			expect(payload)
+			expect(await this.getPayload(aggTx))
 			.toEqual(
 				"2001000000000000b6c125c94aed659dc1346151d03e72552dfe57c6882baa924310f3cddea39c2387bf238aba046b6a7a2f849802b38bb5f046de6b455e60a2fbaa5f22eb4d53005f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb000000000198414140420f000000000000dd6d0000000000eadc97a286bf8081b523c4d246cf6ca05f208835b82e1f97ad978a2d638386a2780000000000000077000000000000005f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb00000000019844429869762418c5b643eee70e6f20d4d555d5997087d7a686a9e222a46a117e21cf76e65d50e5fbaf4d1b001b0048656c6c6f205473756e616769284361746a736f6e292053444b2100"
 			);
 		});
-
 
 		it('resolves mosaic metadata without aggregate', async () => {
 			//ResourceNotFound
@@ -1101,7 +1114,6 @@ describe('tsunagi-sdk.0.1',() => {
 				"c700000000000000dc5ff39f1dc61eb4500f2d19dec8bc36f03dffcb65504e906e6f6e6eecb71022b9e88993f4f55de53ba969563ad48be7fb718aaf1021617a1fa6324814f9b0045f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb000000000198444240420f000000000000dd6d00000000009869762418c5b643eee70e6f20d4d555d5997087d7a686a9e222a46a117e21cf76e65d50e5fbaf4d1b001b0048656c6c6f205473756e616769284361746a736f6e292053444b21"
 			);
 		});
-
 
 		it('resolves namespace metadata', async () => {
 
@@ -1125,29 +1137,11 @@ describe('tsunagi-sdk.0.1',() => {
 				transactions:[tx1],
 			}
 
-			let catjson = await loadCatjson(aggTx,this.network);
-			let layout = await loadLayout(aggTx,catjson,false); //isEmbedded false
-
-			let preparedTx = await prepareTransaction(aggTx,layout,this.network); //TX事前準備
-			let parsedTx   = await parseTransaction(preparedTx,layout,catjson,this.network); //TX解析
-			let builtTx    = buildTransaction(parsedTx); //TX構築
-
-			let signature = signTransaction(builtTx,this.privateKey,this.network);
-			builtTx = updateTransaction(builtTx,"signature","value",signature);
-
-			//トランザクションハッシュ作成
-			let txHash = hashTransaction(aggTx.signer_public_key,signature,builtTx,this.network);
-
-			let payload = hexlifyTransaction(builtTx);
-			console.log(payload);
-			console.log(txHash)
-
-			expect(payload)
+			expect(await this.getPayload(aggTx))
 			.toEqual(
 				"2001000000000000b80a6851320a00db3e505516813106f3190fbbd349266667373faf85cdd370cec50c3224c8110c62147a3bffb7be8b1bc09aec7d7701bc15299b45c18ddd70015f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb000000000198414140420f000000000000dd6d0000000000accdb81d64d2626a79d546a2380171879f39beecc9b314805ca9b5a0d2b547e4780000000000000077000000000000005f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb00000000019844439869762418c5b643eee70e6f20d4d555d5997087d7a686a9d9d07308378a6a8b85738c26eb1534a41b001b0048656c6c6f205473756e616769284361746a736f6e292053444b2100"
 			);
 		});
-
 
 		it('resolves namespace metadata without aggregate', async () => {
 			//ResourceNotFound
@@ -1172,7 +1166,7 @@ describe('tsunagi-sdk.0.1',() => {
 
 	});
 
-	xdescribe('multisig transaction', () => {
+	describe('multisig transaction', () => {
 	
 
 		it('resolves multisig account modification address_additions', async () => {
@@ -1240,7 +1234,7 @@ describe('tsunagi-sdk.0.1',() => {
 			);
 		});
 
-		it('resolves multisig account modification change delta', async () => {
+		xit('resolves multisig account modification change delta', async () => {
 
 			let tx1 = {
 				type:'MULTISIG_ACCOUNT_MODIFICATION',
@@ -1280,7 +1274,7 @@ describe('tsunagi-sdk.0.1',() => {
 			);
 		});
 
-		it('resolves multisig account modification address_deletions', async () => {
+		xit('resolves multisig account modification address_deletions', async () => {
 
 			let tx1 = {
 				type:'MULTISIG_ACCOUNT_MODIFICATION',
@@ -1339,7 +1333,7 @@ describe('tsunagi-sdk.0.1',() => {
 		});
 
 
-		it('resolves multisig account modification address_deletions 2', async () => {
+		xit('resolves multisig account modification address_deletions 2', async () => {
 
 			let tx1 = {
 				type:'MULTISIG_ACCOUNT_MODIFICATION',
