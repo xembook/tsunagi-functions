@@ -182,8 +182,11 @@ function parse_transaction($tx,$layout,$catjson,$network) {
 			continue;
 
 		}else if($layer_type === "UnresolvedAddress"){
+
+
+
 			//アドレスに30個の0が続く場合はネームスペースとみなします。
-			if(strpos($tx[$layer["name"]],'000000000000000000000000000000') !== false){
+			if(isset($tx[$layer["name"]]) && !is_array($tx[$layer["name"]]) && strpos($tx[$layer["name"]],'000000000000000000000000000000') !== false){
 
 				$filter_value = array_filter($catjson, function($cj){
 					return $cj["name"] === "NetworkType";
@@ -272,15 +275,15 @@ function parse_transaction($tx,$layout,$catjson,$network) {
 				$items = [];
 				foreach($tx[$layer["name"]] as $tx_item){
 
-					$tx_layer = array_filter($catjson, function($cj) use($layer_type){
+					$filter_layer = array_filter($catjson, function($cj) use($layer_type){
 						return $cj["name"] === $layer_type;
 					});
-
+					$tx_layer = array_values($filter_layer)[0];
 					$tx_layer["value"] = $tx_item;
 					
 					if($layer_type === "UnresolvedAddress"){
 						//アドレスに30個の0が続く場合はネームスペースとみなします。
-						if(strpos($txItem,'000000000000000000000000000000') !== false){
+						if(strpos($tx_item,'000000000000000000000000000000') !== false){
 
 							$network_type = array_filter($catjson, function($cj){
 								return $cj["name"] === "NetworkType";
@@ -332,6 +335,8 @@ function parse_transaction($tx,$layout,$catjson,$network) {
 			}else{
 
 			}
+//			print_r("push tx_layer".PHP_EOL);
+//			print_r($tx_layer);
 			array_push($parsed_tx,$tx_layer);
 		}
 	}
@@ -342,7 +347,7 @@ function parse_transaction($tx,$layout,$catjson,$network) {
 
 	if(isset($layer_size) && isset($layer_size[0]["size"])){
 
-		//print_r($parsed_tx);
+//		print_r($parsed_tx);
 		$parsed_tx[array_keys($layer_size)[0]]["value"] = count_size($parsed_tx);
 	}
 	return $parsed_tx;
@@ -614,7 +619,7 @@ function generate_key($name){
 
 	return $result | $NAMESPACE_FLAG;
 }
-
+/*
 function generate_mosaic_id($owner_address, $nonce){
 
 	$NAMESPACE_FLAG = 1 << 63;
@@ -622,6 +627,23 @@ function generate_mosaic_id($owner_address, $nonce){
 	$hasher = hash_init('sha3-256');
 	hash_update($hasher,pack('V', $nonce));
 	hash_update($hasher,$owner_address);
+	$digest = unpack("C*", hex2bin(hash_final($hasher,false)));
+	$result = digest_to_bigint($digest);
+
+	if ($result & $NAMESPACE_FLAG){
+		$result -= $NAMESPACE_FLAG;
+	}
+
+	return $result;
+}
+*/
+function generate_mosaic_id($owner_address, $nonce){
+
+	$NAMESPACE_FLAG = 1 << 63;
+
+	$hasher = hash_init('sha3-256');
+	hash_update($hasher,pack('V', $nonce));
+	hash_update($hasher,hex2bin($owner_address));
 	$digest = unpack("C*", hex2bin(hash_final($hasher,false)));
 	$result = digest_to_bigint($digest);
 
