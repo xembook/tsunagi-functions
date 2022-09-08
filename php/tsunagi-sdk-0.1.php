@@ -285,16 +285,20 @@ function parse_transaction($tx,$layout,$catjson,$network) {
 						//アドレスに30個の0が続く場合はネームスペースとみなします。
 						if(strpos($tx_item,'000000000000000000000000000000') !== false){
 
-							$network_type = array_filter($catjson, function($cj){
+							$filter_value = array_filter($catjson, function($cj){
 								return $cj["name"] === "NetworkType";
 							});
+							$network_type = array_values($filter_value)[0];
 
-							$network_value = array_filter($network_type["values"], function($cj) use($tx){
+							$filter_network = array_filter($network_type["values"], function($cj) use($tx){
 								return $cj["name"] === $tx["network"];
-							})["value"];
+							});
 
-							$prefix = bin2hex($network_value + 1);
-							$tx_layer["value"] =  $prefix + $tx_layer["value"];
+							$network_value = array_values($filter_network)[0]["value"];
+
+							$prefix = dechex($network_value + 1);
+							$tx_layer["value"] =  $prefix . $tx_layer["value"];
+
 						}
 					}			
 					array_push($items,$tx_layer);

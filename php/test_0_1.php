@@ -57,6 +57,8 @@ class test_0_1 extends \PHPUnit\Framework\TestCase {
 		$this->deadline_time = ((intval($now/1000)  + 7200) - 1637848847) * 1000;
 	}
 
+
+
 	public function testTransfer(){
 
 		$helper = new helper($this->network);
@@ -1217,7 +1219,48 @@ class test_0_1 extends \PHPUnit\Framework\TestCase {
 
 	public function testAccountRestriction(){
 		$helper = new helper($this->network);
-		$this->markTestIncomplete();
+
+
+		//account restriction transaction
+		$tx1 = [
+			"type" => "ACCOUNT_ADDRESS_RESTRICTION",
+			"signer_public_key" => "5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
+			"fee" => 25000,
+			"deadline" => $this->deadline_time,
+			"restriction_flags" => "ADDRESS BLOCK OUTGOING",
+			"restriction_additions" => [
+				bin2hex(Base32::decode("TCO7HLVDQUX6V7C737BCM3VYJ3MKP6REE2EKROA")),
+				bin2hex(Base32::decode("TDZBCWHAVA62R4JFZJJUXQWXLIRTUK5KZHFR5AQ"))
+			],
+			"restriction_deletions" => [],
+		];
+
+		$payload = $helper->get_payload($tx1);
+		$this->assertEquals(
+			"b8000000000000005dd7b8579be90231ada1d6f4158ff6ce47f17a7946f0f9872a5a2d451ab5920c389e8237e25560e71e4e4e2dfcb3c8e297642f1ed78975ab206a984feef2de095f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb0000000001985041a86100000000000000dd6d000000000001c0020000000000989df3aea3852feafc5fdfc2266eb84ed8a7fa242688a8b898f21158e0a83da8f125ca534bc2d75a233a2baac9cb1e82"
+			, $payload
+		);
+
+		//resolves 2 address restriction_additions by namespace
+		$tx1 = [
+			"type" => "ACCOUNT_ADDRESS_RESTRICTION",
+			"signer_public_key" => "5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
+			"fee" => 25000,
+			"deadline" => $this->deadline_time,
+			"restriction_flags" => "ADDRESS BLOCK OUTGOING",
+			"restriction_additions" => [
+				convert_address_alias_id(generate_namespace_id("bob",generate_namespace_id("xembook"))),
+				bin2hex(Base32::decode("TDZBCWHAVA62R4JFZJJUXQWXLIRTUK5KZHFR5AQ"))
+			],
+			"restriction_deletions" => [],
+		];
+
+		$payload = $helper->get_payload($tx1);
+		$this->assertEquals(
+			"b8000000000000005cdc385106ea9a1896d12d2c7c171f1975df38298ddb065eab1fa63dad9f87eb19ab72611d3e28d1841b5dd708f489bc8266f27e66d7d8400e15aff0b8da4e045f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb0000000001985041a86100000000000000dd6d000000000001c0020000000000993a7f6395187cb7c800000000000000000000000000000098f21158e0a83da8f125ca534bc2d75a233a2baac9cb1e82"
+			, $payload
+		);
+
 	}
 
 	public function testGlobalMosaicRestriction(){
