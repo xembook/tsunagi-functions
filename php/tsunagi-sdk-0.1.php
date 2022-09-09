@@ -1,4 +1,5 @@
 <?php
+use Base32\Base32;
 
 //catjson取得
 function load_catjson($tx,$network) {
@@ -589,8 +590,8 @@ function cosign_transaction($tx_hash,$private_key) {
 }
 
 
-function generate_address_id() {
-    return 0;
+function generate_address_id($address) {
+    return bin2hex(Base32::decode($address));
 }
 
 
@@ -624,24 +625,7 @@ function generate_key($name){
 
 	return $result | $NAMESPACE_FLAG;
 }
-/*
-function generate_mosaic_id($owner_address, $nonce){
 
-	$NAMESPACE_FLAG = 1 << 63;
-
-	$hasher = hash_init('sha3-256');
-	hash_update($hasher,pack('V', $nonce));
-	hash_update($hasher,$owner_address);
-	$digest = unpack("C*", hex2bin(hash_final($hasher,false)));
-	$result = digest_to_bigint($digest);
-
-	if ($result & $NAMESPACE_FLAG){
-		$result -= $NAMESPACE_FLAG;
-	}
-
-	return $result;
-}
-*/
 function generate_mosaic_id($owner_address, $nonce){
 
 	$NAMESPACE_FLAG = 1 << 63;
@@ -666,9 +650,6 @@ function convert_address_alias_id($namespace_id){
 
 }
 
-function uint32_to_bytes(){
-
-}
 
 function  digest_to_bigint($digest){
 
@@ -678,25 +659,6 @@ function  digest_to_bigint($digest){
 	}
 	return $result;
 };
-
-
-/*
-const uint32ToBytes = value => new Uint8Array([
-	value & 0xFF,
-	(value >> 8) & 0xFF,
-	(value >> 16) & 0xFF,
-	(value >> 24) & 0xFF
-]);
-
-const digestToBigInt = digest => {
-	let result = 0n;
-	for (let i = 0; 8 > i; ++i)
-		result += (BigInt(digest[i]) << BigInt(8 * i));
-
-	return result;
-};
-*/
-
 
 ?>
 
