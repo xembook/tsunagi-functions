@@ -1216,10 +1216,8 @@ class test_0_1 extends \PHPUnit\Framework\TestCase {
 			, $payload
 		);
 	}
-
 	public function testAccountRestriction(){
 		$helper = new helper($this->network);
-
 
 		//account restriction transaction
 		$tx1 = [
@@ -1261,21 +1259,445 @@ class test_0_1 extends \PHPUnit\Framework\TestCase {
 			, $payload
 		);
 
+		//resolves 2 address restriction_deletions transfer
+		$tx1 = [
+			"type" => "ACCOUNT_ADDRESS_RESTRICTION",
+			"signer_public_key" => "5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
+			"fee" => 25000,
+			"deadline" => $this->deadline_time,
+			"restriction_flags" => "ADDRESS BLOCK OUTGOING",
+			"restriction_additions" => [],
+			"restriction_deletions" => [
+				bin2hex(Base32::decode("TCO7HLVDQUX6V7C737BCM3VYJ3MKP6REE2EKROA")),
+				bin2hex(Base32::decode("TDZBCWHAVA62R4JFZJJUXQWXLIRTUK5KZHFR5AQ"))
+			],
+		];
+
+		$payload = $helper->get_payload($tx1);
+		$this->assertEquals(
+			"b8000000000000000f2d19602306a1418229fa0ba8a67bbd0cbc777e9aa51a14647528ae5477ce26cc1bb5f4ceaf8d4a36b58955f324d76a520278438125b2df676fa6089f6ac3035f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb0000000001985041a86100000000000000dd6d000000000001c0000200000000989df3aea3852feafc5fdfc2266eb84ed8a7fa242688a8b898f21158e0a83da8f125ca534bc2d75a233a2baac9cb1e82"
+			, $payload
+		);
+
+		//resolves 2 mosaic restriction_additions transfer
+		$tx1 = [
+			"type" => "ACCOUNT_MOSAIC_RESTRICTION",
+			"signer_public_key" => "5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
+			"fee" => 25000,
+			"deadline" => $this->deadline_time,
+			"restriction_flags" => "MOSAIC_ID BLOCK",
+			"restriction_additions" => [0x4DAFFBE5505DE676,0x2A09B7F9097934C2],
+			"restriction_deletions" => [],
+		];
+
+		$payload = $helper->get_payload($tx1);
+		$this->assertEquals(
+			"9800000000000000e876104b9595db102728e39715c548b5992a3743348fe2a01f53e155ca27d955482c1a2ca05d3a2f1784db510427d14431f112a6bf339b1f709e95f4d441f4015f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb0000000001985042a86100000000000000dd6d0000000000028002000000000076e65d50e5fbaf4dc2347909f9b7092a"
+			, $payload
+		);
+
+		//resolves 2 mosaic restriction_deletions transfer
+		$tx1 = [
+			"type" => "ACCOUNT_MOSAIC_RESTRICTION",
+			"signer_public_key" => "5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
+			"fee" => 25000,
+			"deadline" => $this->deadline_time,
+			"restriction_flags" => "MOSAIC_ID BLOCK",
+			"restriction_additions" => [],
+			"restriction_deletions" => [0x4DAFFBE5505DE676,0x2A09B7F9097934C2],
+		];
+
+		$payload = $helper->get_payload($tx1);
+		$this->assertEquals(
+			"980000000000000063ccbdc7a6bd545d6751a1ed5dad87eda2efbef52462d19ba2e9a1f39d36999539b833a4732d12b87e8ea6802002fb575ac8d04ab4398827e12a41f0a425600c5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb0000000001985042a86100000000000000dd6d0000000000028000020000000076e65d50e5fbaf4dc2347909f9b7092a"
+			, $payload
+		);
+
+		//resolves 2 operation restriction_additions transfer
+		$tx1 = [
+			"type" => "ACCOUNT_OPERATION_RESTRICTION",
+			"signer_public_key" => "5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
+			"fee" => 25000,
+			"deadline" => $this->deadline_time,
+			"restriction_flags" => "TRANSACTION_TYPE BLOCK OUTGOING",
+			"restriction_additions" => ["TRANSFER","AGGREGATE_COMPLETE"],
+			"restriction_deletions" => [],
+		];
+
+		$payload = $helper->get_payload($tx1);
+		$this->assertEquals(
+			"8c00000000000000d78ef15ed98496bc101c340ef9862fccca5e73aea04b93612ec00c4bd745674c1173827b81449a1e120bb960c176d56339f2b3d8ce7b7cd95d4b438f6e96ad075f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb0000000001985043a86100000000000000dd6d000000000004c002000000000054414141"
+			, $payload
+		);
+
+		//resolves 2 operation restriction_deletions transfer
+		$tx1 = [
+			"type" => "ACCOUNT_OPERATION_RESTRICTION",
+			"signer_public_key" => "5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
+			"fee" => 25000,
+			"deadline" => $this->deadline_time,
+			"restriction_flags" => "TRANSACTION_TYPE BLOCK OUTGOING",
+			"restriction_additions" => [],
+			"restriction_deletions" => ["TRANSFER","AGGREGATE_COMPLETE"],
+		];
+
+		$payload = $helper->get_payload($tx1);
+		$this->assertEquals(
+			"8c000000000000000d553c66bdddc3e1a91cd7cf8ee3fe1bd92f4a9c25a876b78ad95876d03856bb8bcb7cff0bc64ed8a672d1d8592068140a040dbd83e5970ebd57e30be3a31a0a5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb0000000001985043a86100000000000000dd6d000000000004c000020000000054414141"
+			, $payload
+		);
+
+		//aggregate
+		$tx1 = [
+			"type" => "ACCOUNT_ADDRESS_RESTRICTION",
+			"signer_public_key" => "5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
+			"restriction_flags" => "ADDRESS BLOCK OUTGOING",
+			"restriction_additions" => [
+				bin2hex(Base32::decode("TCO7HLVDQUX6V7C737BCM3VYJ3MKP6REE2EKROA")),
+				bin2hex(Base32::decode("TDZBCWHAVA62R4JFZJJUXQWXLIRTUK5KZHFR5AQ"))
+			],
+			"restriction_deletions" => [],
+		];
+
+		$tx2 = [
+			"type" => "ACCOUNT_ADDRESS_RESTRICTION",
+			"signer_public_key" => "5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
+			"restriction_flags" => "ADDRESS BLOCK OUTGOING",
+			"restriction_additions" => [
+				convert_address_alias_id(generate_namespace_id("bob",generate_namespace_id("xembook"))),
+				bin2hex(Base32::decode("TDZBCWHAVA62R4JFZJJUXQWXLIRTUK5KZHFR5AQ"))
+			],
+			"restriction_deletions" => [],
+		];
+
+		$tx3 = [
+			"type" => "ACCOUNT_ADDRESS_RESTRICTION",
+			"signer_public_key" => "5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
+			"restriction_flags" => "ADDRESS BLOCK OUTGOING",
+			"restriction_additions" => [],
+			"restriction_deletions" => [
+				bin2hex(Base32::decode("TCO7HLVDQUX6V7C737BCM3VYJ3MKP6REE2EKROA")),
+				bin2hex(Base32::decode("TDZBCWHAVA62R4JFZJJUXQWXLIRTUK5KZHFR5AQ"))
+			],
+		];
+
+		$tx4 = [
+			"type" => "ACCOUNT_MOSAIC_RESTRICTION",
+			"signer_public_key" => "5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
+			"restriction_flags" => "MOSAIC_ID BLOCK",
+			"restriction_additions" => [0x4DAFFBE5505DE676,0x2A09B7F9097934C2],
+			"restriction_deletions" => [],
+		];
+
+		$tx5 = [
+			"type" => "ACCOUNT_MOSAIC_RESTRICTION",
+			"signer_public_key" => "5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
+			"restriction_flags" => "MOSAIC_ID BLOCK",
+			"restriction_additions" => [],
+			"restriction_deletions" => [0x4DAFFBE5505DE676,0x2A09B7F9097934C2],
+		];
+
+		$tx6 = [
+			"type" => "ACCOUNT_OPERATION_RESTRICTION",
+			"signer_public_key" => "5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
+			"restriction_flags" => "TRANSACTION_TYPE BLOCK OUTGOING",
+			"restriction_additions" => ["TRANSFER","AGGREGATE_COMPLETE"],
+			"restriction_deletions" => [],
+		];
+
+		$tx7 = [
+			"type" => "ACCOUNT_OPERATION_RESTRICTION",
+			"signer_public_key" => "5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
+			"restriction_flags" => "TRANSACTION_TYPE BLOCK OUTGOING",
+			"restriction_additions" => [],
+			"restriction_deletions" => ["TRANSFER","AGGREGATE_COMPLETE"],
+		];
+
+		$agg_tx = [
+			"type" => 'AGGREGATE_COMPLETE',
+			"signer_public_key" => "5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
+			"fee" => 1000000,
+			"deadline" => $this->deadline_time,
+			"transactions" => [$tx1,$tx2,$tx3,$tx4,$tx5,$tx6,$tx7],
+
+		];
+		$payload = $helper->get_payload($agg_tx);
+
+		//TODO未検証
+		$this->assertEquals(
+			"f002000000000000a6b76ba9637d35045fd9dfdbf63ce100598eccbab238199bd465d2a66236814473ed1b504573a4be3f177f1045aa367aae8f915ad56101d96c0f9809c24818015f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb000000000198414140420f000000000000dd6d0000000000940deda2e41ffc266aa8a19507f9da37b4fd1a0f6766ab9b6f5bf6db10ecb053480200000000000068000000000000005f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb000000000198504101c0020000000000989df3aea3852feafc5fdfc2266eb84ed8a7fa242688a8b898f21158e0a83da8f125ca534bc2d75a233a2baac9cb1e8268000000000000005f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb000000000198504101c0020000000000993a7f6395187cb7c800000000000000000000000000000098f21158e0a83da8f125ca534bc2d75a233a2baac9cb1e8268000000000000005f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb000000000198504101c0000200000000989df3aea3852feafc5fdfc2266eb84ed8a7fa242688a8b898f21158e0a83da8f125ca534bc2d75a233a2baac9cb1e8248000000000000005f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb0000000001985042028002000000000076e65d50e5fbaf4dc2347909f9b7092a48000000000000005f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb0000000001985042028000020000000076e65d50e5fbaf4dc2347909f9b7092a3c000000000000005f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb000000000198504304c002000000000054414141000000003c000000000000005f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb000000000198504304c00002000000005441414100000000"
+			, $payload
+		);
 	}
 
 	public function testGlobalMosaicRestriction(){
 		$helper = new helper($this->network);
-		$this->markTestIncomplete();
+
+		//resolves global mosaic restriction transfer
+		$tx1 = [
+			"type" => "MOSAIC_GLOBAL_RESTRICTION",
+			"signer_public_key" => "5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
+			"fee" => 25000,
+			"deadline" => $this->deadline_time,
+			"mosaic_id" => 0x4DAFFBE5505DE676,
+			"reference_mosaic_id" => 0,
+			"restriction_key" => generate_key("key_account"),
+			"previous_restriction_value" => 0,
+			"new_restriction_value" => 0x1,
+			"previous_restriction_type" => "NONE",
+			"new_restriction_type" => "EQ"
+		];
+
+		$payload = $helper->get_payload($tx1);
+		$this->assertEquals(
+			"aa0000000000000083b18a9467dd39067ef18dc9eb5d7ee69b51fc68c954586d4291e68407ab41feca86224ddafcd9fd2b5375f33e1e4bb4de031b47fa42c742d4adb82fc60caf0e5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb0000000001985141a86100000000000000dd6d000000000076e65d50e5fbaf4d0000000000000000d72781051bb77297000000000000000001000000000000000001"
+			, $payload
+		);
+
+		//resolves global mosaic restriction transfer
+		$tx1 = [
+			"type" => "MOSAIC_ADDRESS_RESTRICTION",
+			"signer_public_key" => "5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
+			"fee" => 25000,
+			"deadline" => $this->deadline_time,
+			"mosaic_id" => 0x4DAFFBE5505DE676,
+			"restriction_key" => generate_key("key_account"),
+			"previous_restriction_value" => 0xFFFFFFFFFFFFFFFF,
+			"new_restriction_value" => 0x1,
+			"target_address" => bin2hex(Base32::decode("TBUXMJAYYW3EH3XHBZXSBVGVKXKZS4EH26TINKI")),
+		];
+
+		$payload = $helper->get_payload($tx1);
+		$this->assertEquals(
+			"b80000000000000040748328e8dab01fee7f82b4e23b3ed2c6336783790f286aa75eab0982c2a60af9eb5a2c524a427ec5d7e451d47a3f1620e5478ae37d048441fd7f2675e4880e5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb0000000001985142a86100000000000000dd6d000000000076e65d50e5fbaf4dd72781051bb77297ffffffffffffffff01000000000000009869762418c5b643eee70e6f20d4d555d5997087d7a686a9"
+			, $payload
+		);
+
+		//aggregate
+		$tx1 = [
+			"type" => "MOSAIC_GLOBAL_RESTRICTION",
+			"signer_public_key" => "5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
+			"mosaic_id" => 0x4DAFFBE5505DE676,
+			"reference_mosaic_id" => 0,
+			"restriction_key" => generate_key("key_account"),
+			"previous_restriction_value" => 0,
+			"new_restriction_value" => 0x1,
+			"previous_restriction_type" => "NONE",
+			"new_restriction_type" => "EQ"
+		];
+
+		$tx2 = [
+			"type" => "MOSAIC_ADDRESS_RESTRICTION",
+			"signer_public_key" => "5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
+			"mosaic_id" => 0x4DAFFBE5505DE676,
+			"restriction_key" => generate_key("key_account"),
+			"previous_restriction_value" => 0xFFFFFFFFFFFFFFFF,
+			"new_restriction_value" => 0x1,
+			"target_address" => bin2hex(Base32::decode("TBUXMJAYYW3EH3XHBZXSBVGVKXKZS4EH26TINKI")),
+		];
+
+
+		$agg_tx = [
+			"type" => 'AGGREGATE_COMPLETE',
+			"signer_public_key" => "5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
+			"fee" => 1000000,
+			"deadline" => $this->deadline_time,
+			"transactions" => [$tx1,$tx2],
+
+		];
+		$payload = $helper->get_payload($agg_tx);
+
+		//TODO未検証
+		$this->assertEquals(
+			"7001000000000000ad419685fe429a729725dff6b0d44be438c5f4e5d4edeea42ab8f78bd93c0fa886674824832d6c1cefec35eedd75eb7a142c270a221aed5c0e7dce2234c4d5005f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb000000000198414140420f000000000000dd6d000000000075aa5d190ff872320ec8047a029772ee17b2f62f9f8da3be67ba7adc17233cfbc8000000000000005a000000000000005f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb000000000198514176e65d50e5fbaf4d0000000000000000d72781051bb7729700000000000000000100000000000000000100000000000068000000000000005f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb000000000198514276e65d50e5fbaf4dd72781051bb77297ffffffffffffffff01000000000000009869762418c5b643eee70e6f20d4d555d5997087d7a686a9"
+			, $payload
+		);
 	}
 
 	public function testMosaicSupplyRevocation(){
 		$helper = new helper($this->network);
-		$this->markTestIncomplete();
+
+		//resolves global mosaic restriction transfer
+		$tx1 = [
+			"type" => "MOSAIC_SUPPLY_REVOCATION",
+			"signer_public_key" => "5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
+			"fee" => 25000,
+			"deadline" => $this->deadline_time,
+			"source_address" => bin2hex(Base32::decode("TBUXMJAYYW3EH3XHBZXSBVGVKXKZS4EH26TINKI")),
+			"mosaic" => [
+				["mosaic_id" =>  0x0552BC5EF5BD589D, "amount" => 100],
+			],
+		];
+		$payload = $helper->get_payload($tx1);
+
+		$this->assertEquals(
+			"a800000000000000fd67cc1e3962d068da002cc79531e8972575a771cddf8b9317492bc1022dfc80944540bfca1aba09c44aedf56aef5a7c00eb7f569ef7f94a7f0dad46eebcb70a5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb0000000001984d43a86100000000000000dd6d00000000009869762418c5b643eee70e6f20d4d555d5997087d7a686a99d58bdf55ebc52056400000000000000"
+			, $payload
+		);
+
+		//resolves global mosaic restriction transfer
+		$tx1 = [
+			"type" => "MOSAIC_SUPPLY_REVOCATION",
+			"signer_public_key" => "5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
+			"source_address" => bin2hex(Base32::decode("TBUXMJAYYW3EH3XHBZXSBVGVKXKZS4EH26TINKI")),
+			"mosaic" => [
+				["mosaic_id" =>  0x0552BC5EF5BD589D, "amount" => 100],
+			],
+		];
+		$agg_tx = [
+			"type" => 'AGGREGATE_COMPLETE',
+			"signer_public_key" => "5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
+			"fee" => 1000000,
+			"deadline" => $this->deadline_time,
+			"transactions" => [$tx1],
+
+		];
+		$payload = $helper->get_payload($agg_tx);
+
+		//TODO未検証
+		$this->assertEquals(
+			"0001000000000000bd814e80d7e36dd383348f45a386a63a410453e7530d4bd2c22d38d9597227d6899dd36e48fb6c5bf770a519d85fd8a2783592443a5edade551813cc42e682085f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb000000000198414140420f000000000000dd6d000000000089aea3333dc6fb52d00c74db39ea3b9c2e34932d5198ad52dacc9459249c0a78580000000000000058000000000000005f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb0000000001984d439869762418c5b643eee70e6f20d4d555d5997087d7a686a99d58bdf55ebc52056400000000000000"
+			, $payload
+		);
 	}
 
 	public function testSecret(){
 		$helper = new helper($this->network);
-		$this->markTestIncomplete();
+
+		//resolves secret lock
+		$tx1 = [
+			"type" => "SECRET_LOCK",
+			"signer_public_key" => "5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
+			"fee" => 25000,
+			"deadline" => $this->deadline_time,
+			"recipient_address" => bin2hex(Base32::decode("TBUXMJAYYW3EH3XHBZXSBVGVKXKZS4EH26TINKI")),
+			"secret" => "f260bfb53478f163ee61ee3e5fb7cfcaf7f0b663bc9dd4c537b958d4ce00e240",
+			"mosaic" => [
+				["mosaic_id" =>  0x3A8416DB2D53B6C8, "amount" => 10000000],
+			],
+			"duration" => 480,
+			"hash_algorithm" => "SHA3_256",
+		];
+		$payload = $helper->get_payload($tx1);
+
+		$this->assertEquals(
+			"d1000000000000000117860215bbc73d6ab56fa39f5ae1495ff55ad76104c3371701de042d6a0865bfb551ece7549abf636d60d443d690beee087f9417290b65da230abf280039085f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb0000000001985241a86100000000000000dd6d00000000009869762418c5b643eee70e6f20d4d555d5997087d7a686a9f260bfb53478f163ee61ee3e5fb7cfcaf7f0b663bc9dd4c537b958d4ce00e240c8b6532ddb16843a8096980000000000e00100000000000000"
+			, $payload
+		);
+
+		//resolves secret proof
+		$tx1 = [
+			"type" => "SECRET_PROOF",
+			"signer_public_key" => "5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
+			"fee" => 25000,
+			"deadline" => $this->deadline_time,
+			"recipient_address" => bin2hex(Base32::decode("TBUXMJAYYW3EH3XHBZXSBVGVKXKZS4EH26TINKI")),
+			"secret" => "f260bfb53478f163ee61ee3e5fb7cfcaf7f0b663bc9dd4c537b958d4ce00e240",
+			"hash_algorithm" => "SHA3_256",
+			"proof" => "7944496ac0f572173c2549baf9ac18f893aab6d0",
+		];
+		$payload = $helper->get_payload($tx1);
+
+		$this->assertEquals(
+			"cf000000000000008a17b7e88005e436580b8b500bf01da70fb22906065590412c458f31094a11c4fee2b08cc1025f40642f96285ffa54bb1a88c4cf373f11b6c240ce146b41a4055f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb0000000001985242a86100000000000000dd6d00000000009869762418c5b643eee70e6f20d4d555d5997087d7a686a9f260bfb53478f163ee61ee3e5fb7cfcaf7f0b663bc9dd4c537b958d4ce00e2401400007944496ac0f572173c2549baf9ac18f893aab6d0"
+			, $payload
+		);
+
+		//resolves secret lock with aggregate
+		$tx1 = [
+			"type" => "SECRET_LOCK",
+			"signer_public_key" => "5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
+			"recipient_address" => bin2hex(Base32::decode("TBUXMJAYYW3EH3XHBZXSBVGVKXKZS4EH26TINKI")),
+			"secret" => "0debb816347a49c5121b07c1ec2e9f7443eef6451d260cc646f32520237fa68c",
+			"mosaic" => [
+				["mosaic_id" =>  0x3A8416DB2D53B6C8, "amount" => 10000000],
+			],
+			"duration" => 480,
+			"hash_algorithm" => "SHA3_256",
+		];
+		$agg_tx = [
+			"type" => 'AGGREGATE_COMPLETE',
+			"signer_public_key" => "5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
+			"fee" => 1000000,
+			"deadline" => $this->deadline_time,
+			"transactions" => [$tx1],
+
+		];
+		$payload = $helper->get_payload($agg_tx);
+
+		//TODO未検証
+		$this->assertEquals(
+			"3001000000000000185b61702bbf8298e2c117f0b262f644f59269ceaf7dbce9851543a62a01f726a08a3409da1d6ecd9ed30d6aa56289c3cfeba7377e66dbc36751493cdc28920e5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb000000000198414140420f000000000000dd6d0000000000944643651ac8d446192f0dcbe1c370610552ddd0be94a9ba77ce7063e693cb29880000000000000081000000000000005f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb00000000019852419869762418c5b643eee70e6f20d4d555d5997087d7a686a90debb816347a49c5121b07c1ec2e9f7443eef6451d260cc646f32520237fa68cc8b6532ddb16843a8096980000000000e0010000000000000000000000000000"
+			, $payload
+		);
+
+
+		//resolves secret proof with aggregate
+		$tx1 = [
+			"type" => "SECRET_PROOF",
+			"signer_public_key" => "5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
+			"recipient_address" => bin2hex(Base32::decode("TBUXMJAYYW3EH3XHBZXSBVGVKXKZS4EH26TINKI")),
+			"secret" => "0debb816347a49c5121b07c1ec2e9f7443eef6451d260cc646f32520237fa68c",
+			"hash_algorithm" => "SHA3_256",
+			"proof" => "d91a8258175a6213225bd4ec240f1971c8742dca",
+		];
+
+		$agg_tx = [
+			"type" => 'AGGREGATE_COMPLETE',
+			"signer_public_key" => "5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
+			"fee" => 1000000,
+			"deadline" => $this->deadline_time,
+			"transactions" => [$tx1],
+
+		];
+		$payload = $helper->get_payload($agg_tx);
+
+		//TODO未検証
+		$this->assertEquals(
+			"2801000000000000b26c51b84114750e4005ab6002c5d6646f6de025bdf1fadbe429953044be5e61c1ecf6adaaf4cba51f0748a1cb17f82c9adf091eb7c05f4f5b5b226ead64f9065f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb000000000198414140420f000000000000dd6d0000000000bd584e6eb97627993d2157bc630a4c95ec783e201678539ce671e3d36367372c80000000000000007f000000000000005f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb00000000019852429869762418c5b643eee70e6f20d4d555d5997087d7a686a90debb816347a49c5121b07c1ec2e9f7443eef6451d260cc646f32520237fa68c140000d91a8258175a6213225bd4ec240f1971c8742dca00"
+			, $payload
+		);
+
+
+
+		//resolves secret lock by namespace
+		$tx1 = [
+			"type" => "SECRET_LOCK",
+			"signer_public_key" => "5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
+			"fee" => 25000,
+			"deadline" => $this->deadline_time,
+			"recipient_address" => convert_address_alias_id(generate_namespace_id("xembook")),
+			"secret" => "760b4407e82970bc86f5a3063b445c0cfec35c6720cbf1f8b5ca643d51bb5a00",
+			"mosaic" => [
+				["mosaic_id" =>  generate_namespace_id("xym",generate_namespace_id("symbol")) , "amount" => 10000000],
+			],
+			"duration" => 480,
+			"hash_algorithm" => "SHA3_256",
+		];
+		$payload = $helper->get_payload($tx1);
+
+		$this->assertEquals(
+			"d100000000000000936ffff90a654017eb900af35ea4f5a687b38b111190e2c1f9992e542c5be0bb25f22c14440b67442149de0cf5c7ea0e9642f19badcbc8b6aec8bda707c4a2075f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb0000000001985241a86100000000000000dd6d00000000009985738c26eb1534a4000000000000000000000000000000760b4407e82970bc86f5a3063b445c0cfec35c6720cbf1f8b5ca643d51bb5a00eeaff441ba994be78096980000000000e00100000000000000"
+			, $payload
+		);
+
+		//resolves secret proof by namespace
+		$tx1 = [
+			"type" => "SECRET_PROOF",
+			"signer_public_key" => "5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
+			"fee" => 25000,
+			"deadline" => $this->deadline_time,
+			"recipient_address" => convert_address_alias_id(generate_namespace_id("xembook")),
+			"secret" => "760b4407e82970bc86f5a3063b445c0cfec35c6720cbf1f8b5ca643d51bb5a00",
+			"hash_algorithm" => "SHA3_256",
+			"proof" => "336b7e682903606a2fef4c91d83c4af7da3e7486",
+		];
+		$payload = $helper->get_payload($tx1);
+
+		$this->assertEquals(
+			"cf0000000000000043d7a84b4c20435ffdd50644a2a0eaaed667326975d8af93015013899f5b4741f92d66ea7b2d23ad57fb5cd8d71344ffe34dd9654dbc58d9a447aaab70814d0b5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb0000000001985242a86100000000000000dd6d00000000009985738c26eb1534a4000000000000000000000000000000760b4407e82970bc86f5a3063b445c0cfec35c6720cbf1f8b5ca643d51bb5a00140000336b7e682903606a2fef4c91d83c4af7da3e7486"
+			, $payload
+		);
 	}
 
 	public function testMosaicGenerate(){

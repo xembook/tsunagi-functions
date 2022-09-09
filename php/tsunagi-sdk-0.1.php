@@ -1,10 +1,4 @@
 <?php
-function restaurant_check($meal, $tax, $tip) {
-    $tax_amount = $meal * ($tax / 100);
-    $tip_amount = $meal * ($tip / 100);
-    $total_amount = $meal + $tax_amount + $tip_amount;
-    return $total_amount;
-}
 
 //catjson取得
 function load_catjson($tx,$network) {
@@ -183,8 +177,6 @@ function parse_transaction($tx,$layout,$catjson,$network) {
 
 		}else if($layer_type === "UnresolvedAddress"){
 
-
-
 			//アドレスに30個の0が続く場合はネームスペースとみなします。
 			if(isset($tx[$layer["name"]]) && !is_array($tx[$layer["name"]]) && strpos($tx[$layer["name"]],'000000000000000000000000000000') !== false){
 
@@ -225,9 +217,10 @@ function parse_transaction($tx,$layout,$catjson,$network) {
 
 					$filter_value = array_filter($catitem["values"], function($cj) use($item){
 						return $cj["name"] === $item;
-					})["value"];
+					});
 
-					array_push($values,$filter_value);
+					$item_value = array_values($filter_value)[0]["value"];
+					array_push($values,$item_value);
 				}
 				$tx[$layer["name"]] = $values;
 			}else{
@@ -515,7 +508,15 @@ function hexlify_transaction($item,$alignment = 0) {
 		}else if($size==4){
 			$hex = bin2hex(pack('V', $item["value"]));
 		}else if($size==8){
-			$hex = bin2hex(pack('P', $item["value"]));
+
+			//0xffffffffffffffff を 00000000000000000としてしまう現象回避
+			if(sprintf('%016X',$item["value"]) == "00000000000000000" && $item["value"] > 0){
+
+				$hex = "ffffffffffffffff";
+
+			}else{
+				$hex = bin2hex(pack('P', $item["value"]));
+			}
 		}else if($size==24 || $size==32 || $size==64){
 			$hex = $item["value"];
 		}else{
