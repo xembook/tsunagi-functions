@@ -186,8 +186,8 @@ function parse_transaction($tx,$layout,$catjson,$network) {
 				});
 
 				$network_type = array_values($filter_value)[0];
-				print_r($network_type);
-				print_r($tx["network"]);
+//				print_r($network_type);
+//				print_r($tx["network"]);
 
 				$filter_network = array_filter($network_type["values"], function($cj) use($tx){
 					return $cj["name"] === $tx["network"];
