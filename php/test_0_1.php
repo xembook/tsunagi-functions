@@ -51,8 +51,13 @@ class test_0_1 extends \PHPUnit\Framework\TestCase {
 				"https://sym-test.opening-line.jp:3001",
 			]
 		];
+
 		$now = $this->network["epochAdjustment"] * 1000;
 		$this->deadline_time = ((intval($now/1000)  + 7200) - 1637848847) * 1000;
+
+//		$now = time();
+//		$this->deadline_time = (($now  + 7200) - $this->network["epochAdjustment"]) * 1000;
+
 	}
 
 

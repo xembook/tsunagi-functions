@@ -4,14 +4,14 @@ use Base32\Base32;
 //catjson取得
 function load_catjson($tx,$network) {
 
-	$jsonFile;
+	$json_file;
 	if($tx["type"] === "AGGREGATE_COMPLETE" || $tx["type"] === "AGGREGATE_BONDED"){
-		$jsonFile =  "aggregate.json";
+		$json_file =  "aggregate.json";
 	}else{
-		$jsonFile =  strtolower($tx["type"]) . ".json";
+		$json_file =  strtolower($tx["type"]) . ".json";
 	}
 
-	$res = file_get_contents($network["catjasonBase"] . $jsonFile);
+	$res = file_get_contents($network["catjasonBase"] . $json_file);
 	$catjson = json_decode($res,true);
 	
 	return $catjson;
@@ -27,16 +27,16 @@ function load_layout($tx,$catjson,$is_embedded) {
 		$prefix = "";
 	}
 
-	$layoutName;
-	if(      $tx["type"] === "AGGREGATE_COMPLETE"){ $layoutName = "AggregateCompleteTransaction";
-	}else if($tx["type"] === "AGGREGATE_BONDED"){   $layoutName = "AggregateBondedTransaction";
+	$layout_name;
+	if(      $tx["type"] === "AGGREGATE_COMPLETE"){ $layout_name = "AggregateCompleteTransaction";
+	}else if($tx["type"] === "AGGREGATE_BONDED"){   $layout_name = "AggregateBondedTransaction";
 	}else{
-		$layoutName = $prefix . to_camel_case(strtolower($tx["type"])) . "Transaction";
+		$layout_name = $prefix . to_camel_case(strtolower($tx["type"])) . "Transaction";
 	}
 
-	$conditions = ["prefix" => $prefix,"layoutName" => $layoutName];
+	$conditions = ["prefix" => $prefix,"layout_name" => $layout_name];
 	$factory = array_filter($catjson, function($item)use($conditions){
-		return isset($item['factory_type']) && $item['factory_type'] == $conditions["prefix"] . "Transaction" && $item["name"] === $conditions["layoutName"];
+		return isset($item['factory_type']) && $item['factory_type'] == $conditions["prefix"] . "Transaction" && $item["name"] === $conditions["layout_name"];
 	});
 
 	return array_values($factory)[0]["layout"];
