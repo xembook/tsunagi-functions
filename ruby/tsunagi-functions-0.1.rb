@@ -1,10 +1,61 @@
-
+require "ed25519"
+require 'digest'
+require 'sha3'
+require "base32"
+require 'json'
+require "net/http"
+require 'rubygems'
+require 'active_record'
 
 def load_catjson(tx,network) 
-	return 0
+
+	if tx["type"] === "AGGREGATE_COMPLETE" || tx["type"] === "AGGREGATE_BONDED" then
+		json_file =  "aggregate.json"
+	else
+		json_file =  tx["type"].downcase + ".json"
+	end
+
+	uri = URI.parse(network["catjasonBase"] + json_file)
+	json = Net::HTTP.get(uri)
+	result = JSON.parse(json)
+	
+	return result
+
 end
 
 def load_layout(tx,catjson,is_embedded) 
+
+	if is_embedded then
+		prefix = "Embedded";
+	else
+		prefix = "";
+	end
+
+	if    tx["type"] === "AGGREGATE_COMPLETE" then 
+		layout_name = "AggregateCompleteTransaction"
+	elsif tx["type"] === "AGGREGATE_BONDED" then 
+		layout_name = "AggregateBondedTransaction"
+	else
+		puts "aaaa".camelize
+
+		layout_name = prefix + tx["type"].downcase.camelize + "Transaction"
+		puts layout_name
+	end
+
+
+	factory = catjson.find{|item| item['factory_type'] == prefix + "Transaction" && item["name"]  == layout_name}
+	puts factory["layout"]
+
+=begin
+	conditions = {"prefix" => prefix,"layoutName" => $layoutName];
+	$factory = array_filter($catjson, function($item)use($conditions){
+		return isset($item['factory_type']) && $item['factory_type'] == $conditions["prefix"] . "Transaction" && $item["name"] === $conditions["layoutName"];
+	});
+
+	return array_values($factory)[0]["layout"];
+=end
+
+
 	return 0
 end
 
