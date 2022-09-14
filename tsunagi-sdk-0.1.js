@@ -120,7 +120,10 @@ async function parseTransaction(tx,layout,catjson,network){
 	for(let layer of layout){
 
 		let layerType = layer.type;
-		let layerDisposition = layer.disposition;
+		let layerDisposition = "";
+		if("disposition" in layer){
+			layerDisposition = layer.disposition;
+		}
 		let catitem = Object.assign({}, catjson.find(cj=>cj.name === layerType));
 		
 		if("condition" in layer ){
@@ -178,7 +181,7 @@ async function parseTransaction(tx,layout,catjson,network){
 					}
 				}
 				catitem.value = value;
-			}else if(layerDisposition !== undefined && layerDisposition.indexOf('array') != -1){
+			}else if(layerDisposition.indexOf('array') != -1){
 				values = [];
 				for(let item of  tx[layer.name]){
 					values.push(catitem.values.find(cvf=>cvf.name === item).value);
@@ -191,7 +194,7 @@ async function parseTransaction(tx,layout,catjson,network){
 		}
 
 		//layerの配置
-		if(layerDisposition !== undefined && layerDisposition.indexOf('array') != -1){ // "array sized","array fill"
+		if(layerDisposition.indexOf('array') != -1){ // "array sized","array fill"
 
 			let size = tx[layer.size];
 			if(layerType === "byte"){
