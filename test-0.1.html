@@ -103,7 +103,7 @@ describe('tsunagi-sdk.0.1',() => {
 		
 	});
 
-	xdescribe('aggregate complete transaction', () => {
+	describe('aggregate complete transaction', () => {
 
 		it('resolves 3 account transfer', async () => {
 
@@ -394,7 +394,7 @@ describe('tsunagi-sdk.0.1',() => {
 
 	}); // aggregate complete transaction
 
-	xdescribe('aggregate bonded transaction', () => {
+	describe('aggregate bonded transaction', () => {
 
 		it('resolves hash lock', async () => {
 
@@ -789,7 +789,7 @@ describe('tsunagi-sdk.0.1',() => {
 
 	});
 
-	xdescribe('mosaic transaction', () => {
+	describe('mosaic transaction', () => {
 
 		//Failure_Mosaic_Modification_Disallowed
 		it('resolves mosaic definition', async () => {
@@ -890,7 +890,7 @@ describe('tsunagi-sdk.0.1',() => {
 
 	});
 
-	xdescribe('namespace transaction', () => {
+	describe('namespace transaction', () => {
 
 		it('resolves root namespace regisration', async () => {
 
@@ -1018,7 +1018,7 @@ describe('tsunagi-sdk.0.1',() => {
 		});
 	});
 	
-	xdescribe('metadata transaction', () => {
+	describe('metadata transaction', () => {
 
 		it('resolves account metadata', async () => {
 
@@ -1234,7 +1234,7 @@ describe('tsunagi-sdk.0.1',() => {
 			);
 		});
 
-		xit('resolves multisig account modification change delta', async () => {
+		it('resolves multisig account modification change delta', async () => {
 
 			let tx1 = {
 				type:'MULTISIG_ACCOUNT_MODIFICATION',
@@ -1274,7 +1274,7 @@ describe('tsunagi-sdk.0.1',() => {
 			);
 		});
 
-		xit('resolves multisig account modification address_deletions', async () => {
+		it('resolves multisig account modification address_deletions', async () => {
 
 			let tx1 = {
 				type:'MULTISIG_ACCOUNT_MODIFICATION',
@@ -1333,7 +1333,7 @@ describe('tsunagi-sdk.0.1',() => {
 		});
 
 
-		xit('resolves multisig account modification address_deletions 2', async () => {
+		it('resolves multisig account modification address_deletions 2', async () => {
 
 			let tx1 = {
 				type:'MULTISIG_ACCOUNT_MODIFICATION',
@@ -1377,7 +1377,7 @@ describe('tsunagi-sdk.0.1',() => {
 	
 	});
 
-	xdescribe('account restriction transaction', () => {
+	describe('account restriction transaction', () => {
 	
 	
 		it('resolves 2 address restriction_additions transfer', async () => {
@@ -1516,7 +1516,7 @@ describe('tsunagi-sdk.0.1',() => {
 	
 	});
 
-	xdescribe('global mosaic restriction transaction', () => {
+	describe('global mosaic restriction transaction', () => {
 	
 		it('resolves global mosaic restriction transfer', async () => {
 
@@ -1559,9 +1559,13 @@ describe('tsunagi-sdk.0.1',() => {
 				"b80000000000000040748328e8dab01fee7f82b4e23b3ed2c6336783790f286aa75eab0982c2a60af9eb5a2c524a427ec5d7e451d47a3f1620e5478ae37d048441fd7f2675e4880e5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb0000000001985142a86100000000000000dd6d000000000076e65d50e5fbaf4dd72781051bb77297ffffffffffffffff01000000000000009869762418c5b643eee70e6f20d4d555d5997087d7a686a9"
 			);
 		});
+
+	
+	
+	
 	});
 
-	xdescribe('mosaic supply revocation transaction', () => {
+	describe('mosaic supply revocation transaction', () => {
 	
 		it('resolves mosaic supply revocation', async () => {
 
@@ -1583,7 +1587,7 @@ describe('tsunagi-sdk.0.1',() => {
 	
 	});
 
-	xdescribe('secret lock-proof transaction', () => {
+	describe('secret lock-proof transaction', () => {
 	
 		it('resolves secret lock', async () => {
 
