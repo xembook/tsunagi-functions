@@ -125,11 +125,7 @@ function parse_transaction($tx,$layout,$catjson,$network) {
 		$filter_item = array_filter($catjson, function($cj) use($layer_type){
 			return $cj["name"] === $layer_type;
 		});
-		$catitem = array_values($filter_item);
-
-		if(count($catitem) > 0 ){
-			$catitem = $catitem[0];
-		}
+		$catitem = array_values($filter_item)[0];
 
 		if(isset($layer["condition"])){
 			if($layer["condition_operation"] === "equals"){
@@ -179,7 +175,7 @@ function parse_transaction($tx,$layout,$catjson,$network) {
 		}else if($layer_type === "UnresolvedAddress"){
 
 			//アドレスに30個の0が続く場合はネームスペースとみなします。
-			if(isset($tx[$layer["name"]]) && !is_array($tx[$layer["name"]]) && strpos($tx[$layer["name"]],'000000000000000000000000000000') !== false){
+			if(isset($tx[$layer["name"]]) && !is_array($tx[$layer["name"]]) && strpos($tx[$layer["name"]],'000000000000000000000000000000') === true){
 
 				$filter_value = array_filter($catjson, function($cj){
 					return $cj["name"] === "NetworkType";
@@ -277,7 +273,7 @@ function parse_transaction($tx,$layout,$catjson,$network) {
 					
 					if($layer_type === "UnresolvedAddress"){
 						//アドレスに30個の0が続く場合はネームスペースとみなします。
-						if(strpos($tx_item,'000000000000000000000000000000') !== false){
+						if(strpos($tx_item,'000000000000000000000000000000') === true){
 
 							$filter_value = array_filter($catjson, function($cj){
 								return $cj["name"] === "NetworkType";
