@@ -68,7 +68,7 @@ function prepare_transaction($tx,$layout,$network) {
 	}
 
 	if(isset($tx['mosaics'])){
-		$ids = array_column($prepared_tx['mosaics'], 'mosaic_id');
+		$ids = array_column($tx['mosaics'], 'mosaic_id');
 		array_multisort($ids, SORT_ASC, $prepared_tx['mosaics']);
 	}
 
