@@ -80,7 +80,7 @@ function prepare_transaction($tx,$layout,$network) {
 			if(isset($layer["element_disposition"])  && isset($prepared_tx[$layer["name"]])){
 				$size = strlen($prepared_tx[$layer["name"]]) / ($layer["element_disposition"]["size"] * 2);
 
-			}else if(strpos($layer["size"],'_count') !== false){//暫定 sizeにcountという文字列が含まれている場合はサイズ値を指定する項目が含まれると考える
+			}else if(strpos($layer["size"],'_count') === true){//暫定 sizeにcountという文字列が含まれている場合はサイズ値を指定する項目が含まれると考える
 				
 				if(isset($prepared_tx[$layer["name"]])){
 
@@ -195,19 +195,19 @@ function parse_transaction($tx,$layout,$catjson,$network) {
 			}
 		}else if(isset($catitem["type"]) && $catitem["type"] === "enum"){
 
-			if(strpos($catitem["name"],'Flags') !== false){
+			if(strpos($catitem["name"],'Flags') === true){
 
 				$value = 0;
 				foreach($catitem["values"] as $item_layer){
 
-					if(strpos($tx[$layer["name"]],$item_layer["name"]) !== false){
+					if(strpos($tx[$layer["name"]],$item_layer["name"]) === true){
 
 						$value += $item_layer["value"];
 					}
 				}
 				$catitem["value"] = $value;
 			
-			}else if(isset($layer_disposition) &&  strpos($layer_disposition,'array') !== false ){
+			}else if(isset($layer_disposition) &&  strpos($layer_disposition,'array') === true ){
 
 				$values = [];
 				foreach($tx[$layer["name"]] as $item){
@@ -233,7 +233,7 @@ function parse_transaction($tx,$layout,$catjson,$network) {
 		}
 
 		//layerの配置
-		if(isset($layer_disposition) && strpos($layer_disposition,'array') !== false ){
+		if(isset($layer_disposition) && strpos($layer_disposition,'array') === true ){
 
 			$size = 0;
 			if(isset($tx[$layer["size"]])){
