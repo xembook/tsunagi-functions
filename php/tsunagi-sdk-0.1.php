@@ -68,7 +68,7 @@ function prepare_transaction($tx,$layout,$network) {
 	}
 
 	if(isset($tx['mosaics'])){
-		$ids = array_column($tx['mosaics'], 'mosaic_id');
+		$ids = array_column($prepared_tx['mosaics'], 'mosaic_id');
 		array_multisort($ids, SORT_ASC, $prepared_tx['mosaics']);
 	}
 
@@ -80,7 +80,7 @@ function prepare_transaction($tx,$layout,$network) {
 			if(isset($layer["element_disposition"])  && isset($prepared_tx[$layer["name"]])){
 				$size = strlen($prepared_tx[$layer["name"]]) / ($layer["element_disposition"]["size"] * 2);
 
-			}else if(strpos($layer["size"],'_count') === true){//暫定 sizeにcountという文字列が含まれている場合はサイズ値を指定する項目が含まれると考える
+			}else if(strpos($layer["size"],'_count') !== false){//暫定 sizeにcountという文字列が含まれている場合はサイズ値を指定する項目が含まれると考える
 				
 				if(isset($prepared_tx[$layer["name"]])){
 
@@ -125,7 +125,11 @@ function parse_transaction($tx,$layout,$catjson,$network) {
 		$filter_item = array_filter($catjson, function($cj) use($layer_type){
 			return $cj["name"] === $layer_type;
 		});
-		$catitem = array_values($filter_item)[0];
+		$catitem = array_values($filter_item);
+
+		if(count($catitem) > 0 ){
+			$catitem = $catitem[0];
+		}
 
 		if(isset($layer["condition"])){
 			if($layer["condition_operation"] === "equals"){
@@ -175,7 +179,7 @@ function parse_transaction($tx,$layout,$catjson,$network) {
 		}else if($layer_type === "UnresolvedAddress"){
 
 			//アドレスに30個の0が続く場合はネームスペースとみなします。
-			if(isset($tx[$layer["name"]]) && !is_array($tx[$layer["name"]]) && strpos($tx[$layer["name"]],'000000000000000000000000000000') === true){
+			if(isset($tx[$layer["name"]]) && !is_array($tx[$layer["name"]]) && strpos($tx[$layer["name"]],'000000000000000000000000000000') !== false){
 
 				$filter_value = array_filter($catjson, function($cj){
 					return $cj["name"] === "NetworkType";
@@ -195,19 +199,19 @@ function parse_transaction($tx,$layout,$catjson,$network) {
 			}
 		}else if(isset($catitem["type"]) && $catitem["type"] === "enum"){
 
-			if(strpos($catitem["name"],'Flags') === true){
+			if(strpos($catitem["name"],'Flags') !== false){
 
 				$value = 0;
 				foreach($catitem["values"] as $item_layer){
 
-					if(strpos($tx[$layer["name"]],$item_layer["name"]) === true){
+					if(strpos($tx[$layer["name"]],$item_layer["name"]) !== false){
 
 						$value += $item_layer["value"];
 					}
 				}
 				$catitem["value"] = $value;
 			
-			}else if(isset($layer_disposition) &&  strpos($layer_disposition,'array') === true ){
+			}else if(strpos($layer_disposition,'array') !== false ){
 
 				$values = [];
 				foreach($tx[$layer["name"]] as $item){
@@ -233,7 +237,7 @@ function parse_transaction($tx,$layout,$catjson,$network) {
 		}
 
 		//layerの配置
-		if(isset($layer_disposition) && strpos($layer_disposition,'array') === true ){
+		if(strpos($layer_disposition,'array') !== false ){
 
 			$size = 0;
 			if(isset($tx[$layer["size"]])){
@@ -273,7 +277,7 @@ function parse_transaction($tx,$layout,$catjson,$network) {
 					
 					if($layer_type === "UnresolvedAddress"){
 						//アドレスに30個の0が続く場合はネームスペースとみなします。
-						if(strpos($tx_item,'000000000000000000000000000000') === true){
+						if(strpos($tx_item,'000000000000000000000000000000') !== false){
 
 							$filter_value = array_filter($catjson, function($cj){
 								return $cj["name"] === "NetworkType";
@@ -339,7 +343,7 @@ function parse_transaction($tx,$layout,$catjson,$network) {
 		return $pf["name"] === "size";
 	} );
 
-	if(isset($layer_size) && isset($layer_size[0]["size"])){
+	if(isset($layer_size[0]["size"])){
 
 //		print_r($parsed_tx);
 		$parsed_tx[array_keys($layer_size)[0]]["value"] = count_size($parsed_tx);
