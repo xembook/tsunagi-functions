@@ -19,10 +19,10 @@ class TestTsunagi < Test::Unit::TestCase
 		now = network["epochAdjustment"];
 		deadline_time = ((now  + 7200) - network["epochAdjustment"]) * 1000;
 
-		puts [deadline_time]
-		puts [deadline_time].pack("Q").unpack('H*')[0]
+#		puts [deadline_time]
+#		puts [deadline_time].pack("Q").unpack('H*')[0]
 
-
+=begin
 		tx1 = {
 			"type" => "TRANSFER",
 			"signer_public_key" => "5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
@@ -39,10 +39,51 @@ class TestTsunagi < Test::Unit::TestCase
 		catjson = load_catjson(tx1,network)
 #		puts catjson
 		layout = load_layout(tx1,catjson,false)
-		puts layout
+#		puts layout
 		prepared_tx = prepare_transaction(tx1,layout,network) 
 		parsed_tx = parse_transaction(prepared_tx,layout,catjson,network) 
-
+#		puts parsed_tx
+		built_tx = build_transaction(parsed_tx)
 #    assert_equal 0, load_catjson(0,0)
+
+=end
+		tx1 = {
+			"type" => "TRANSFER",
+			"signer_public_key" => "5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
+			"recipient_address" => Base32.decode("TCO7HLVDQUX6V7C737BCM3VYJ3MKP6REE2EKROA").unpack('H*')[0],
+			"mosaics" => [
+				{"mosaic_id" =>  0x2A09B7F9097934C2, "amount" => 1},
+				{"mosaic_id" =>  0x3A8416DB2D53B6C8, "amount" => 100},
+			],
+			"message" => "Hello Tsunagi(Catjson) SDK!",
+		};
+
+		agg_tx = {
+			"type" => 'AGGREGATE_COMPLETE',
+			"signer_public_key" => "5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
+			"fee" => 25000,
+			"deadline" => deadline_time,
+			"transactions" => [tx1],
+
+		};
+
+
+		catjson = load_catjson(agg_tx,network)
+#		puts catjson
+		layout = load_layout(agg_tx,catjson,false)
+#		puts layout
+		prepared_tx = prepare_transaction(agg_tx,layout,network) 
+		parsed_tx = parse_transaction(prepared_tx,layout,catjson,network) 
+#		puts parsed_tx
+		built_tx = build_transaction(parsed_tx)
+		puts built_tx
+
+
+
+
+
+
+
+
   end
 end

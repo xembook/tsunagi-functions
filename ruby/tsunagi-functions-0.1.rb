@@ -36,15 +36,15 @@ def load_layout(tx,catjson,is_embedded)
 	elsif tx["type"] === "AGGREGATE_BONDED" then 
 		layout_name = "AggregateBondedTransaction"
 	else
-		puts "aaaa".camelize
+#		puts "aaaa".camelize
 
 		layout_name = prefix + tx["type"].downcase.camelize + "Transaction"
-		puts layout_name
+#		puts layout_name
 	end
 
 
 	factory = catjson.find{|item| item['factory_type'] == prefix + "Transaction" && item["name"]  == layout_name}
-	puts factory["layout"]
+#	puts factory["layout"]
 
 
 
@@ -101,7 +101,7 @@ def prepare_transaction(tx,layout,network)
 			end
 			prepared_tx[ layer["size"] ] = size
 		else
-			puts "else"
+#			puts "else"
 
 		end
 	}
@@ -115,8 +115,10 @@ def prepare_transaction(tx,layout,network)
 			e_prepared_tx = prepare_transaction(e_tx,e_layout,network)
 			txes.push(e_prepared_tx)
 		}
+		prepared_tx["transactions"] = txes
+
 	end
-	puts prepared_tx
+#	puts prepared_tx
 	return prepared_tx
 
 
@@ -125,6 +127,7 @@ def prepare_transaction(tx,layout,network)
 end
 
 def parse_transaction(tx,layout,catjson,network) 
+
 	parsed_tx = [] #return
 	layout.each{|layer|
 
@@ -136,10 +139,6 @@ def parse_transaction(tx,layout,catjson,network)
 		end
 
 		catitem = Marshal.load(Marshal.dump(catjson.find{|cf| cf["name"] == layer_type}))
-
-		puts "■■■■■■■■■■"
-		puts layer_type
-		puts catitem
 
 		if layer.has_key?("condition") then
 			if layer["condition_operation"] == "equals" then
@@ -161,7 +160,6 @@ def parse_transaction(tx,layout,catjson,network)
 			tx["transactions"].each{ |e_tx|#小文字のeはembeddedの略
 				e_catjson = load_catjson(e_tx,network) #catjsonの更新
 				e_layout = load_layout(e_tx,e_catjson,true) #isEmbedded:true
-
 				e_parsed_tx = parse_transaction(e_tx,e_layout,e_catjson,network) #再帰
 				items.push(e_parsed_tx)
 			}
@@ -188,7 +186,7 @@ def parse_transaction(tx,layout,catjson,network)
 		elsif layer_type == "UnresolvedAddress" then
 
 
-			puts layer["name"]
+#			puts layer["name"]
 			#アドレスに30個の0が続く場合はネームスペースとみなします。
 			if tx.has_key?(layer["name"]) && !tx[layer["name"]].kind_of?(Array) && tx[layer["name"]].include?('000000000000000000000000000000') == true then
 
@@ -223,7 +221,6 @@ def parse_transaction(tx,layout,catjson,network)
 				}
 				tx[layer["name"]] = values
 			else
-				puts catitem["values"]
 				catitem["value"] = catitem["values"].find{|cj| cj["name"] == tx[layer["name"]]}["value"]
 			end
 		end
@@ -316,13 +313,13 @@ def parse_transaction(tx,layout,catjson,network)
 
 	}
 
-	puts parsed_tx
 	layer_size = parsed_tx.find{|pf| pf["name"] == "size"}
 
 	if !layer_size.nil? && layer_size.has_key?("size") then
 
 		layer_size["value"] = count_size(parsed_tx)
 	end
+
 	return parsed_tx
 #	return 0	
 	
@@ -376,6 +373,72 @@ def count_size(item,alignment = 0)
 end
 
 def build_transaction(parsed_tx) 
+
+	built_tx = Marshal.load(Marshal.dump(parsed_tx))
+
+	layer_payload_size = built_tx.find{|bf| bf["name"] == "payload_size"}
+
+	if !layer_payload_size.nil? then
+
+		transactions =  built_tx.find{|bf| bf["name"] == "transactions"}
+		layer_payload_size["value"] = count_size(transactions); #参照元を上書き
+	end
+
+
+	#//Merkle Hash Builder
+	layer_transactions_hash =  built_tx.find{|bf| bf["name"] == "transactions_hash"}
+
+	if !layer_transactions_hash.nil? then
+
+		hashes = [];
+		transactions =  built_tx.find{|bf| bf["name"] == "transactions"}
+		transactions.each{|e_tx|
+
+			digest = SHA3::Digest.hexdigest(
+				:sha256, 
+				(hexlify_transaction(e_tx)).scan(/../).map{ |b| b.to_i(16) }.pack('C*')
+			)
+			hashes.push(digest)
+		}
+		num_remaining_hashes = hashes.size
+
+
+		while 1 < num_remaining_hashes do
+
+			i = 0
+			while i < num_remaining_hashes do
+				
+				hasher = SHA3::Digest::SHA256.new
+				hasher.update(hashes[i].scan(/../).map{ |b| b.to_i(16) }.pack('C*'))
+
+				if i + 1 < num_remaining_hashes then
+
+					hasher.update(hashes[i+1].scan(/../).map{ |b| b.to_i(16) }.pack('C*'))
+
+				else
+
+					hasher.update(hashes[i].scan(/../).map{ |b| b.to_i(16) }.pack('C*'))
+					num_remaining_hashes += 1
+				end
+
+				hashes[(i / 2).floor] = hasher.digest
+				i += 2
+			end
+			num_remaining_hashes = (num_remaining_hashes / 2).floor
+		end
+	end
+=begin
+
+
+
+		$built_tx[array_keys($layer_transactions_hash)[0]]["value"] = $hashes[0];
+	}
+
+	return $built_tx;
+
+
+
+=end
 	return 0
 end
 
