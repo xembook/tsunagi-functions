@@ -120,10 +120,6 @@ def prepare_transaction(tx,layout,network)
 	end
 #	puts prepared_tx
 	return prepared_tx
-
-
-
-
 end
 
 def parse_transaction(tx,layout,catjson,network) 
@@ -327,7 +323,6 @@ end
 
 def count_size(item,alignment = 0) 
 
-
 	total_size = 0;
 	
 	#//レイアウトサイズの取得
@@ -381,7 +376,7 @@ def build_transaction(parsed_tx)
 	if !layer_payload_size.nil? then
 
 		transactions =  built_tx.find{|bf| bf["name"] == "transactions"}
-		layer_payload_size["value"] = count_size(transactions); #参照元を上書き
+		layer_payload_size["value"] = count_size(transactions); #参照元上書き->built_tx
 	end
 
 
@@ -391,8 +386,11 @@ def build_transaction(parsed_tx)
 	if !layer_transactions_hash.nil? then
 
 		hashes = [];
+
 		transactions =  built_tx.find{|bf| bf["name"] == "transactions"}
-		transactions.each{|e_tx|
+		transactions["layout"].each{|e_tx|
+
+
 
 			digest = SHA3::Digest.hexdigest(
 				:sha256, 
@@ -426,24 +424,70 @@ def build_transaction(parsed_tx)
 			end
 			num_remaining_hashes = (num_remaining_hashes / 2).floor
 		end
+
+		layer_transactions_hash["value"] = hashes[0].unpack('H*')[0] #参照元上書き->built_tx
 	end
-=begin
 
-
-
-		$built_tx[array_keys($layer_transactions_hash)[0]]["value"] = $hashes[0];
-	}
-
-	return $built_tx;
-
-
-
-=end
-	return 0
+	return built_tx
 end
 
 def hexlify_transaction(item,alignment = 0) 
-	return 0
+
+	puts "■■■■■■■■■■■■■"
+	puts item
+
+	hex = ""
+	if item.kind_of?(Hash) && item.has_key?("layout") then
+		item["layout"].each{|layer|
+			if item.has_key?("alignment") then
+				item_alignment = item["alignment"]
+			else
+				item_alignment = 0
+			end
+			hex += hexlify_transaction(layer,item_alignment) #再帰
+		}
+	elsif  item.kind_of?(Array) then
+		sub_layout_hex = ""
+		item.each{|sub_layout| 
+			sub_layout_hex += hexlify_transaction(sub_layout,alignment) # //再帰
+			hex_length = sub_layout_hex.length
+		}		 
+		if alignment > 0 then
+			aligned_size = (( sub_layout_hex.length + (alignment * 2) - 2)/ (alignment * 2) ).floor * (alignment * 2)
+			sub_layout_hex = sub_layout_hex + "0" * (aligned_size - hex_length)
+		end
+		hex += sub_layout_hex;
+	else
+
+		size = item["size"]
+		if item["value"].nil? then
+			if size >= 24 then
+				item["value"] = "00" * size
+			else
+				item["value"] = 0
+			end
+		end
+
+		if size==1 then
+			if item["name"] == "element_disposition" then
+				hex = item["value"]
+			else
+				hex = [item["value"]].pack("C").unpack('H*')[0]
+			end	 
+		elsif size==2 then
+			hex = [item["value"]].pack("v").unpack('H*')[0]
+		elsif size==4 then
+			hex = [item["value"]].pack("L").unpack('H*')[0]
+		elsif size==8 then
+			hex = [item["value"]].pack("Q").unpack('H*')[0]
+		elsif size==24 || size==32 || size==64 then
+			hex = item["value"]
+		else
+			puts "unknown size order"
+		end
+	end
+	return hex;
+
 end
 
 def sign_transaction(built_tx,private_key,network) 
