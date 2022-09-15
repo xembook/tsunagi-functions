@@ -78,6 +78,11 @@ class TestTsunagi < Test::Unit::TestCase
 		built_tx = build_transaction(parsed_tx)
 		puts built_tx
 
+		private_key = "94ee0f4d7fe388ac4b04a6a6ae2ba969617879b83616e4d25710d688a89d80c7"
+		signature = sign_transaction(built_tx,private_key,network);
+		built_tx = update_transaction(built_tx,"signature","value",signature);
+		tx_hash = hash_transaction(agg_tx["signer_public_key"],signature,built_tx,network);
+		payload = hexlify_transaction(built_tx)
 
 
 

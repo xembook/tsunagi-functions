@@ -491,22 +491,54 @@ def hexlify_transaction(item,alignment = 0)
 end
 
 def sign_transaction(built_tx,private_key,network) 
-	return 0
+
+	signing_key = Ed25519::SigningKey.new(private_key.scan(/../).map{ |b| b.to_i(16) }.pack('C*'))
+
+	verifiable_data = get_verifiable_data(built_tx)
+	puts verifiable_data
+	verifiable_buffer = verifiable_data.scan(/../).map{ |b| b.to_i(16) }.pack('C*')
+	signature = signing_key.sign(verifiable_buffer).unpack('H*')[0]
+	return signature; 
 end
 
 def get_verifiable_data(built_tx) 
-	return 0
+	
+	type_layer = built_tx.find{|fb| fb["name"] == "type"}
+
+	if [16705,16961].include?(type_layer["value"]) then
+		return built_tx.slice(5,6)
+	else
+		return built_tx.slice(5)
+	end
 end
 
 def hash_transaction(signer,signature,built_tx,network) 
-	return 0
+
+	hasher = SHA3::Digest::SHA256.new
+	hasher.update(signature.scan(/../).map{ |b| b.to_i(16) }.pack('C*'))
+	hasher.update(signer.scan(/../).map{ |b| b.to_i(16) }.pack('C*'))
+	hasher.update(network["generationHash"].scan(/../).map{ |b| b.to_i(16) }.pack('C*'))
+	hasher.update(hexlify_transaction(get_verifiable_data(built_tx)).scan(/../).map{ |b| b.to_i(16) }.pack('C*'))
+	tx_hash = hasher.digest
+
+	return tx_hash;
 end
 
 def update_transaction(built_tx,name,type,value) 
-	return 0
+	
+	updated_tx = Marshal.load(Marshal.dump(built_tx))
+
+	layer = built_tx.find{|fb| fb["name"] == name}
+	layer[type] = value; #参照元上書き->updated_tx
+	return updated_tx;
+
 end
 
 def cosign_transaction(tx_hash,private_key) 
+
+	signing_key = Ed25519::SigningKey.new(private_key.scan(/../).map{ |b| b.to_i(16) }.pack('C*'))
+	signature = signing_key.sign(tx_hash.scan(/../).map{ |b| b.to_i(16) }.pack('C*')).unpack('H*')[0]
+	return signature; 
 end
 
 def generate_address_id(address) 
