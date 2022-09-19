@@ -78,10 +78,15 @@ def prepare_transaction(tx,layout,network)
 	if prepared_tx.has_key?("mosaics") then
 		prepared_tx['mosaics'] = (
 			tx['mosaics'].sort do |a, b|
-				b["mosaic_id"] <=> a["mosaic_id"]
+				a["mosaic_id"] <=> b["mosaic_id"]
 			end
 		)
 	end
+
+puts "mosamosamosa####################################"
+puts prepared_tx
+
+
 
 	layout.each{|layer|
 
@@ -237,7 +242,7 @@ def parse_transaction(tx,layout,catjson,network)
 					sub_layout = Marshal.load(Marshal.dump(layer))
 
 					items = []
-					for count in Range.new(0, size) do
+					for count in Range.new(0, size,true) do
 						tx_layer = {}
 						tx_layer["signedness"] = layer["element_disposition"]["signedness"]
 						tx_layer["name"] = "element_disposition"
@@ -252,7 +257,7 @@ def parse_transaction(tx,layout,catjson,network)
 					parsed_tx.push(sub_layout)
 
 				else
-					puts "not yet"
+					puts "not yet1"
 				end
 			elsif tx.has_key?(layer["name"]) then
 
@@ -280,7 +285,8 @@ def parse_transaction(tx,layout,catjson,network)
 				parsed_tx.push(sub_layout)
 
 			else
-				puts "not yet"
+				puts "not yet2"
+				puts layer
 			end
 		else #reserved またはそれ以外(定義なし)
 
@@ -314,6 +320,11 @@ def parse_transaction(tx,layout,catjson,network)
 	if !layer_size.nil? && layer_size.has_key?("size") then
 
 		layer_size["value"] = count_size(parsed_tx)
+
+			puts "size==================================================="
+			puts layer_size["value"]
+			puts parsed_tx
+
 	end
 
 	return parsed_tx
@@ -361,6 +372,7 @@ def count_size(item,alignment = 0)
 		end
 	end
 
+
 	return total_size
 
 
@@ -390,13 +402,17 @@ def build_transaction(parsed_tx)
 		transactions =  built_tx.find{|bf| bf["name"] == "transactions"}
 		transactions["layout"].each{|e_tx|
 
+			puts "■■■■■■■■■■■"
+			puts hexlify_transaction(e_tx)
 
 
 			digest = SHA3::Digest.hexdigest(
 				:sha256, 
 				(hexlify_transaction(e_tx)).scan(/../).map{ |b| b.to_i(16) }.pack('C*')
 			)
-			hashes.push(digest)
+#			hashes.push(digest)
+			hashes.push(digest.scan(/../).map{ |b| b.to_i(16) }.pack('C*'))
+
 		}
 		num_remaining_hashes = hashes.size
 
@@ -407,15 +423,18 @@ def build_transaction(parsed_tx)
 			while i < num_remaining_hashes do
 				
 				hasher = SHA3::Digest::SHA256.new
-				hasher.update(hashes[i].scan(/../).map{ |b| b.to_i(16) }.pack('C*'))
+#				hasher.update(hashes[i].scan(/../).map{ |b| b.to_i(16) }.pack('C*'))
+				hasher.update(hashes[i])
 
 				if i + 1 < num_remaining_hashes then
 
-					hasher.update(hashes[i+1].scan(/../).map{ |b| b.to_i(16) }.pack('C*'))
+#					hasher.update(hashes[i+1].scan(/../).map{ |b| b.to_i(16) }.pack('C*'))
+					hasher.update(hashes[i+1])
 
 				else
 
-					hasher.update(hashes[i].scan(/../).map{ |b| b.to_i(16) }.pack('C*'))
+#					hasher.update(hashes[i].scan(/../).map{ |b| b.to_i(16) }.pack('C*'))
+					hasher.update(hashes[i])
 					num_remaining_hashes += 1
 				end
 
@@ -425,7 +444,9 @@ def build_transaction(parsed_tx)
 			num_remaining_hashes = (num_remaining_hashes / 2).floor
 		end
 
+
 		layer_transactions_hash["value"] = hashes[0].unpack('H*')[0] #参照元上書き->built_tx
+#		layer_transactions_hash["value"] = hashes[0] #参照元上書き->built_tx
 	end
 
 	return built_tx
@@ -433,8 +454,6 @@ end
 
 def hexlify_transaction(item,alignment = 0) 
 
-	puts "■■■■■■■■■■■■■"
-	puts item
 
 	hex = ""
 	if item.kind_of?(Hash) && item.has_key?("layout") then
@@ -448,11 +467,13 @@ def hexlify_transaction(item,alignment = 0)
 		}
 	elsif  item.kind_of?(Array) then
 		sub_layout_hex = ""
+		hex_length = 0
 		item.each{|sub_layout| 
 			sub_layout_hex += hexlify_transaction(sub_layout,alignment) # //再帰
 			hex_length = sub_layout_hex.length
 		}		 
 		if alignment > 0 then
+
 			aligned_size = (( sub_layout_hex.length + (alignment * 2) - 2)/ (alignment * 2) ).floor * (alignment * 2)
 			sub_layout_hex = sub_layout_hex + "0" * (aligned_size - hex_length)
 		end
@@ -495,8 +516,9 @@ def sign_transaction(built_tx,private_key,network)
 	signing_key = Ed25519::SigningKey.new(private_key.scan(/../).map{ |b| b.to_i(16) }.pack('C*'))
 
 	verifiable_data = get_verifiable_data(built_tx)
-	puts verifiable_data
-	verifiable_buffer = verifiable_data.scan(/../).map{ |b| b.to_i(16) }.pack('C*')
+	payload = network["generationHash"] +  hexlify_transaction(verifiable_data);
+
+	verifiable_buffer = payload.scan(/../).map{ |b| b.to_i(16) }.pack('C*')
 	signature = signing_key.sign(verifiable_buffer).unpack('H*')[0]
 	return signature; 
 end
@@ -521,16 +543,18 @@ def hash_transaction(signer,signature,built_tx,network)
 	hasher.update(hexlify_transaction(get_verifiable_data(built_tx)).scan(/../).map{ |b| b.to_i(16) }.pack('C*'))
 	tx_hash = hasher.digest
 
-	return tx_hash;
+
+	return tx_hash.unpack('H*')[0];
 end
 
 def update_transaction(built_tx,name,type,value) 
 	
-	updated_tx = Marshal.load(Marshal.dump(built_tx))
+#	updated_tx = Marshal.load(Marshal.dump(built_tx))
 
 	layer = built_tx.find{|fb| fb["name"] == name}
-	layer[type] = value; #参照元上書き->updated_tx
-	return updated_tx;
+	layer[type] = value  #参照元上書き->updated_tx
+
+	return built_tx
 
 end
 

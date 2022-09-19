@@ -61,7 +61,7 @@ class TestTsunagi < Test::Unit::TestCase
 		agg_tx = {
 			"type" => 'AGGREGATE_COMPLETE',
 			"signer_public_key" => "5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
-			"fee" => 25000,
+			"fee" => 1000000,
 			"deadline" => deadline_time,
 			"transactions" => [tx1],
 
@@ -80,10 +80,12 @@ class TestTsunagi < Test::Unit::TestCase
 
 		private_key = "94ee0f4d7fe388ac4b04a6a6ae2ba969617879b83616e4d25710d688a89d80c7"
 		signature = sign_transaction(built_tx,private_key,network);
+		puts "============================="
+puts signature
 		built_tx = update_transaction(built_tx,"signature","value",signature);
 		tx_hash = hash_transaction(agg_tx["signer_public_key"],signature,built_tx,network);
 		payload = hexlify_transaction(built_tx)
-
+		puts payload
 
 
 
