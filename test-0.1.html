@@ -105,6 +105,36 @@ describe('tsunagi-sdk.0.1',() => {
 
 	describe('aggregate complete transaction', () => {
 
+		it('resolves siimple complete', async () => {
+
+			//Alice->Bob
+			let tx1 = {
+				type:'TRANSFER',
+				signer_public_key:"5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
+				recipient_address:generateAddressId("TCO7HLVDQUX6V7C737BCM3VYJ3MKP6REE2EKROA"),
+				mosaics:[
+					{mosaic_id: 0x2A09B7F9097934C2n, amount: 1n},
+					{mosaic_id: 0x3A8416DB2D53B6C8n, amount: 100n},
+				],
+				message:"Hello Tsunagi(Catjson) SDK!",
+			}
+
+			let aggTx = {
+				type:'AGGREGATE_COMPLETE',
+				signer_public_key:"5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
+				fee:1000000n,
+				deadline:this.deadline,
+				transactions:[tx1],
+			}
+
+			expect(await this.getPayload(aggTx))
+			.toEqual(
+				"380100000000000048b5dad7211f0ff1aee442484bac4def33fe600b37a52a39966e61ed93e54ddcb3517a60471ba4fb37660e5abf164c1ac364bdc485da5cad00cd1b7282145b085f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb000000000198414140420f000000000000dd6d0000000000a5b60f432c88daaf89d3154c5f1e6f7be3090c1af95ba0f21c308ecf119b222290000000000000008c000000000000005f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb0000000001985441989df3aea3852feafc5fdfc2266eb84ed8a7fa242688a8b81c00020000000000c2347909f9b7092a0100000000000000c8b6532ddb16843a64000000000000000048656c6c6f205473756e616769284361746a736f6e292053444b2100000000"
+			);
+
+		});
+
+
 		it('resolves 3 account transfer', async () => {
 
 			//Alice->Bob
