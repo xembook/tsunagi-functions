@@ -399,13 +399,11 @@ function hexlifyTransaction(item,alignment){
 	}else if(Array.isArray(item)){
 		let subLayoutHex = "";
 		for(let subLayout of item){
-			//subLayoutSize += countSize(subLayout);
 			subLayoutHex += hexlifyTransaction(subLayout,alignment);
-			hexLength = subLayoutHex.length;
-		}		 
+		}
 		if(alignment !== undefined && alignment > 0){
 			let alignedSize = Math.floor((subLayoutHex.length + (alignment * 2) - 2)/ (alignment * 2) ) * (alignment * 2);
-			subLayoutHex = subLayoutHex + "0".repeat(alignedSize - hexLength);
+			subLayoutHex = subLayoutHex + "0".repeat(alignedSize - subLayoutHex.length);
 		}
 		hex += subLayoutHex;
 	}else{

@@ -481,11 +481,11 @@ function hexlify_transaction($item,$alignment = 0) {
 		$sub_layout_hex = "";
 		foreach($item as $sub_layout){
 			$sub_layout_hex .= hexlify_transaction($sub_layout,$alignment);//再帰
-			$hex_length = strlen($sub_layout_hex);
 		}		 
+
 		if(isset($alignment) && $alignment > 0){
 			$aligned_size = floor(( strlen($sub_layout_hex) + ($alignment * 2) - 2)/ ($alignment * 2) ) * ($alignment * 2);
-			$sub_layout_hex = $sub_layout_hex . str_repeat ("0",$aligned_size - $hex_length);
+			$sub_layout_hex = $sub_layout_hex . str_repeat ("0",$aligned_size - strlen($sub_layout_hex));
 		}
 		$hex .= $sub_layout_hex;
 	}else{
