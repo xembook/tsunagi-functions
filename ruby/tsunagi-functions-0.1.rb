@@ -83,11 +83,6 @@ def prepare_transaction(tx,layout,network)
 		)
 	end
 
-puts "mosamosamosa####################################"
-puts prepared_tx
-
-
-
 	layout.each{|layer|
 
 		if layer.has_key?("size") && layer["size"].kind_of?(String)  then
@@ -320,11 +315,6 @@ def parse_transaction(tx,layout,catjson,network)
 	if !layer_size.nil? && layer_size.has_key?("size") then
 
 		layer_size["value"] = count_size(parsed_tx)
-
-			puts "size==================================================="
-			puts layer_size["value"]
-			puts parsed_tx
-
 	end
 
 	return parsed_tx
@@ -401,10 +391,6 @@ def build_transaction(parsed_tx)
 
 		transactions =  built_tx.find{|bf| bf["name"] == "transactions"}
 		transactions["layout"].each{|e_tx|
-
-			puts "■■■■■■■■■■■"
-			puts hexlify_transaction(e_tx)
-
 
 			digest = SHA3::Digest.hexdigest(
 				:sha256, 
@@ -526,11 +512,10 @@ end
 def get_verifiable_data(built_tx) 
 	
 	type_layer = built_tx.find{|fb| fb["name"] == "type"}
-
 	if [16705,16961].include?(type_layer["value"]) then
 		return built_tx.slice(5,6)
 	else
-		return built_tx.slice(5)
+		return built_tx.slice(5..-1)
 	end
 end
 
@@ -566,25 +551,72 @@ def cosign_transaction(tx_hash,private_key)
 end
 
 def generate_address_id(address) 
-	return 0
+	return Base32.decode(address).unpack('H*')[0]
 end
 
 def generate_namespace_id(name, parent_namespace_id = 0)
-	return 0
+
+
+	namespace_flag = 1 << 63;
+
+
+	hasher = SHA3::Digest::SHA256.new
+	hasher.update([parent_namespace_id & 0xFFFFFFFF].pack("L"))
+	hasher.update([(parent_namespace_id >> 32) & 0xFFFFFFFF].pack("L"))
+	hasher.update(name)
+
+	digest = hasher.digest.unpack('H*')[0]
+	result = digest_to_bigint(digest.scan(/../).map{ |b| b.to_i(16) })
+	#//85738c26eb1534a4c4a38decd175461e4624c0b4c61e021fb82f985eaae3d911 xembook
+
+	return result | namespace_flag;
+
 end	
 
+def digest_to_bigint(digest)
+
+	result = 0
+	for i in 0...8 do
+		result += digest[i] << 8 * i
+	end
+
+	return result
+end
+
 def generate_key(name)
-	return 0
+	
+	namespace_flag = 1 << 63;
+
+	hasher = SHA3::Digest::SHA256.new
+	hasher.update(name)
+
+	digest = hasher.digest.unpack('H*')[0]
+	result = digest_to_bigint(digest.scan(/../).map{ |b| b.to_i(16) })
+
+	return result | namespace_flag;
 end
 
 def generate_mosaic_id(owner_address, nonce)
-	return 0
+
+	namespace_flag = 1 << 63;
+
+p owner_address
+	hasher = SHA3::Digest::SHA256.new
+	hasher.update([nonce].pack("L"))
+	hasher.update(owner_address.scan(/../).map{ |b| b.to_i(16) }.pack('C*'))
+	digest = hasher.digest.unpack('H*')[0]
+
+	result = digest_to_bigint(digest.scan(/../).map{ |b| b.to_i(16) })
+
+	if result & namespace_flag then
+		result -= namespace_flag
+	end
+
+	return result
 end
 
 def convert_address_alias_id(namespace_id)
-	return 0
+
+	return [namespace_id].pack("Q").unpack('H*')[0] + "000000000000000000000000000000"
 end
 
-def digest_to_bigint(digest)
-	return 0
-end
