@@ -188,7 +188,7 @@ def parse_transaction(tx,layout,catjson,network)
 
 #				let prefix = (catjson.find{|cf| cf["name"] =="NetworkType"}).["values"].find{|vf| vf["name"] == tx["network"]}.["value"] + 1).pack("C").unpack('H*')[0]
 				network_type = catjson.find{|cf| cf["name"] =="NetworkType"}
-				network_value = network_type["values"].find{|vf| vf["name"] == tx["network"]}
+				network_value = network_type["values"].find{|vf| vf["name"] == tx["network"]}["value"]
 				prefix =  [network_value + 1].pack("C").unpack('H*')[0]
 				tx[layer["name"]] =  prefix +  tx[layer["name"]]
 			end
@@ -513,6 +513,7 @@ def get_verifiable_data(built_tx)
 	
 	type_layer = built_tx.find{|fb| fb["name"] == "type"}
 	if [16705,16961].include?(type_layer["value"]) then
+
 		return built_tx.slice(5,6)
 	else
 		return built_tx.slice(5..-1)
@@ -600,7 +601,6 @@ def generate_mosaic_id(owner_address, nonce)
 
 	namespace_flag = 1 << 63;
 
-p owner_address
 	hasher = SHA3::Digest::SHA256.new
 	hasher.update([nonce].pack("L"))
 	hasher.update(owner_address.scan(/../).map{ |b| b.to_i(16) }.pack('C*'))
