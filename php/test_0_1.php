@@ -770,7 +770,6 @@ class test_0_1 extends \PHPUnit\Framework\TestCase {
 		$tx2 = [
 			"type" => "MOSAIC_SUPPLY_CHANGE",
 			"signer_public_key" => "5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
-			"duration" => 0,
 			"mosaic_id" => generate_mosaic_id(generate_address_id("TBUXMJAYYW3EH3XHBZXSBVGVKXKZS4EH26TINKI"),$nonce),
 			"delta" => 1000 * 100,
 			"action" => 'INCREASE',
