@@ -127,7 +127,6 @@ def parse_transaction(tx,layout,catjson,network)
 	parsed_tx = [] #return
 	layout.each{|layer|
 
-
 		layer_type = layer["type"]
 		layer_disposition = ""
 		if layer.has_key?("disposition") then
@@ -210,6 +209,7 @@ def parse_transaction(tx,layout,catjson,network)
 			elsif layer_disposition.include?('array') == true then
 
 				values = []
+
 				tx[layer["name"]].each{|item| 
 
 					item_value = catitem["values"].find{|cj| cj["name"] == item}["value"]
@@ -261,27 +261,27 @@ def parse_transaction(tx,layout,catjson,network)
 				items = []
 				tx[layer["name"]].each{|tx_item| 
 
-					tx_layer = catjson.find{|cj| cj["name"] == layer_type }
+					tx_layer = Marshal.load(Marshal.dump(catjson.find{|cj| cj["name"] == layer_type }))
+#					tx_layer = catjson.find{|cj| cj["name"] == layer_type }
 					tx_layer["value"] = tx_item
 					
 					if layer_type == "UnresolvedAddress" then
+
 						#アドレスに30個の0が続く場合はネームスペースとみなします。
-						if tx_item.include('000000000000000000000000000000') == true then
+						if tx_item.include?('000000000000000000000000000000') == true then
 
 							network_type = catjson.find{|cj| cj["name"] === "NetworkType"}
 							network_value = network_type["values"].find{|cj| cj["name"] == tx["network"]}["value"]
 							prefix =  [network_value + 1].pack("C").unpack('H*')[0]
-							tx_layer["value"] =  prefix . tx_layer["value"]
+							tx_layer["value"] =  prefix + tx_layer["value"]
 						end
 					end			
 					items.push(tx_layer)
 				}
 				sub_layout["layout"] = items
+
 				parsed_tx.push(sub_layout)
 
-			else
-				puts "not yet2"
-				puts layer
 			end
 		else #reserved またはそれ以外(定義なし)
 
