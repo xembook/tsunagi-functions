@@ -20,7 +20,6 @@ def load_catjson(tx,network)
 	result = JSON.parse(json)
 	
 	return result
-
 end
 
 def load_layout(tx,catjson,is_embedded) 
@@ -36,18 +35,10 @@ def load_layout(tx,catjson,is_embedded)
 	elsif tx["type"] === "AGGREGATE_BONDED" then 
 		layout_name = "AggregateBondedTransaction"
 	else
-#		puts "aaaa".camelize
-
 		layout_name = prefix + tx["type"].downcase.camelize + "Transaction"
-#		puts layout_name
 	end
 
-
 	factory = catjson.find{|item| item['factory_type'] == prefix + "Transaction" && item["name"]  == layout_name}
-#	puts factory["layout"]
-
-
-
 	return factory["layout"]
 end
 
@@ -102,7 +93,6 @@ def prepare_transaction(tx,layout,network)
 			prepared_tx[ layer["size"] ] = size
 		else
 #			puts "else"
-
 		end
 	}
 
@@ -118,7 +108,6 @@ def prepare_transaction(tx,layout,network)
 		prepared_tx["transactions"] = txes
 
 	end
-#	puts prepared_tx
 	return prepared_tx
 end
 
@@ -180,12 +169,9 @@ def parse_transaction(tx,layout,catjson,network)
 
 		elsif layer_type == "UnresolvedAddress" then
 
-
-#			puts layer["name"]
 			#アドレスに30個の0が続く場合はネームスペースとみなします。
 			if tx.has_key?(layer["name"]) && !tx[layer["name"]].kind_of?(Array) && tx[layer["name"]].include?('000000000000000000000000000000') == true then
 
-#				let prefix = (catjson.find{|cf| cf["name"] =="NetworkType"}).["values"].find{|vf| vf["name"] == tx["network"]}.["value"] + 1).pack("C").unpack('H*')[0]
 				network_type = catjson.find{|cf| cf["name"] =="NetworkType"}
 				network_value = network_type["values"].find{|vf| vf["name"] == tx["network"]}["value"]
 				prefix =  [network_value + 1].pack("C").unpack('H*')[0]
@@ -220,7 +206,6 @@ def parse_transaction(tx,layout,catjson,network)
 				catitem["value"] = catitem["values"].find{|cj| cj["name"] == tx[layer["name"]]}["value"]
 			end
 		end
-
 
 		#//layerの配置
 		if layer_disposition.include?('array') == true then
@@ -262,7 +247,6 @@ def parse_transaction(tx,layout,catjson,network)
 				tx[layer["name"]].each{|tx_item| 
 
 					tx_layer = Marshal.load(Marshal.dump(catjson.find{|cj| cj["name"] == layer_type }))
-#					tx_layer = catjson.find{|cj| cj["name"] == layer_type }
 					tx_layer["value"] = tx_item
 					
 					if layer_type == "UnresolvedAddress" then
@@ -307,7 +291,6 @@ def parse_transaction(tx,layout,catjson,network)
 			end
 			parsed_tx.push(tx_layer)
 		end
-
 	}
 
 	layer_size = parsed_tx.find{|pf| pf["name"] == "size"}
@@ -318,8 +301,6 @@ def parse_transaction(tx,layout,catjson,network)
 	end
 
 	return parsed_tx
-#	return 0	
-	
 end
 
 def count_size(item,alignment = 0) 
@@ -362,11 +343,7 @@ def count_size(item,alignment = 0)
 		end
 	end
 
-
 	return total_size
-
-
-#	return 0
 end
 
 def build_transaction(parsed_tx) 
@@ -396,7 +373,6 @@ def build_transaction(parsed_tx)
 				:sha256, 
 				(hexlify_transaction(e_tx)).scan(/../).map{ |b| b.to_i(16) }.pack('C*')
 			)
-#			hashes.push(digest)
 			hashes.push(digest.scan(/../).map{ |b| b.to_i(16) }.pack('C*'))
 
 		}
@@ -409,17 +385,14 @@ def build_transaction(parsed_tx)
 			while i < num_remaining_hashes do
 				
 				hasher = SHA3::Digest::SHA256.new
-#				hasher.update(hashes[i].scan(/../).map{ |b| b.to_i(16) }.pack('C*'))
 				hasher.update(hashes[i])
 
 				if i + 1 < num_remaining_hashes then
 
-#					hasher.update(hashes[i+1].scan(/../).map{ |b| b.to_i(16) }.pack('C*'))
 					hasher.update(hashes[i+1])
 
 				else
 
-#					hasher.update(hashes[i].scan(/../).map{ |b| b.to_i(16) }.pack('C*'))
 					hasher.update(hashes[i])
 					num_remaining_hashes += 1
 				end
@@ -432,14 +405,12 @@ def build_transaction(parsed_tx)
 
 
 		layer_transactions_hash["value"] = hashes[0].unpack('H*')[0] #参照元上書き->built_tx
-#		layer_transactions_hash["value"] = hashes[0] #参照元上書き->built_tx
 	end
 
 	return built_tx
 end
 
 def hexlify_transaction(item,alignment = 0) 
-
 
 	hex = ""
 	if item.kind_of?(Hash) && item.has_key?("layout") then
@@ -529,19 +500,15 @@ def hash_transaction(signer,signature,built_tx,network)
 	hasher.update(hexlify_transaction(get_verifiable_data(built_tx)).scan(/../).map{ |b| b.to_i(16) }.pack('C*'))
 	tx_hash = hasher.digest
 
-
 	return tx_hash.unpack('H*')[0];
 end
 
 def update_transaction(built_tx,name,type,value) 
 	
-#	updated_tx = Marshal.load(Marshal.dump(built_tx))
-
 	layer = built_tx.find{|fb| fb["name"] == name}
 	layer[type] = value  #参照元上書き->updated_tx
 
 	return built_tx
-
 end
 
 def cosign_transaction(tx_hash,private_key) 
@@ -557,9 +524,7 @@ end
 
 def generate_namespace_id(name, parent_namespace_id = 0)
 
-
 	namespace_flag = 1 << 63;
-
 
 	hasher = SHA3::Digest::SHA256.new
 	hasher.update([parent_namespace_id & 0xFFFFFFFF].pack("L"))
@@ -568,10 +533,8 @@ def generate_namespace_id(name, parent_namespace_id = 0)
 
 	digest = hasher.digest.unpack('H*')[0]
 	result = digest_to_bigint(digest.scan(/../).map{ |b| b.to_i(16) })
-	#//85738c26eb1534a4c4a38decd175461e4624c0b4c61e021fb82f985eaae3d911 xembook
 
 	return result | namespace_flag;
-
 end	
 
 def digest_to_bigint(digest)
