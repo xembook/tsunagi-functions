@@ -44,9 +44,12 @@ void main() {
 
 			var catjson = await loadCatjson(tx1,network);
 			var layout = await loadLayout(tx1,catjson,false);
+			var preparedTx = await prepareTransaction(tx1,layout,network); //TX事前準備
+			var parsedTx = await parseTransaction(preparedTx,layout,catjson,network); 
+
 
 //				print(layout);
-			expect(layout, "mario");
+			expect(preparedTx, "mario");
 
 			// 期待値とチェック
 			expect("mario", "mario");
