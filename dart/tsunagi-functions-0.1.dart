@@ -299,65 +299,47 @@ parseTransaction(tx,layout,catjson,network) async{
 	return parsedTx;
 }
 
-/*
 
-
-
-
-	}
-
-
-
-*/
 countSize(item,alignment){
 	var totalSize = 0;
-	print("■■■■■■■■■■■■■");
-	print(item.runtimeType);
 
-	if(item != null &&  item.containsKey("layout")){
-	}else if(item.runtimeType == "List"){
-	}else{
-	}
-
-	return totalSize;
-
-}
-
-
-/*
-	let totalSize = 0;
-	
 	//レイアウトサイズの取得
-	if(item !== undefined && "layout" in item){
-		for(let layer of item.layout){
-			let itemAlignment;
-			if("alignment" in item){
-				itemAlignment = item.alignment;
+	if(item != null &&  item.containsKey("layout")){
+
+		for(var layer in item["layout"]){
+			var itemAlignment;
+			if(item.containsKey("alignment")){
+				itemAlignment = item["alignment"];
 			}else{
 				itemAlignment = 0;
 			}
 			totalSize += countSize(layer,itemAlignment); //再帰
 		}
+
 	//レイアウトを構成するレイヤーサイズの取得
-	}else if(Array.isArray(item)){
-		let layoutSize = 0;
-		for(let layout of item){
+	}else if(item.runtimeType.toString() == "List<dynamic>"){
+
+		var layoutSize = 0;
+		for(var layout in item){
 			layoutSize += countSize(layout,alignment);
 		}		 
-		if(alignment !== undefined && alignment > 0){
-			layoutSize = Math.floor((layoutSize  + alignment - 1) / alignment ) * alignment;
+		if(alignment !== null && alignment > 0){
+			layoutSize = ((layoutSize  + alignment - 1) / alignment ).floor() * alignment;
 		}
 		totalSize += layoutSize;
-	
+
 	}else{
-		if("size" in item){
-			totalSize += item.size;
-			console.log(item.name + ":" + item.size);
-		}else{console.error("no size:" + item.name);}
+		if(item.containsKey("size")){
+			totalSize += item["size"];
+			print(item.name + ":" + item.size);
+		}else{print("no size:" + item.name);}
+
 	}
 	console.log(totalSize);
 	return totalSize;
-*/
+}
+
+
 
 
 buildTransaction(parsedTx){
