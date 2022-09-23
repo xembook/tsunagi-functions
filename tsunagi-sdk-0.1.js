@@ -13,7 +13,7 @@ async function loadCatjson(tx,network){
 	return catjson;
 }
 
-async function loadLayout(tx,catjson,isEmbedded){
+function loadLayout(tx,catjson,isEmbedded){
 
 	let prefix;
 	if(isEmbedded){
@@ -75,7 +75,8 @@ async function prepareTransaction(tx,layout,network){
 	for(let layer of layout){
 
 		//size定義の調査
-		if(layer.size !== undefined && isNaN(layer.size)){
+//		if(layer.size !== undefined && isNaN(layer.size)){
+		if('size' in layer && isNaN(layer.size)){
 
 			let size = 0;
 			//element_dispositionが定義されている場合は、TX内の実データをそのサイズ数で分割する。
@@ -102,9 +103,9 @@ async function prepareTransaction(tx,layout,network){
 		for(let eTx of tx.transactions){
 
 			let eCatjson = await loadCatjson(eTx,network);
-			let eLayout = await loadLayout(eTx,eCatjson,true);
+			let eLayout = loadLayout(eTx,eCatjson,true);
 			//再帰処理
-			ePreparedTx = await prepareTransaction(eTx,eLayout,network);
+			let ePreparedTx = await prepareTransaction(eTx,eLayout,network);
 			txes.push(ePreparedTx);
 		}
 		preparedTx.transactions = txes;
@@ -144,7 +145,7 @@ async function parseTransaction(tx,layout,catjson,network){
 			let items = [];
 			for(let eTx of tx.transactions){ //小文字のeはembeddedの略
 				let eCatjson = await loadCatjson(eTx,network);//catjsonの更新
-				let eLayout = await loadLayout(eTx,eCatjson,true); //isEmbedded:true
+				let eLayout = loadLayout(eTx,eCatjson,true); //isEmbedded:true
 				let eParsedTx = await parseTransaction(eTx,eLayout,eCatjson,network); //再帰
 				items.push(eParsedTx);
 			}
@@ -167,7 +168,8 @@ async function parseTransaction(tx,layout,catjson,network){
 
 		}else if(layerType === "UnresolvedAddress"){
 			//アドレスに30個の0が続く場合はネームスペースとみなします。
-			if(tx[layer.name] !== undefined  && tx[layer.name].indexOf("000000000000000000000000000000")>=0){
+//			if(tx[layer.name] !== undefined  && tx[layer.name].indexOf("000000000000000000000000000000")>=0){
+			if(layer.name in tx && tx[layer.name].indexOf("000000000000000000000000000000")>=0){
 				let prefix = (catjson.find(cf=>cf.name==="NetworkType").values.find(vf=>vf.name===tx.network).value + 1).toString(16);
 				tx[layer.name] =  prefix + tx[layer.name];
 			}
@@ -182,7 +184,7 @@ async function parseTransaction(tx,layout,catjson,network){
 				}
 				catitem.value = value;
 			}else if(layerDisposition.indexOf('array') != -1){
-				values = [];
+				let values = [];
 				for(let item of  tx[layer.name]){
 					values.push(catitem.values.find(cvf=>cvf.name === item).value);
 				}
@@ -351,7 +353,7 @@ function countSize(item,alignment){
 	let totalSize = 0;
 	
 	//レイアウトサイズの取得
-	if(item !== undefined && item.layout){
+	if(item !== undefined && "layout" in item){
 		for(let layer of item.layout){
 			let itemAlignment;
 			if("alignment" in item){
@@ -386,7 +388,7 @@ function countSize(item,alignment){
 function hexlifyTransaction(item,alignment){
 
 	let hex = "";
-	if(item !== undefined && item.layout){
+	if(item !== undefined && "layout" in item){
 		for(let layer of item.layout){
 			let itemAlignment;
 			if("alignment" in item){
