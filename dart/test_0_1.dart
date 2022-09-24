@@ -46,6 +46,7 @@ void main() {
 			var layout = await loadLayout(tx1,catjson,false);
 			var preparedTx = await prepareTransaction(tx1,layout,network); //TX事前準備
 			var parsedTx = await parseTransaction(preparedTx,layout,catjson,network); 
+			var builtTx = buildTransaction(parsedTx); 
 
 
 //				print(layout);

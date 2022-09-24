@@ -146,12 +146,12 @@ parseTransaction(tx,layout,catjson,network) async{
 		if(layer.containsKey("disposition")){
 			layerDisposition = layer["disposition"];
 		}
-
-		var catitem = {}..addAll( catjson.firstWhere((cj)=>cj["name"] == layerType,orElse: () => null) );
+		
+		var catitem = {}..addAll( catjson.firstWhere((cj)=>cj["name"] == layerType,orElse: () => {}) );
 
 		
 		if(layer.containsKey("condition") ){
-			if(layer["condition_operation"] === "equals"){
+			if(layer["condition_operation"] == "equals"){
 				if(layer["condition_value"] != tx[layer["condition"]]){
 					continue;
 				}
@@ -192,8 +192,10 @@ parseTransaction(tx,layout,catjson,network) async{
 
 		}else if(layerType == "UnresolvedAddress"){
 			//アドレスに30個の0が続く場合はネームスペースとみなします。
+			print("■■■■■■■■■■■■■■■■■■");
+			print(tx);
 			if(tx.containsKey(layer["name"]) && tx[layer["name"]].contains("000000000000000000000000000000")){
-				var prefix = (catjson.firstWhere((cj)=>cj["name"] == "NetworkType")["values"].firstWhere(vf=>vf["name"]==tx["network"])["value"] + 1).toRadixString(16);
+				var prefix = (catjson.firstWhere((cj)=>cj["name"] == "NetworkType")["values"].firstWhere((vf)=>vf["name"]==tx["network"])["value"] + 1).toRadixString(16);
 				tx[layer["name"]] =  prefix + tx[layer["name"]];
 			}
 		}else if(catitem["type"] == "enum"){
@@ -226,18 +228,18 @@ parseTransaction(tx,layout,catjson,network) async{
 			var size = tx[layer["size"]];
 			if(layerType == "byte"){
 
-				if(layer.containsKey()){ //message
+				if(layer.containsKey("element_disposition")){ //message
 					var subLayout = {}..addAll(layer);
 
 					var items = [];
-					for(let count = 0; count < size; count++){
+					for(var count = 0; count < size; count++){
 						var txLayer = {};
 						txLayer["signedness"] = layer["element_disposition"]["signedness"];
 						txLayer["name"] = "element_disposition";
 						txLayer["size"] = layer["element_disposition"]["size"];
-						txLayer["value"] = tx[layer["name"]].substring(count * 2, 2);
+						txLayer["value"] = tx[layer["name"]].substring(count * 2, count * 2 + 2);
 						txLayer["type"] = layerType;
-						items.add([txLayer]);
+						items.add(txLayer);
 					}
 					subLayout["layout"] = items;
 					parsedTx.add(subLayout);
@@ -246,7 +248,7 @@ parseTransaction(tx,layout,catjson,network) async{
 			}else if(tx.containsKey(layer["name"])){
 
 				var subLayout = {}..addAll(layer);
-				let items = [];
+				var items = [];
 				for(var txItem in tx[layer["name"]]){
 					var txLayer = {}..addAll(catjson.firstWhere((cj)=>cj["name"] == layerType));
 					txLayer["value"] = txItem;
@@ -258,7 +260,8 @@ parseTransaction(tx,layout,catjson,network) async{
 							txLayer["value"] =  prefix + txLayer["value"];
 						}
 					}			
-					items.add([txLayer]);
+//					items.add([txLayer]);
+					items.add(txLayer);
 				}
 				subLayout["layout"] = items;
 				parsedTx.add(subLayout);
@@ -272,18 +275,18 @@ parseTransaction(tx,layout,catjson,network) async{
 			if(catitem.length > 0){
 
 				//catjsonのデータを使う
-				txLayer["signedness	= catitem.signedness;
+				txLayer["signedness"]	= catitem["signedness"];
 				txLayer["size"]  = catitem["size"];
 				txLayer["type"]  = catitem["type"];
 				txLayer["value"] = catitem["value"];
 			}
 
 			//txに指定されている場合上書き(enumパラメータは上書きしない)
-			if(tx.containsKey(layer["name"]) && catitem["type"] !== "enum"){
+			if(tx.containsKey(layer["name"]) && catitem["type"] != "enum"){
 				txLayer["value"] = tx[layer["name"]];
 			}else{
 				/* そのままtxLayerを追加 */
-				console.log(layer["name"]);
+				print(layer["name"]);
 			}
 			parsedTx.add(txLayer);
 		}
@@ -303,8 +306,25 @@ parseTransaction(tx,layout,catjson,network) async{
 countSize(item,alignment){
 	var totalSize = 0;
 
+	print("start : countSize");
+	print(item.runtimeType.toString());
+	print(item);
+
+	//レイアウトを構成するレイヤーサイズの取得
+	if(item.runtimeType.toString() == "List<dynamic>"){
+
+		var layoutSize = 0;
+		for(var layout in item){
+			layoutSize += countSize(layout,alignment);
+		}		 
+		if(alignment != null && alignment > 0){
+			layoutSize = ((layoutSize  + alignment - 1) / alignment ).floor() * alignment;
+		}
+		totalSize += layoutSize;
+
+
 	//レイアウトサイズの取得
-	if(item != null &&  item.containsKey("layout")){
+	}else if(item != null &&  item.containsKey("layout")){
 
 		for(var layer in item["layout"]){
 			var itemAlignment;
@@ -316,26 +336,14 @@ countSize(item,alignment){
 			totalSize += countSize(layer,itemAlignment); //再帰
 		}
 
-	//レイアウトを構成するレイヤーサイズの取得
-	}else if(item.runtimeType.toString() == "List<dynamic>"){
-
-		var layoutSize = 0;
-		for(var layout in item){
-			layoutSize += countSize(layout,alignment);
-		}		 
-		if(alignment !== null && alignment > 0){
-			layoutSize = ((layoutSize  + alignment - 1) / alignment ).floor() * alignment;
-		}
-		totalSize += layoutSize;
-
 	}else{
 		if(item.containsKey("size")){
 			totalSize += item["size"];
-			print(item.name + ":" + item.size);
-		}else{print("no size:" + item.name);}
+			print(item["name"] + ":" + item["size"].toString());
+		}else{print("no size:" + item["name"]);}
 
 	}
-	console.log(totalSize);
+	print(totalSize);
 	return totalSize;
 }
 
@@ -343,8 +351,53 @@ countSize(item,alignment){
 
 
 buildTransaction(parsedTx){
-	return 0;
+	var builtTx = []..addAll(parsedTx);
+print("■■■■■■■■■■■■■■■");
+
+print(builtTx.runtimeType.toString());
+
+
+	var layerPayloadSize = builtTx.firstWhere((lf)=>lf["name"] == "payload_size", orElse: () => null);
+	if(layerPayloadSize != null && layerPayloadSize.containsKey("size")){
+		layerPayloadSize["value"] = countSize(builtTx.firstWhere((lf)=>lf["name"] == "transactions"),0);
+	}
+
+	var layerTransactionsHash = builtTx.firstWhere((lf)=>lf["name"] == "transactions_hash", orElse: () => null);
+	if(layerTransactionsHash != null){
+
+		var hashes = [];
+		for(var eTx in builtTx.firstWhere((lf)=>lf["name"] == "transactions")["layout"]){
+			var hasher = SHA3(256, SHA3_PADDING, 256);
+			hashes.add(hasher.update(hex.decode(hexlifyTransaction(eTx,0))).digest());
+		}
+
+		var numRemainingHashes = hashes.length;
+		while (1 < numRemainingHashes) {
+			var i = 0;
+			while (i < numRemainingHashes) {
+				var hasher = SHA3(256, SHA3_PADDING, 256);
+				hasher.update(hashes[i]);
+
+				if (i + 1 < numRemainingHashes) {
+					hasher.update(hashes[i + 1]);
+				} else {
+					// if there is an odd number of hashes, duplicate the last one
+					hasher.update(hashes[i]);
+					numRemainingHashes += 1;
+				}
+				hashes[(i / 2).floor()] = hasher.digest();
+				i += 2;
+			}
+			numRemainingHashes = (numRemainingHashes / 2).floor();
+		}
+		layerTransactionsHash["value"] = hex.encode(hashes[0]);
+	}
+
+	return builtTx;
 }
+
+
+
 getVerifiableData(builtTx){
 	return 0;
 }
@@ -358,8 +411,66 @@ updateTransaction(builtTx,name,type,value){
 	return 0;
 }
 hexlifyTransaction(item,alignment){
-	return 0;
+	var payload = "";
+
+	if(item.runtimeType.toString() == "List<dynamic>"){
+		var subLayoutHex = "";
+		for(var subLayout in item){
+			subLayoutHex += hexlifyTransaction(subLayout,alignment);
+		}
+		if(alignment != null && alignment > 0){
+			var alignedSize = ((subLayoutHex.length + (alignment * 2) - 2)/ (alignment * 2) ).floor() * (alignment * 2);
+			subLayoutHex = subLayoutHex + ("0" * (alignedSize - subLayoutHex.length));
+		}
+		payload += subLayoutHex;
+
+	}else if(item != null && item.containsKey("layout")){
+		for(var layer in item["layout"]){
+			var itemAlignment;
+			if(item.containsKey("alignment")){
+				itemAlignment = item["alignment"];
+			}else{
+				itemAlignment = 0;
+			}
+			payload += hexlifyTransaction(layer,itemAlignment); //再帰
+		}
+
+	}else{
+		var size = item["size"];
+//		if(item["value"] == null){
+		if(!item.containsKey("value")){
+			if(size >= 24){
+				item["value"] = "00" * size;
+			}else{
+				item["value"] = 0;
+			}
+		}
+
+		if(size==1){
+			if(item["name"] == "element_disposition"){
+				payload = item["value"];
+			}else{
+				payload = hex.encode(Uint8List(1)..buffer.asByteData().setInt8(0, item["value"]));
+			}	 
+		}else if(size==2){
+			payload = hex.encode(Uint8List(2)..buffer.asByteData().setInt16(0, item["value"], Endian.little));
+		}else if(size==4){
+			payload = hex.encode(Uint8List(4)..buffer.asByteData().setInt32(0, item["value"], Endian.little));
+		}else if(size==8){
+			payload = hex.encode(Uint8List(8)..buffer.asByteData().setInt64(0, item["value"], Endian.little));
+		}else if(size==24 || size==32 || size==64){
+			payload = item["value"];
+		}else{
+			print("unknown size order");
+		}
+	}
+	print(payload);
+
+	return payload;
+
 }
+
+
 signTransaction(builtTx,priKey,network){
 	return 0;
 }
@@ -368,6 +479,7 @@ cosignTransaction(txhash,priKey){
 }
 
 generateAddressId(address){
-	return 0;
+
+	return base32.decodeAsHexString(address);
 
 }
