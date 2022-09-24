@@ -420,7 +420,7 @@ function hexlifyTransaction(item,alignment){
 
 		if(size==1){
 			if(item.name === "element_disposition"){
-				hex = buffer.Buffer.from(item.value,'hex').toString("hex");
+				hex = item.value;
 			}else{
 				hex = buffer.Buffer.from(new Uint8Array([item.value]).buffer).toString("hex");
 			}	 
@@ -431,7 +431,7 @@ function hexlifyTransaction(item,alignment){
 		}else if(size==8){
 			hex = buffer.Buffer.from(new BigInt64Array([item.value]).buffer).toString("hex");
 		}else if(size==24 || size==32 || size==64){
-			hex = buffer.Buffer.from(item.value,'hex').toString("hex");
+			hex = item.value.toLowerCase();
 		}else{
 			console.error("unknown size order");
 		}
