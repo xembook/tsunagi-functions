@@ -352,10 +352,6 @@ countSize(item,alignment){
 
 buildTransaction(parsedTx){
 	var builtTx = []..addAll(parsedTx);
-print("■■■■■■■■■■■■■■■");
-
-print(builtTx.runtimeType.toString());
-
 
 	var layerPayloadSize = builtTx.firstWhere((lf)=>lf["name"] == "payload_size", orElse: () => null);
 	if(layerPayloadSize != null && layerPayloadSize.containsKey("size")){
@@ -396,20 +392,6 @@ print(builtTx.runtimeType.toString());
 	return builtTx;
 }
 
-
-
-getVerifiableData(builtTx){
-	return 0;
-}
-hashTransaction(signer,signature,builtTx,network){
-	return 0;
-}
-
-
-
-updateTransaction(builtTx,name,type,value){
-	return 0;
-}
 hexlifyTransaction(item,alignment){
 	var payload = "";
 
@@ -458,6 +440,7 @@ hexlifyTransaction(item,alignment){
 			payload = hex.encode(Uint8List(4)..buffer.asByteData().setInt32(0, item["value"], Endian.little));
 		}else if(size==8){
 			payload = hex.encode(Uint8List(8)..buffer.asByteData().setInt64(0, item["value"], Endian.little));
+
 		}else if(size==24 || size==32 || size==64){
 			payload = item["value"];
 		}else{
@@ -472,10 +455,56 @@ hexlifyTransaction(item,alignment){
 
 
 signTransaction(builtTx,priKey,network){
-	return 0;
+
+	var privateKey = ed.newKeyFromSeed(hex.decode(priKey));
+
+	var verifiableData = getVerifiableData(builtTx);
+	var payload = network["generationHash"]  +  hexlifyTransaction(verifiableData,0);
+	var signature = hex.encode(ed.sign(privateKey, hex.decode(payload)));
+	return signature; 
+
 }
+
+getVerifiableData(builtTx){
+
+	var typeLayer = builtTx.firstWhere((bf) => bf["name"] == "type");
+	if([16705,16961].contains(typeLayer["value"])){
+
+		return builtTx.sublist(5,11);
+	}else{
+//		return builtTx.sublist(5,builtTx.length);
+		return builtTx.sublist(5);
+	}
+}
+hashTransaction(signer,signature,builtTx,network){
+
+
+	var hasher = SHA3(256, SHA3_PADDING, 256);
+
+	hasher.update(hex.decode(signature));
+	hasher.update(hex.decode(signer));
+	hasher.update(hex.decode(network["generationHash"]));
+	hasher.update(hex.decode(signature));
+	hasher.update(hex.decode(hexlifyTransaction(getVerifiableData(builtTx),0)));
+	return hex.encode(hasher.digest());
+}
+
+
+
+updateTransaction(builtTx,name,type,value){
+	
+	var updatedTx = []..addAll(builtTx);
+
+	var layer = updatedTx.firstWhere((bf)=>bf["name"] == name);
+	layer[type] = value;
+	return updatedTx;
+}
+
 cosignTransaction(txhash,priKey){
-	return 0;
+
+	var privateKey = ed.newKeyFromSeed(hex.decode(priKey));
+	var signature = hex.encode(ed.sign(privateKey, hex.decode(txhash)));
+	return signature; 
 }
 
 generateAddressId(address){
@@ -483,3 +512,81 @@ generateAddressId(address){
 	return base32.decodeAsHexString(address);
 
 }
+
+
+generateNamespaceId(name, parentNamespaceId){
+
+	var namespace_flag = BigInt.from(1) << 63;
+
+	var hasher = SHA3(256, SHA3_PADDING, 256);
+
+	hasher.update(Uint8List(4)..buffer.asByteData().setInt32(0, ( BigInt.parse(parentNamespaceId.toString()) & BigInt.from(0xFFFFFFFF)).toInt(), Endian.little));
+	hasher.update(Uint8List(4)..buffer.asByteData().setInt32(0, ((BigInt.parse(parentNamespaceId.toString()) >> 32) & BigInt.from(0xFFFFFFFF)).toInt(), Endian.little));
+
+
+	hasher.update(utf8.encode(name));
+	var digest =  digestToBigint(hasher.digest());
+	return digest | namespace_flag;
+}
+
+
+digestToBigint(digest){
+
+	var result = BigInt.from(0);
+	for(var count = 0; count < 8; count++){
+		result += BigInt.from(digest[count]) << 8 * count;
+	}
+
+	return result;
+}
+
+generateKey(name){
+	
+	var namespace_flag = BigInt.from(1) << 63;
+
+	var hasher = SHA3(256, SHA3_PADDING, 256);
+	hasher.update(utf8.encode(name));
+
+	var digest =  digestToBigint(hasher.digest());
+	return digest | namespace_flag;
+}
+
+generateMosaicId(ownerAddress, nonce){
+
+	var namespace_flag = BigInt.from(1) << 63;
+
+	var hasher = SHA3(256, SHA3_PADDING, 256);
+	hasher.update(Uint8List(4)..buffer.asByteData().setInt32(0, nonce, Endian.little));
+	hasher.update(hex.decode(ownerAddress));
+
+	var result =  digestToBigint(hasher.digest());
+
+	if( result & namespace_flag > BigInt.from(0)){
+		result -= namespace_flag;
+	}
+	return result;
+
+
+}
+
+convertAddressAliasId(namespaceId){
+
+	return hex.encode( bigIntToUint8List(namespaceId)) + "000000000000000000000000000000";
+}
+
+
+Uint8List bigIntToUint8List(BigInt bigInt) =>
+	bigIntToByteData(bigInt).buffer.asUint8List();
+
+ByteData bigIntToByteData(BigInt bigInt) {
+	final data = ByteData((bigInt.bitLength / 8).ceil());
+	var _bigInt = bigInt;
+
+	for (var i = 0; i < data.lengthInBytes; i++) {
+		data.setUint8(i, _bigInt.toUnsigned(8).toInt());
+		_bigInt = _bigInt >> 8;
+	}
+
+	return data;
+}
+
