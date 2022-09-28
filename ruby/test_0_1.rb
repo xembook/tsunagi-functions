@@ -1518,6 +1518,9 @@ class TestTsunagi < Test::Unit::TestCase
 		expect = "989df3aea3852feafc5fdfc2266eb84ed8a7fa242688a8b8"
 		assert_equal expect, generate_address_id("TCO7HLVDQUX6V7C737BCM3VYJ3MKP6REE2EKROA")
 		
+		expect = "1ff973caeb3dc0"
+		assert_equal expect, 8999999999000000.to_s(16)
+
 
 	end
 
