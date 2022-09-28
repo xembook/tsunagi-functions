@@ -57,7 +57,7 @@ loadLayout(tx,catjson,isEmbedded){
 
 toCamelCase(str) {
 	var res =  str.split('_').map((word) =>word[0].toUpperCase() + word.substring(1).toLowerCase()).toList().join('');
-	print(res);
+//	print(res);
 	return res;
 }
 
@@ -77,7 +77,7 @@ prepareTransaction(tx,layout,network) async{
 	}
 
 	if(preparedTx.containsKey("value")){
-		preparedTx["name"] = hex.encode(utf8.encode(tx["value"]));
+		preparedTx["value"] = hex.encode(utf8.encode(tx["value"]));
 	}
 
 	if(tx.containsKey("mosaics")){
@@ -85,13 +85,13 @@ prepareTransaction(tx,layout,network) async{
 		var castMosaics = tx["mosaics"] as List<dynamic>;
 		preparedTx["mosaics"] = castMosaics..sort((a,b) => a["mosaic_id"].compareTo(b["mosaic_id"]));
 
-		print(preparedTx["mosaics"]);
+//		print(preparedTx["mosaics"]);
 
 	}
 	//レイアウト層ごとの処理
 	for (var layer in layout) {
 
-		print(layer["size"]);
+//		print(layer["size"]);
 
 		//size定義の調査
 		if(layer.containsKey("size") && int.tryParse(layer["size"].toString()) == null){
@@ -192,8 +192,8 @@ parseTransaction(tx,layout,catjson,network) async{
 
 		}else if(layerType == "UnresolvedAddress"){
 			//アドレスに30個の0が続く場合はネームスペースとみなします。
-			print("■■■■■■■■■■■■■■■■■■");
-			print(tx);
+//			print("■■■■■■■■■■■■■■■■■■");
+//			print(tx);
 			if(tx.containsKey(layer["name"]) && tx[layer["name"]].contains("000000000000000000000000000000")){
 				var prefix = (catjson.firstWhere((cj)=>cj["name"] == "NetworkType")["values"].firstWhere((vf)=>vf["name"]==tx["network"])["value"] + 1).toRadixString(16);
 				tx[layer["name"]] =  prefix + tx[layer["name"]];
@@ -286,7 +286,7 @@ parseTransaction(tx,layout,catjson,network) async{
 				txLayer["value"] = tx[layer["name"]];
 			}else{
 				/* そのままtxLayerを追加 */
-				print(layer["name"]);
+//				print(layer["name"]);
 			}
 			parsedTx.add(txLayer);
 		}
@@ -298,7 +298,7 @@ parseTransaction(tx,layout,catjson,network) async{
 		layerSize["value"] = countSize(parsedTx,0);
 	}
 
-	print(parsedTx);
+//	print(parsedTx);
 	return parsedTx;
 }
 
@@ -306,9 +306,9 @@ parseTransaction(tx,layout,catjson,network) async{
 countSize(item,alignment){
 	var totalSize = 0;
 
-	print("start : countSize");
-	print(item.runtimeType.toString());
-	print(item);
+//	print("start : countSize");
+//	print(item.runtimeType.toString());
+//	print(item);
 
 	//レイアウトを構成するレイヤーサイズの取得
 	if(item.runtimeType.toString() == "List<dynamic>"){
@@ -339,11 +339,11 @@ countSize(item,alignment){
 	}else{
 		if(item.containsKey("size")){
 			totalSize += item["size"];
-			print(item["name"] + ":" + item["size"].toString());
+//			print(item["name"] + ":" + item["size"].toString());
 		}else{print("no size:" + item["name"]);}
 
 	}
-	print(totalSize);
+//	print(totalSize);
 	return totalSize;
 }
 
@@ -439,15 +439,18 @@ hexlifyTransaction(item,alignment){
 		}else if(size==4){
 			payload = hex.encode(Uint8List(4)..buffer.asByteData().setInt32(0, item["value"], Endian.little));
 		}else if(size==8){
-			payload = hex.encode(Uint8List(8)..buffer.asByteData().setInt64(0, item["value"], Endian.little));
-
+			if(item["value"].runtimeType.toString() == "int"){
+				payload = hex.encode(Uint8List(8)..buffer.asByteData().setInt64(0, item["value"], Endian.little));
+			}else{
+				payload = hex.encode(bigIntToUint8List(item["value"]));
+			}
 		}else if(size==24 || size==32 || size==64){
 			payload = item["value"];
 		}else{
 			print("unknown size order");
 		}
 	}
-	print(payload);
+//	print(payload);
 
 	return payload;
 
@@ -484,7 +487,6 @@ hashTransaction(signer,signature,builtTx,network){
 	hasher.update(hex.decode(signature));
 	hasher.update(hex.decode(signer));
 	hasher.update(hex.decode(network["generationHash"]));
-	hasher.update(hex.decode(signature));
 	hasher.update(hex.decode(hexlifyTransaction(getVerifiableData(builtTx),0)));
 	return hex.encode(hasher.digest());
 }
