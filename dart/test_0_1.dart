@@ -199,11 +199,11 @@ void main() {
 		});
 
 
-	}, skip: true);
+	}, skip: false);
 
 
 	group('aggregate complete transaction', () {
-/*
+
 		test('resolves siimple complete',  () async {
 
 			//Alice->Bob
@@ -231,7 +231,7 @@ void main() {
 			);
 
 		});
-*/
+
 
 		test('resolves 3 account transfer',  () async {
 
