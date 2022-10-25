@@ -13,18 +13,10 @@ import (
     "golang.org/x/text/cases"
     "golang.org/x/text/language"
 	"encoding/binary"
+	"crypto/ed25519"
+	"encoding/base32"
 )
 import 	"golang.org/x/crypto/sha3"
-
-
-func Summarize(nums []int) int {
-    var total int
-    for _, num := range nums {
-        total += num
-    }
-    return total
-}
-
 
 func loadCatjson( tx map[string]any, network map[string]any) []any{
 
@@ -100,7 +92,13 @@ func prepareTransaction(tx map[string]any,layout []any,network map[string]any) m
 
 	if _, ok := preparedTx["mosaics"]; ok {
 		castMosaics := preparedTx["mosaics"].([]any)
-		sort.Slice(castMosaics, func(i, j int) bool { return castMosaics[i].(map[string]any)["mosaic_id"].(int) < castMosaics[j].(map[string]any)["mosaic_id"].(int) })
+		sort.Slice(castMosaics, func(i, j int) bool { 
+			if fmt.Sprintf("%T",castMosaics[i].(map[string]any)["mosaic_id"]) == "uint64" {
+				return castMosaics[i].(map[string]any)["mosaic_id"].(uint64) < castMosaics[j].(map[string]any)["mosaic_id"].(uint64)
+			}else{
+				return castMosaics[i].(map[string]any)["mosaic_id"].(int) < castMosaics[j].(map[string]any)["mosaic_id"].(int)
+			}
+		})
 	}
 
     for _,layer := range layout {
@@ -121,9 +119,9 @@ func prepareTransaction(tx map[string]any,layout []any,network map[string]any) m
 				}
 			}else if strings.Contains(layerMap["size"].(string), "_count") {
 
-				if _, ok := preparedTx["name"]; ok{
+				if _, ok := preparedTx[layerMap["name"].(string)]; ok{
 
-					size = len(preparedTx[layerMap["name"].(string)].(string));
+					size = len(preparedTx[layerMap["name"].(string)].([]any));
 				}else{
 					size = 0;
 				}
@@ -151,7 +149,7 @@ func prepareTransaction(tx map[string]any,layout []any,network map[string]any) m
 		preparedTx["transactions"] = txes
 
 	}
-	fmt.Println(preparedTx)
+//	fmt.Println(preparedTx)
 	return preparedTx
 }
 
@@ -164,17 +162,26 @@ func containsKey(item map[string]any,str any) bool{
 	return false
 }
 
+func contains(s []int, e int) bool {
+	for _, v := range s {
+		if e == v {
+			return true
+		}
+	}
+	return false
+}
+
 func parseTransaction(tx  map[string]any,layout  []any,catjson  []any,network map[string]any) []any{
 
 //	parsedTx := make([]any,len(layout))
 	parsedTx := make([]any,0)
 
     for _,layer := range layout {
-		fmt.Println("-------------------")
+//		fmt.Println("-------------------")
 		layerMap := layer.(map[string]any)
-		fmt.Println(layerMap["name"])
+//		fmt.Println(layerMap["name"])
 		layerType := layerMap["type"]
-		fmt.Println(layerType)
+//		fmt.Println(layerType)
 		layerDisposition := ""
 
 		_=layerType
@@ -190,7 +197,7 @@ func parseTransaction(tx  map[string]any,layout  []any,catjson  []any,network ma
 
 
 		catitem := make(map[string]any)
-		fmt.Println(idx)
+//		fmt.Println(idx)
 		if idx >= 0 {
 			for k, v := range catjson[idx].(map[string]any) {
 				catitem[k] = v
@@ -269,7 +276,9 @@ func parseTransaction(tx  map[string]any,layout  []any,catjson  []any,network ma
 				
 				idx := slices.IndexFunc(catjson, func(item any) bool {return item.(map[string]any)["name"] == "NetworkType"})
 				idx2 := slices.IndexFunc(catjson[idx].(map[string]any)["values"].([]any), func(item any) bool {return item.(map[string]any)["name"].(string) == tx["network"].(string)})
-				prefix := fmt.Sprintf("%x", catjson[idx2].(map[string]any)["value"].(int) + 1)
+//				fmt.Println("idx2")
+//				fmt.Println(catjson[idx].(map[string]any)["values"].([]any)[idx2].(map[string]any)["value"])
+				prefix := fmt.Sprintf("%x", int(catjson[idx].(map[string]any)["values"].([]any)[idx2].(map[string]any)["value"].(float64)) + 1)
 				
 				tx[layerMap["name"].(string)] =  prefix + tx[layerMap["name"].(string)].(string);
 			}
@@ -351,13 +360,21 @@ func parseTransaction(tx  map[string]any,layout  []any,catjson  []any,network ma
 
 					if layerType == "UnresolvedAddress"{
 						if strings.Contains(txItem.(string),"000000000000000000000000000000") {
+
+							idx := slices.IndexFunc(catjson, func(item any) bool {return item.(map[string]any)["name"] == "NetworkType"})
+							idx2 := slices.IndexFunc(catjson[idx].(map[string]any)["values"].([]any), func(item any) bool {return item.(map[string]any)["name"].(string) == tx["network"].(string)})
+//							fmt.Println("idx2")
+//							fmt.Println(catjson[idx].(map[string]any)["values"].([]any)[idx2].(map[string]any)["value"])
+							prefix := fmt.Sprintf("%x", int(catjson[idx].(map[string]any)["values"].([]any)[idx2].(map[string]any)["value"].(float64)) + 1)
+										
+							txLayer["value"] =  prefix + txLayer["value"].(string)
 						}
 					}
 					items = append(items,txLayer)
 				}
 				subLayout["layout"] = items
 
-				fmt.Println(subLayout)
+//				fmt.Println(subLayout)
 				parsedTx = append(parsedTx,subLayout)
 
 			}else{
@@ -383,7 +400,7 @@ func parseTransaction(tx  map[string]any,layout  []any,catjson  []any,network ma
 			}else{
 			}
 
-			fmt.Println(txLayer)
+//			fmt.Println(txLayer)
 			parsedTx = append(parsedTx,txLayer)
 		}
 	}
@@ -407,7 +424,7 @@ func parseTransaction(tx  map[string]any,layout  []any,catjson  []any,network ma
 func countSize(item any, alignment int) int {
 
 	totalSize := 0
-	fmt.Println(item)
+//	fmt.Println(item)
 	if fmt.Sprintf("%T",item) == "[]interface {}" {
 		layoutSize := 0
 		for _,layout := range item.([]any) {
@@ -494,18 +511,21 @@ func buildTransaction(parsedTx []any) []any {
 
 		layerTransactionsHash["value"] = hex.EncodeToString(byteHash0)
 	}
-	fmt.Println(layerTransactionsHash["value"])
+//	fmt.Println(layerTransactionsHash["value"])
 	return builtTx
 }
 
 func hexlifyTransaction(item any, alignment int)string{
-	fmt.Printf("%T",item)
+	
 	payload := ""
 
 	if fmt.Sprintf("%T",item) == "[]interface {}" {
 		subLayoutHex := ""
 		for _,layout := range item.([]any) {
+//			fmt.Println("layout")
+//			fmt.Println(layout.(map[string]any)["name"])
 			subLayoutHex += hexlifyTransaction(layout.(map[string]any),alignment)
+//			fmt.Println(subLayoutHex)
 		}
 		if alignment > 0 {
 			alignedSize := math.Floor(float64(len(subLayoutHex) + (alignment * 2) - 2)/float64(alignment * 2)) * float64(alignment * 2)
@@ -524,6 +544,7 @@ func hexlifyTransaction(item any, alignment int)string{
 			payload += hexlifyTransaction(layer,itemAlignment)
 		}
 	}else{
+//		fmt.Println("else")
 		size := int(item.(map[string]any)["size"].(float64))
 		
 		if !containsKey(item.(map[string]any),"value") {
@@ -553,8 +574,8 @@ func hexlifyTransaction(item any, alignment int)string{
 				binary.LittleEndian.PutUint16(varint,uint16(item.(map[string]any)["value"].(float64)))
 			}
 			payload = hex.EncodeToString(varint)
-			fmt.Println(item.(map[string]any)["name"])
-			fmt.Println(payload)
+//			fmt.Println(item.(map[string]any)["name"])
+//			fmt.Println(payload)
 
 		}else if size == 4 {
 		
@@ -570,16 +591,133 @@ func hexlifyTransaction(item any, alignment int)string{
 			varint := make([]byte, 8)
 			if fmt.Sprintf("%T",item.(map[string]any)["value"]) == "int" {
 				binary.LittleEndian.PutUint64(varint,uint64(item.(map[string]any)["value"].(int)))
-			}else if fmt.Sprintf("%T",item.(map[string]any)["value"]) == "float64" {
-				binary.LittleEndian.PutUint64(varint,uint64(item.(map[string]any)["value"].(float64)))
+			}else if fmt.Sprintf("%T",item.(map[string]any)["value"]) == "uint64" {
+				binary.LittleEndian.PutUint64(varint,uint64(item.(map[string]any)["value"].(uint64)))
 			}
 			payload = hex.EncodeToString(varint)
-
-		}else if size == 16 || size == 24 || size == 32 {
+//			fmt.Println("-----------------------")
+//			fmt.Println(item.(map[string]any)["name"])
+//			fmt.Println(payload)
+		
+		}else if size == 24 || size == 32 || size == 64 {
 			payload = item.(map[string]any)["value"].(string)
 		}else{
 			fmt.Println("Unknown size")
+			fmt.Println(size)
+
 		}
 	}
 	return payload
+}
+
+func signTransaction(builtTx []any, priKey string,network map[string]any) string{
+	seed, _ := hex.DecodeString(priKey)
+	privateKey := ed25519.NewKeyFromSeed(seed)
+	verifiableData := getVerifiableData(builtTx)
+	payload := network["generationHash"].(string) + hexlifyTransaction(verifiableData,0)
+
+	verifiableBuffer, _ := hex.DecodeString(payload)
+	signature := ed25519.Sign(privateKey, verifiableBuffer)
+//	fmt.Println(hex.EncodeToString(signature))
+	return hex.EncodeToString(signature)
+}
+
+
+
+
+func getVerifiableData(builtTx []any)[]any{
+	idx := slices.IndexFunc(builtTx, func(item any) bool {return item.(map[string]any)["name"] == "type"})
+	if idx >= 0 {
+		typeLayer := builtTx[idx].(map[string]any)["value"]
+		if(contains(make([]int,16705, 16961), int(typeLayer.(float64)))){
+			return  builtTx[5:11]
+		}else{
+			return builtTx[5:]
+		}
+	}
+	return make([]any,0)
+}
+
+func hashTransaction(signer string,signature string,builtTx []any,network map[string]any) string{
+
+	hasher := sha3.New256()
+	//decodeStr := []byte
+	decodeStr,_ := hex.DecodeString(signature)
+	hasher.Write(decodeStr)
+	decodeStr,_ = hex.DecodeString(signer)
+	hasher.Write(decodeStr)
+	decodeStr,_ = hex.DecodeString(network["generationHash"].(string))
+	hasher.Write(decodeStr)
+	decodeStr,_ = hex.DecodeString(hexlifyTransaction(builtTx,0))
+	hasher.Write(decodeStr)
+	return hex.EncodeToString(hasher.Sum(nil))
+}
+
+func updateTransaction(builtTx []any,name string,typeString string,value string) []any{
+
+	updatedTx := make([]any,0)
+	for idx := range builtTx {
+		updatedTx = append(updatedTx,builtTx[idx])
+	}	
+
+	idx := slices.IndexFunc(updatedTx, func(item any) bool {return item.(map[string]any)["name"] == name})
+	if idx >= 0 {
+		updatedTx[idx].(map[string]any)[typeString] = value
+	}
+	return updatedTx
+}
+
+func cosignTransaction(txHash string,priKey string) string{
+	seed, _ := hex.DecodeString(priKey)
+	privateKey := ed25519.NewKeyFromSeed(seed)
+	decodeStr,_ := hex.DecodeString(txHash)
+	signature := ed25519.Sign(privateKey, decodeStr)
+	return hex.EncodeToString(signature)
+}
+
+func generateAddressId(address string) string{
+
+	recipientAddress, _ := base32.StdEncoding.DecodeString(address + "A")
+	return hex.EncodeToString(recipientAddress[:len(recipientAddress) - 1])
+	//return recipientAddress
+}
+
+func generateNamespaceId(name string,parentNamespaceId uint64) uint64{
+
+	namespace_flag := uint64(1 << 63)
+	hasher := sha3.New256()
+	varint1 := make([]byte, 4)
+	binary.LittleEndian.PutUint32(varint1,uint32(parentNamespaceId & 0xFFFFFFFF))
+	hasher.Write(varint1)
+
+	varint2 := make([]byte, 4)
+	binary.LittleEndian.PutUint32(varint2,uint32((parentNamespaceId >> 32) & 0xFFFFFFFF))
+	hasher.Write(varint2)
+
+	hasher.Write([]byte(name))
+	digest := hasher.Sum(nil)
+//	fmt.Println(digest)
+//	namespaceId := sha3.Sum256([]byte(namespace))
+	digestToBigint(digest)
+//	fmt.Println(digestToBigint(digest) | namespace_flag)
+return digestToBigint(digest) | namespace_flag
+}
+
+func digestToBigint(digest []byte) uint64{
+//	varint := make([]byte, 8)
+//	binary.LittleEndian.PutUint64(varint,uint64(digest))
+	result := uint64(0)
+	for i := 0; i < 8; i++ {
+		result |= uint64(digest[i]) << (8 * i)
+	}
+
+	return result
+}
+
+func convertAddressAliasId(namespaceId uint64) string{
+	//namespaceId = namespaceId & 0xFFFFFFFFFFFFFFFF){
+		b := make([]byte, 8)
+		binary.LittleEndian.PutUint64(b, namespaceId)
+
+	return hex.EncodeToString(b) + "000000000000000000000000000000";
 }
