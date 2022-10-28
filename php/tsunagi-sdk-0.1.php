@@ -239,12 +239,12 @@ function parse_transaction($tx,$layout,$catjson,$network) {
 		//layerの配置
 		if(strpos($layer_disposition,'array') !== false ){
 
-			$size = 0;
-			if(isset($tx[$layer["size"]])){
-				$size = $tx[$layer["size"]];
-			}
-
 			if($layer_type === "byte"){
+
+				$size = 0;
+				if(isset($tx[$layer["size"]])){
+					$size = $tx[$layer["size"]];
+				}
 
 				if(isset($layer["element_disposition"])){ //message
 

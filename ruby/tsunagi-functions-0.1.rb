@@ -210,12 +210,13 @@ def parse_transaction(tx,layout,catjson,network)
 		#//layerの配置
 		if layer_disposition.include?('array') == true then
 
-			size = 0
-			if tx.has_key?(layer["size"]) == true then
-				size = tx[layer["size"]]
-			end
 
 			if layer_type == "byte" then
+
+				size = 0
+				if tx.has_key?(layer["size"]) == true then
+					size = tx[layer["size"]]
+				end
 
 				if layer.has_key?("element_disposition") then
 

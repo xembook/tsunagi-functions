@@ -225,10 +225,10 @@ parseTransaction(tx,layout,catjson,network) async{
 		//layerの配置
 		if(layerDisposition.contains('array')){ // "array sized","array fill"
 
-			var size = tx[layer["size"]];
 			if(layerType == "byte"){
 
 				if(layer.containsKey("element_disposition")){ //message
+					var size = tx[layer["size"]];
 					var subLayout = {}..addAll(layer);
 
 					var items = [];
