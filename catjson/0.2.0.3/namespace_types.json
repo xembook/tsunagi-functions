@@ -1,0 +1,46 @@
+[
+  {
+    "name": "NamespaceId",
+    "signedness": "unsigned",
+    "size": 8,
+    "type": "byte"
+  },
+  {
+    "comments": "Enumeration of namespace registration types.",
+    "name": "NamespaceRegistrationType",
+    "signedness": "unsigned",
+    "size": 1,
+    "type": "enum",
+    "values": [
+      {
+        "comments": "Root namespace.",
+        "name": "ROOT",
+        "value": 0
+      },
+      {
+        "comments": "Child namespace.",
+        "name": "CHILD",
+        "value": 1
+      }
+    ]
+  },
+  {
+    "comments": "Enumeration of alias actions.",
+    "name": "AliasAction",
+    "signedness": "unsigned",
+    "size": 1,
+    "type": "enum",
+    "values": [
+      {
+        "comments": "Unlink a namespace, removing the alias.",
+        "name": "UNLINK",
+        "value": 0
+      },
+      {
+        "comments": "Link a namespace, creating an alias.",
+        "name": "LINK",
+        "value": 1
+      }
+    ]
+  }
+]

@@ -1,0 +1,91 @@
+[
+  {
+    "comments": "Enumeration of receipt types.",
+    "name": "ReceiptType",
+    "signedness": "unsigned",
+    "size": 2,
+    "type": "enum",
+    "values": [
+      {
+        "comments": "Mosaic rental fee receipt.",
+        "name": "MOSAIC_RENTAL_FEE",
+        "value": 4685
+      },
+      {
+        "comments": "Namespace rental fee receipt.",
+        "name": "NAMESPACE_RENTAL_FEE",
+        "value": 4942
+      },
+      {
+        "comments": "Harvest fee receipt.",
+        "name": "HARVEST_FEE",
+        "value": 8515
+      },
+      {
+        "comments": "Hash lock completed receipt.",
+        "name": "LOCK_HASH_COMPLETED",
+        "value": 8776
+      },
+      {
+        "comments": "Hash lock expired receipt.",
+        "name": "LOCK_HASH_EXPIRED",
+        "value": 9032
+      },
+      {
+        "comments": "Secret lock completed receipt.",
+        "name": "LOCK_SECRET_COMPLETED",
+        "value": 8786
+      },
+      {
+        "comments": "Secret lock expired receipt.",
+        "name": "LOCK_SECRET_EXPIRED",
+        "value": 9042
+      },
+      {
+        "comments": "Hash lock created receipt.",
+        "name": "LOCK_HASH_CREATED",
+        "value": 12616
+      },
+      {
+        "comments": "Secret lock created receipt.",
+        "name": "LOCK_SECRET_CREATED",
+        "value": 12626
+      },
+      {
+        "comments": "Mosaic expired receipt.",
+        "name": "MOSAIC_EXPIRED",
+        "value": 16717
+      },
+      {
+        "comments": "Namespace expired receipt.",
+        "name": "NAMESPACE_EXPIRED",
+        "value": 16718
+      },
+      {
+        "comments": "Namespace deleted receipt.",
+        "name": "NAMESPACE_DELETED",
+        "value": 16974
+      },
+      {
+        "comments": "Inflation receipt.",
+        "name": "INFLATION",
+        "value": 20803
+      },
+      {
+        "comments": "Transaction group receipt.",
+        "name": "TRANSACTION_GROUP",
+        "value": 57667
+      },
+      {
+        "comments": "Address alias resolution receipt.",
+        "name": "ADDRESS_ALIAS_RESOLUTION",
+        "value": 61763
+      },
+      {
+        "comments": "Mosaic alias resolution receipt.",
+        "name": "MOSAIC_ALIAS_RESOLUTION",
+        "value": 62019
+      }
+    ]
+  }
+]

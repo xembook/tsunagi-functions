@@ -1,0 +1,23 @@
+[
+  {
+    "comments": "The transaction inside the block that triggered the receipt.",
+    "layout": [
+      {
+        "comments": "Transaction primary source (e.g. index within the block).",
+        "name": "primary_id",
+        "signedness": "unsigned",
+        "size": 4,
+        "type": "byte"
+      },
+      {
+        "comments": "Transaction secondary source (e.g. index within aggregate).",
+        "name": "secondary_id",
+        "signedness": "unsigned",
+        "size": 4,
+        "type": "byte"
+      }
+    ],
+    "name": "ReceiptSource",
+    "type": "struct"
+  }
+]
