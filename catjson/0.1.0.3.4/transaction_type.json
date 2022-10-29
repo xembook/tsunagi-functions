@@ -1,0 +1,136 @@
+[
+  {
+    "comments": "Enumeration of Transaction types",
+    "name": "TransactionType",
+    "signedness": "unsigned",
+    "size": 2,
+    "type": "enum",
+    "values": [
+      {
+        "comments": "AccountKeyLinkTransaction",
+        "name": "ACCOUNT_KEY_LINK",
+        "value": 16716
+      },
+      {
+        "comments": "NodeKeyLinkTransaction",
+        "name": "NODE_KEY_LINK",
+        "value": 16972
+      },
+      {
+        "comments": "AggregateCompleteTransaction",
+        "name": "AGGREGATE_COMPLETE",
+        "value": 16705
+      },
+      {
+        "comments": "AggregateBondedTransaction",
+        "name": "AGGREGATE_BONDED",
+        "value": 16961
+      },
+      {
+        "comments": "VotingKeyLinkTransaction",
+        "name": "VOTING_KEY_LINK",
+        "value": 16707
+      },
+      {
+        "comments": "VrfKeyLinkTransaction",
+        "name": "VRF_KEY_LINK",
+        "value": 16963
+      },
+      {
+        "comments": "HashLockTransaction",
+        "name": "HASH_LOCK",
+        "value": 16712
+      },
+      {
+        "comments": "SecretLockTransaction",
+        "name": "SECRET_LOCK",
+        "value": 16722
+      },
+      {
+        "comments": "SecretProofTransaction",
+        "name": "SECRET_PROOF",
+        "value": 16978
+      },
+      {
+        "comments": "AccountMetadataTransaction",
+        "name": "ACCOUNT_METADATA",
+        "value": 16708
+      },
+      {
+        "comments": "MosaicMetadataTransaction",
+        "name": "MOSAIC_METADATA",
+        "value": 16964
+      },
+      {
+        "comments": "NamespaceMetadataTransaction",
+        "name": "NAMESPACE_METADATA",
+        "value": 17220
+      },
+      {
+        "comments": "MosaicDefinitionTransaction",
+        "name": "MOSAIC_DEFINITION",
+        "value": 16717
+      },
+      {
+        "comments": "MosaicSupplyChangeTransaction",
+        "name": "MOSAIC_SUPPLY_CHANGE",
+        "value": 16973
+      },
+      {
+        "comments": "MosaicSupplyRevocationTransaction",
+        "name": "MOSAIC_SUPPLY_REVOCATION",
+        "value": 17229
+      },
+      {
+        "comments": "MultisigAccountModificationTransaction",
+        "name": "MULTISIG_ACCOUNT_MODIFICATION",
+        "value": 16725
+      },
+      {
+        "comments": "AddressAliasTransaction",
+        "name": "ADDRESS_ALIAS",
+        "value": 16974
+      },
+      {
+        "comments": "MosaicAliasTransaction",
+        "name": "MOSAIC_ALIAS",
+        "value": 17230
+      },
+      {
+        "comments": "NamespaceRegistrationTransaction",
+        "name": "NAMESPACE_REGISTRATION",
+        "value": 16718
+      },
+      {
+        "comments": "AccountAddressRestrictionTransaction",
+        "name": "ACCOUNT_ADDRESS_RESTRICTION",
+        "value": 16720
+      },
+      {
+        "comments": "AccountMosaicRestrictionTransaction",
+        "name": "ACCOUNT_MOSAIC_RESTRICTION",
+        "value": 16976
+      },
+      {
+        "comments": "AccountOperationRestrictionTransaction",
+        "name": "ACCOUNT_OPERATION_RESTRICTION",
+        "value": 17232
+      },
+      {
+        "comments": "MosaicAddressRestrictionTransaction",
+        "name": "MOSAIC_ADDRESS_RESTRICTION",
+        "value": 16977
+      },
+      {
+        "comments": "MosaicGlobalRestrictionTransaction",
+        "name": "MOSAIC_GLOBAL_RESTRICTION",
+        "value": 16721
+      },
+      {
+        "comments": "TransferTransaction",
+        "name": "TRANSFER",
+        "value": 16724
+      }
+    ]
+  }
+]

@@ -1,0 +1,62 @@
+[
+  {
+    "name": "MosaicNonce",
+    "signedness": "unsigned",
+    "size": 4,
+    "type": "byte"
+  },
+  {
+    "comments": "Enumeration of mosaic property flags.",
+    "is_bitwise": true,
+    "name": "MosaicFlags",
+    "signedness": "unsigned",
+    "size": 1,
+    "type": "enum",
+    "values": [
+      {
+        "comments": "No flags present.",
+        "name": "NONE",
+        "value": 0
+      },
+      {
+        "comments": "Mosaic supports supply changes through a MosaicSupplyChangeTransaction even when mosaic creator only owns a partial supply.\nIf the mosaic creator owns the totality of the supply, it can be changed even if this flag is not set.",
+        "name": "SUPPLY_MUTABLE",
+        "value": 1
+      },
+      {
+        "comments": "Mosaic supports TransferTransaction between arbitrary accounts. When not set, this mosaic can only be transferred to or from the mosaic creator.",
+        "name": "TRANSFERABLE",
+        "value": 2
+      },
+      {
+        "comments": "Mosaic supports custom restrictions configured by the mosaic creator.\nSee MosaicAddressRestrictionTransaction and MosaicGlobalRestrictionTransaction.",
+        "name": "RESTRICTABLE",
+        "value": 4
+      },
+      {
+        "comments": "Mosaic supports revocation of tokens by the mosaic creator.",
+        "name": "REVOKABLE",
+        "value": 8
+      }
+    ]
+  },
+  {
+    "comments": "Enumeration of mosaic supply change actions.",
+    "name": "MosaicSupplyChangeAction",
+    "signedness": "unsigned",
+    "size": 1,
+    "type": "enum",
+    "values": [
+      {
+        "comments": "Decreases the supply.",
+        "name": "DECREASE",
+        "value": 0
+      },
+      {
+        "comments": "Increases the supply.",
+        "name": "INCREASE",
+        "value": 1
+      }
+    ]
+  }
+]
