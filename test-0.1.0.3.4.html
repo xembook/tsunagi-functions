@@ -13,12 +13,12 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/tweetnacl/1.0.2/nacl-fast.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/js-sha3/0.8.0/sha3.min.js"></script>
 
-<script src="./tsunagi-sdk-0.2.0.3.js"></script>
+<script src="./tsunagi-sdk-0.1.0.3.4.js"></script>
 <script>
 
 
 jasmine.DEFAULT_TIMEOUT_INTERVAL =240000;
-describe('tsunagi-sdk.0.1',() => {
+describe('tsunagi-sdk.0.1.0.3.4',() => {
 
 	beforeEach(async()=>{
 	});
@@ -55,7 +55,6 @@ describe('tsunagi-sdk.0.1',() => {
 		this.carolPrivateKey = "1e090b2a266877a9f88a510af2eb0945a63dc69dbce674ccd83272717d4175cf";
 
 		this.network = {
-			version:1,
 			network:'TESTNET',
 			generationHash:'7fccd304802016bebbcd342a332f91ff1f3bb5e902988b352697be245f48e836',
 			currencyMosaicId:0x3A8416DB2D53B6C8n,

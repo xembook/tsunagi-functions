@@ -49,17 +49,24 @@ async function prepareTransaction(tx,layout,network){
 
 	let preparedTx = Object.assign({}, tx);
 	preparedTx.network = network.network;
-	preparedTx.version = network.version;
+//	preparedTx.version = network.version;
 
-	if('message' in preparedTx){
+
+	if(tx.type === "AGGREGATE_COMPLETE" || tx.type === "AGGREGATE_BONDED"){
+		preparedTx.version = 2;
+	}else{
+		preparedTx.version = 1;
+	}
+
+	if('message' in tx){
 		preparedTx.message = buffer.Buffer.from([0,...(new TextEncoder('utf-8')).encode(tx.message)]).toString("hex");
 	}
 
-	if('name' in preparedTx){
+	if('name' in tx){
 		preparedTx.name = buffer.Buffer.from((new TextEncoder('utf-8')).encode(tx.name)).toString("hex");
 	}
 
-	if('value' in preparedTx){
+	if('value' in tx){
 		preparedTx.value = buffer.Buffer.from((new TextEncoder('utf-8')).encode(tx.value)).toString("hex");
 	}
 
