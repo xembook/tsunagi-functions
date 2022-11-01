@@ -289,7 +289,7 @@ func parseTransaction(tx  map[string]any,layout  []any,catjson  []any,network ma
 				value := 0
 				for _,itemLayer := range catitem["values"].([]any) {
 					if strings.Contains(tx[layerMap["name"].(string)].(string),itemLayer.(map[string]any)["name"].(string)) {
-						value += itemLayer.(map[string]any)["value"].(int)
+						value += int(itemLayer.(map[string]any)["value"].(float64))
 					}
 				}
 				catitem["value"] = value
@@ -490,15 +490,41 @@ func buildTransaction(parsedTx []any) []any {
 			i := 0
 			for i < numRemainingHashes {
 				hasher := sha3.New256()
-				hasher.Write(hashes[i].([]byte))
+//				fmt.Printf("%T",hashes[i])
+//				fmt.Println(hashes[i])
+				//fmt.Sprintf("%T",item)
+
+				if(fmt.Sprintf("%T",hashes[i]) == "[]uint8") {
+					hasher.Write(hashes[i].([]byte))
+				}else{
+					arrayHashi := hashes[i].([32]byte)
+					byteHashi := []byte(arrayHashi[0:len(arrayHashi)])
+					hasher.Write(byteHashi)
+				}
+		
+//				hasher.Write(byteHashi)
 				
 				if i+1 < numRemainingHashes {
-					
-					hasher.Write(hashes[i+1].([]byte))
+
+					if(fmt.Sprintf("%T",hashes[i]) == "[]uint8") {
+						hasher.Write(hashes[i+1].([]byte))
+					}else{
+						arrayHaship1 := hashes[i+1].([32]byte)
+						byteHaship1 := []byte(arrayHaship1[0:len(arrayHaship1)])
+						hasher.Write(byteHaship1)
+					}					
+
+
 
 				}else{
-					
-					hasher.Write(hashes[i].([]byte))
+					if(fmt.Sprintf("%T",hashes[i]) == "[]uint8") {
+						hasher.Write(hashes[i].([]byte))
+					}else{
+						arrayHashi := hashes[i].([32]byte)
+						byteHashi := []byte(arrayHashi[0:len(arrayHashi)])
+						hasher.Write(byteHashi)
+					}					
+					//hasher.Write(byteHashi)
 					numRemainingHashes += 1
 				}
 				hashes[i/2] = hasher.Sum(nil)
@@ -506,10 +532,17 @@ func buildTransaction(parsedTx []any) []any {
 			}
 			numRemainingHashes = int(numRemainingHashes/2)
 		}
-		arrayHash0 := hashes[0].([32]byte)
-		byteHash0 := []byte(arrayHash0[0:len(arrayHash0)])
 
-		layerTransactionsHash["value"] = hex.EncodeToString(byteHash0)
+		if(fmt.Sprintf("%T",hashes[0]) == "[]uint8") {
+			layerTransactionsHash["value"] = hex.EncodeToString(hashes[0].([]byte))
+		}else{
+			arrayHash0 := hashes[0].([32]byte)
+			byteHash0 := []byte(arrayHash0[0:len(arrayHash0)])
+			layerTransactionsHash["value"] = hex.EncodeToString(byteHash0)
+		}	
+//		arrayHash0 := hashes[0].([32]byte)
+//		byteHash0 := []byte(arrayHash0[0:len(arrayHash0)])
+//		layerTransactionsHash["value"] = hex.EncodeToString(byteHash0)
 	}
 //	fmt.Println(layerTransactionsHash["value"])
 	return builtTx
@@ -518,7 +551,6 @@ func buildTransaction(parsedTx []any) []any {
 func hexlifyTransaction(item any, alignment int)string{
 	
 	payload := ""
-
 	if fmt.Sprintf("%T",item) == "[]interface {}" {
 		subLayoutHex := ""
 		for _,layout := range item.([]any) {
@@ -629,7 +661,8 @@ func getVerifiableData(builtTx []any)[]any{
 	idx := slices.IndexFunc(builtTx, func(item any) bool {return item.(map[string]any)["name"] == "type"})
 	if idx >= 0 {
 		typeLayer := builtTx[idx].(map[string]any)["value"]
-		if(contains(make([]int,16705, 16961), int(typeLayer.(float64)))){
+		if(contains([]int{16705, 16961}, int(typeLayer.(float64)))){
+//			fmt.Println(builtTx[5:11])
 			return  builtTx[5:11]
 		}else{
 			return builtTx[5:]
@@ -648,12 +681,13 @@ func hashTransaction(signer string,signature string,builtTx []any,network map[st
 	hasher.Write(decodeStr)
 	decodeStr,_ = hex.DecodeString(network["generationHash"].(string))
 	hasher.Write(decodeStr)
-	decodeStr,_ = hex.DecodeString(hexlifyTransaction(builtTx,0))
+	decodeStr,_ = hex.DecodeString(hexlifyTransaction(getVerifiableData(builtTx),0))
 	hasher.Write(decodeStr)
 	return hex.EncodeToString(hasher.Sum(nil))
 }
 
-func updateTransaction(builtTx []any,name string,typeString string,value string) []any{
+//func updateTransaction(builtTx []any,name string,typeString string,value string) []any{
+func updateTransaction(builtTx []any,name string,typeString string,value any) []any{
 
 	updatedTx := make([]any,0)
 	for idx := range builtTx {
@@ -720,4 +754,24 @@ func convertAddressAliasId(namespaceId uint64) string{
 		binary.LittleEndian.PutUint64(b, namespaceId)
 
 	return hex.EncodeToString(b) + "000000000000000000000000000000";
+}
+
+func generateMosaicId(ownerAddress string, nonce int) uint64{
+
+	namespace_flag := uint64(1 << 63)
+	hasher := sha3.New256()
+
+	varint1 := make([]byte, 4)
+	binary.LittleEndian.PutUint32(varint1,uint32(nonce))
+	hasher.Write(varint1)
+
+	hexedString,_ := hex.DecodeString(ownerAddress)
+	hasher.Write(hexedString)
+	result := digestToBigint(hasher.Sum(nil))
+
+	if result & namespace_flag > 0 {
+		result -= namespace_flag
+	}
+
+	return result
 }
