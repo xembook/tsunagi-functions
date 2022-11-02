@@ -13,5 +13,5 @@ fn main() {
 
     let parsed = json::parse(&resp_txt).unwrap();
 
-    println!("{:?}", parsed[0]["comments"].to_string());
+    //println!("{:?}", parsed[0]["comments"].to_string());
 }
