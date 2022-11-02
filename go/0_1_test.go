@@ -3,7 +3,7 @@ package main
 import "testing"
 
 import (
-	"fmt"
+//	"fmt"
 	"github.com/stretchr/testify/assert"
 	"golang.org/x/exp/slices"	
 )
@@ -36,6 +36,8 @@ func getPayload(tx map[string]any,network map[string]any) string {
 	payload := hexlifyTransaction(builtTx,0)
 	return payload
 }
+
+
 
 func TestTransferTransaction(t *testing.T) {
 
@@ -306,7 +308,6 @@ func TestAggregateCompleteTransaction2(t *testing.T) {
 	signature := signTransaction(builtTx,"94ee0f4d7fe388ac4b04a6a6ae2ba969617879b83616e4d25710d688a89d80c7",network)
 	builtTx = updateTransaction(builtTx,"signature","value",signature)
 	txHash := hashTransaction(aggTx["signer_public_key"].(string),signature,builtTx,network);
-	fmt.Println(txHash)
 
 	preparedTx["cosignatures"].([]any)[0].(map[string]any)["signature"] = cosignTransaction(txHash,"fa6373f4f497773c5cc55c103e348b139461d61fd4b45387e69d08a68000e06b")
 	preparedTx["cosignatures"].([]any)[1].(map[string]any)["signature"] = cosignTransaction(txHash,"1e090b2a266877a9f88a510af2eb0945a63dc69dbce674ccd83272717d4175cf")
@@ -642,7 +643,7 @@ func TestAggregateBondedTransaction4(t *testing.T) {
 	signature := signTransaction(builtTx,"94ee0f4d7fe388ac4b04a6a6ae2ba969617879b83616e4d25710d688a89d80c7",network)
 	builtTx = updateTransaction(builtTx,"signature","value",signature)
 	txHash := hashTransaction(aggTx["signer_public_key"].(string),signature,builtTx,network);
-	fmt.Println(txHash)
+//	fmt.Println(txHash)
 
 	preparedTx["cosignatures"].([]any)[0].(map[string]any)["signature"] = cosignTransaction(txHash,"fa6373f4f497773c5cc55c103e348b139461d61fd4b45387e69d08a68000e06b")
 
@@ -806,8 +807,6 @@ func TestNamespaceTransaction4(t *testing.T) {
 }
 
 //resolves namespace by aggregate
-
-
 func TestNamespaceTransaction5(t *testing.T) {
 	network  := getNetworkInfo()
 	deadline := getDeadline(network)
@@ -852,44 +851,261 @@ func TestNamespaceTransaction5(t *testing.T) {
 	assert.Equal(t, payload,"e801000000000000989f5f8a026d6e5c45301ce06af70406bd9c3694604a9e0718c3bac4dff9b95494d397210817139ebf43306a7bb43242e200afc4205b9a3cb439ffb1e2a14c015f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb000000000198414140420f000000000000dd6d0000000000de415866cedcab9dda7baa97b5bb326ad2647bfafe69d8b3587a789bff9d073c40010000000000004a000000000000005f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb0000000001984e418051010000000000bd1cf9801594b9ed000878656d626f6f6b3100000000000049000000000000005f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb0000000001984e41bd1cf9801594b9edf47e2f57b78ec1920107746f6d61746f310000000000000051000000000000005f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb0000000001984e42bd1cf9801594b9ed9869762418c5b643eee70e6f20d4d555d5997087d7a686a9010000000000000041000000000000005f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb0000000001984e43f47e2f57b78ec19276e65d50e5fbaf4d0100000000000000")
 }
 
+////metadata transaction
 
+//resolves account metadata
+func TestMetadataTransaction1(t *testing.T) {
+	network  := getNetworkInfo()
+	deadline := getDeadline(network)
+	tx1 := map[string]any{
+		"type" : "ACCOUNT_METADATA",
+		"signer_public_key" : "5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
+		"target_address":generateAddressId("TBUXMJAYYW3EH3XHBZXSBVGVKXKZS4EH26TINKI"),
+		"scoped_metadata_key":generateKey("key_account"), //0x9772B71B058127D7, //"key_account"
+		"value_size_delta":27,
+		"value":"Hello Tsunagi(Catjson) SDK!",
+	}
+	aggTx := map[string]any{
+		"type" : "AGGREGATE_COMPLETE",
+		"signer_public_key" : "5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
+		"fee" : 1000000,
+		"deadline" : deadline,
+		"transactions": []any{tx1},
+	}
+	payload := getPayload(aggTx,network)
+	assert.Equal(t, payload,"1801000000000000f6f159ba7929828c37c4c81987ffe73709c9cbf5c4139827236d780c0ce3d6cfae5d9d76619055ca31caeed995da7aafba3a2635da58af8820d6127fc1f96d025f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb000000000198414140420f000000000000dd6d0000000000765f150d97dd08f64258c5632403090fd6f36e7d4845b7d9c0a24c1c320e9b2b70000000000000006f000000000000005f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb00000000019844419869762418c5b643eee70e6f20d4d555d5997087d7a686a9d72781051bb772971b001b0048656c6c6f205473756e616769284361746a736f6e292053444b2100")
+}
 
-func xTestB(t *testing.T) {
+//resolves account metadata without aggregate
+func TestMetadataTransaction2(t *testing.T) {
+	network  := getNetworkInfo()
+	deadline := getDeadline(network)
+	tx1 := map[string]any{
+		"type" : "ACCOUNT_METADATA",
+		"signer_public_key" : "5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
+		"fee" : 1000000,
+		"deadline" : deadline,
+		"target_address":generateAddressId("TBUXMJAYYW3EH3XHBZXSBVGVKXKZS4EH26TINKI"),
+		"scoped_metadata_key":generateKey("key_account"), //0x9772B71B058127D7, //"key_account"
+		"value_size_delta":27,
+		"value":"Hello Tsunagi(Catjson) SDK!",
+	}
+	payload := getPayload(tx1,network)
+	assert.Equal(t, payload,"bf00000000000000eff25fc449d936edd1003af36b028a53dad3b5ee1a0f4502682a5a79159fac4712a528cebdf4351f28aa7b417b6906d08022135b9bbe55abeb2fb50831e555035f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb000000000198444140420f000000000000dd6d00000000009869762418c5b643eee70e6f20d4d555d5997087d7a686a9d72781051bb772971b001b0048656c6c6f205473756e616769284361746a736f6e292053444b21")
 
-	network  := map[string]any{
-		"version":1,
-		"network":"TESTNET",
-		"generationHash":"7fccd304802016bebbcd342a332f91ff1f3bb5e902988b352697be245f48e836",
-		"epochAdjustment":1637848847,
-		"catjasonBase":"https://xembook.github.io/tsunagi-sdk/catjson/",
-    }
-	_ = network
+}
+
+//resolves mosaic metadata
+func TestMetadataTransaction3(t *testing.T) {
+	network  := getNetworkInfo()
+	deadline := getDeadline(network)
+	tx1 := map[string]any{
+		"type" : "MOSAIC_METADATA",
+		"signer_public_key" : "5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
+		"target_address":generateAddressId("TBUXMJAYYW3EH3XHBZXSBVGVKXKZS4EH26TINKI"),
+		"target_mosaic_id":0x4DAFFBE5505DE676,
+		"scoped_metadata_key":generateKey("key_mosaic"), //0xCF217E116AA422E2, //"key_mosaic"
+		"value_size_delta":27,
+		"value":"Hello Tsunagi(Catjson) SDK!",
+	}
+	aggTx := map[string]any{
+		"type" : "AGGREGATE_COMPLETE",
+		"signer_public_key" : "5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
+		"fee" : 1000000,
+		"deadline" : deadline,
+		"transactions": []any{tx1},
+	}
+	payload := getPayload(aggTx,network)
+	assert.Equal(t, payload,"2001000000000000b6c125c94aed659dc1346151d03e72552dfe57c6882baa924310f3cddea39c2387bf238aba046b6a7a2f849802b38bb5f046de6b455e60a2fbaa5f22eb4d53005f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb000000000198414140420f000000000000dd6d0000000000eadc97a286bf8081b523c4d246cf6ca05f208835b82e1f97ad978a2d638386a2780000000000000077000000000000005f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb00000000019844429869762418c5b643eee70e6f20d4d555d5997087d7a686a9e222a46a117e21cf76e65d50e5fbaf4d1b001b0048656c6c6f205473756e616769284361746a736f6e292053444b2100")
+}
+
+//resolves mosaic metadata without aggregate
+func TestMetadataTransaction4(t *testing.T) {
+	network  := getNetworkInfo()
+	deadline := getDeadline(network)
+	tx1 := map[string]any{
+		"type" : "MOSAIC_METADATA",
+		"signer_public_key" : "5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
+		"fee" : 1000000,
+		"deadline" : deadline,
+		"target_address":generateAddressId("TBUXMJAYYW3EH3XHBZXSBVGVKXKZS4EH26TINKI"),
+		"target_mosaic_id":0x4DAFFBE5505DE676,
+		"scoped_metadata_key":generateKey("key_mosaic"), //0xCF217E116AA422E2, //"key_mosaic"
+		"value_size_delta":27,
+		"value":"Hello Tsunagi(Catjson) SDK!",
+	}
+	payload := getPayload(tx1,network)
+	assert.Equal(t, payload,"c700000000000000dc5ff39f1dc61eb4500f2d19dec8bc36f03dffcb65504e906e6f6e6eecb71022b9e88993f4f55de53ba969563ad48be7fb718aaf1021617a1fa6324814f9b0045f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb000000000198444240420f000000000000dd6d00000000009869762418c5b643eee70e6f20d4d555d5997087d7a686a9e222a46a117e21cf76e65d50e5fbaf4d1b001b0048656c6c6f205473756e616769284361746a736f6e292053444b21")
+
+}
+
+//resolves namespace metadata
+func TestMetadataTransaction5(t *testing.T) {
+	network  := getNetworkInfo()
+	deadline := getDeadline(network)
+	tx1 := map[string]any{
+		"type" : "NAMESPACE_METADATA",
+		"signer_public_key" : "5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
+		"target_address":generateAddressId("TBUXMJAYYW3EH3XHBZXSBVGVKXKZS4EH26TINKI"),
+		"target_namespace_id":generateNamespaceId("xembook",0), //xembook
+		"scoped_metadata_key":generateKey("key_namespace"), //0x8B6A8A370873D0D9, //"key_namespace"
+		"value_size_delta":27,
+		"value":"Hello Tsunagi(Catjson) SDK!",
+		}
+	aggTx := map[string]any{
+		"type" : "AGGREGATE_COMPLETE",
+		"signer_public_key" : "5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
+		"fee" : 1000000,
+		"deadline" : deadline,
+		"transactions": []any{tx1},
+	}
+	payload := getPayload(aggTx,network)
+	assert.Equal(t, payload,"2001000000000000b80a6851320a00db3e505516813106f3190fbbd349266667373faf85cdd370cec50c3224c8110c62147a3bffb7be8b1bc09aec7d7701bc15299b45c18ddd70015f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb000000000198414140420f000000000000dd6d0000000000accdb81d64d2626a79d546a2380171879f39beecc9b314805ca9b5a0d2b547e4780000000000000077000000000000005f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb00000000019844439869762418c5b643eee70e6f20d4d555d5997087d7a686a9d9d07308378a6a8b85738c26eb1534a41b001b0048656c6c6f205473756e616769284361746a736f6e292053444b2100")
+}
+
+//resolves namespace metadata without aggregate
+func TestMetadataTransaction6(t *testing.T) {
+	network  := getNetworkInfo()
+	deadline := getDeadline(network)
+	tx1 := map[string]any{
+		"type" : "NAMESPACE_METADATA",
+		"signer_public_key" : "5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
+		"fee" : 1000000,
+		"deadline" : deadline,
+		"target_address":generateAddressId("TBUXMJAYYW3EH3XHBZXSBVGVKXKZS4EH26TINKI"),
+		"target_namespace_id":generateNamespaceId("xembook",0), //xembook
+		"scoped_metadata_key":generateKey("key_namespace"), //0x8B6A8A370873D0D9, //"key_namespace"
+		"value_size_delta":27,
+		"value":"Hello Tsunagi(Catjson) SDK!",
+	}
+	payload := getPayload(tx1,network)
+	assert.Equal(t, payload,"c700000000000000093141b56044db8b665d8c86f3119988f505c8ac3ad557f22383b2d8b0e2177fd934059df8e7890632b0ec020a087bf0569f8a992201a9e9a69870aa14351e055f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb000000000198444340420f000000000000dd6d00000000009869762418c5b643eee70e6f20d4d555d5997087d7a686a9d9d07308378a6a8b85738c26eb1534a41b001b0048656c6c6f205473756e616769284361746a736f6e292053444b21")
+
+}
+
+////multisig transaction
+
+//resolves multisig account modification address_additions
+func TestMultisigTransaction1(t *testing.T) {
+	
+	network  := getNetworkInfo()
+	deadline := getDeadline(network)
 
 	tx1 := map[string]any{
-		"type" : "TRANSFER",
-		"signer_public_key" : "5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
-		"fee" : 25000,
-		"deadline" : "deadline",
-		"recipient_address" : "TCO7HLVDQUX6V7C737BCM3VYJ3MKP6REE2EKROA",
-		"mosaics" : []any{
-			map[string]any{"mosaic_id" :  0x2A09B7F9097934C2, "amount" : 1},
-			map[string]any{"mosaic_id" :  0x3A8416DB2D53B6C8, "amount" : 100},
+		"type" : "MULTISIG_ACCOUNT_MODIFICATION",
+		"signer_public_key":"66adb706bc9a93e6e803b2b76a1341a8acd98690ef204b402643ae3d4701ee77",
+		"min_removal_delta":1,
+		"min_approval_delta":1,
+		"address_additions":[]any{
+			generateAddressId("TCO7HLVDQUX6V7C737BCM3VYJ3MKP6REE2EKROA"),
+			generateAddressId("TBUXMJAYYW3EH3XHBZXSBVGVKXKZS4EH26TINKI"),
 		},
-		"message" : "Hello Tsunagi(Catjson) SDK!",
-	};
-	_ = tx1
+		"address_deletions":[]any{},
+	}
 
+
+
+	cosignature1 := map[string]any{
+		"version":0,
+		"signer_public_key":"5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
+		"signature":"",
+	}	
+
+	cosignature2 := map[string]any{
+		"version":0,
+		"signer_public_key":"6199bae3b241df60418e258d046c22c8c1a5de2f4f325753554e7fd9c650afec",
+		"signature":"",
+	}	
+
+	aggTx := map[string]any{
+		"type" : "AGGREGATE_COMPLETE",
+		"signer_public_key" : "66adb706bc9a93e6e803b2b76a1341a8acd98690ef204b402643ae3d4701ee77",
+		"fee" : 1000000,
+		"deadline" : deadline,
+		"transactions": []any{tx1},
+		"cosignatures": []any{cosignature1,cosignature2},
+
+	}
+
+	catjson := loadCatjson(aggTx,network)
+	layout := loadLayout(aggTx,catjson,false)
+	preparedTx := prepareTransaction(aggTx,layout,network) //TX事前準備
+	parsedTx := parseTransaction(preparedTx,layout,catjson,network)
+	builtTx := buildTransaction(parsedTx) 
+	signature := signTransaction(builtTx,"22F0BA129FE0C66BA596D7127B85961BF8EEF32784364338BACB4E88D6F284D6",network)
+	builtTx = updateTransaction(builtTx,"signature","value",signature)
+	txHash := hashTransaction(aggTx["signer_public_key"].(string),signature,builtTx,network);
+//	fmt.Println(txHash)
+
+	preparedTx["cosignatures"].([]any)[0].(map[string]any)["signature"] = cosignTransaction(txHash,"94ee0f4d7fe388ac4b04a6a6ae2ba969617879b83616e4d25710d688a89d80c7")
+	preparedTx["cosignatures"].([]any)[1].(map[string]any)["signature"] = cosignTransaction(txHash,"fa6373f4f497773c5cc55c103e348b139461d61fd4b45387e69d08a68000e06b")
+
+	idx := slices.IndexFunc(layout, func(item any) bool {return item.(map[string]any)["name"] == "cosignatures"})
+	if idx >= 0 {
+		cosignaturesLayout := layout[idx].(map[string]any)
+		parsedCosignatures := parseTransaction(preparedTx,[]any{cosignaturesLayout},catjson,network)
+		builtTx = updateTransaction(builtTx,"cosignatures","layout",parsedCosignatures[0].(map[string]any)["layout"])
+	}
+	payload := hexlifyTransaction(builtTx,0);
+	assert.Equal(t, payload,"e001000000000000bf1f73806cedc96540806bd2535be327889448b282e23168ab543037774e202f8d89245c6d4af99f476cf547decd0ae1f77b809ce2e3ec33eb39f3bcaed7970d66adb706bc9a93e6e803b2b76a1341a8acd98690ef204b402643ae3d4701ee77000000000198414140420f000000000000dd6d0000000000336c1c549f927fd26a4ff9f3602423cb544e766d6c2c655e261c80679f185cb56800000000000000680000000000000066adb706bc9a93e6e803b2b76a1341a8acd98690ef204b402643ae3d4701ee7700000000019855410101020000000000989df3aea3852feafc5fdfc2266eb84ed8a7fa242688a8b89869762418c5b643eee70e6f20d4d555d5997087d7a686a900000000000000005f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cbfa0f1120bdd09578723c07734b3a6bebe9810b2871d24532f7bcaba613f821a1ae9835b5dc3927ff6f350f3ca5e3490067b76d23274e264ba30b58e0643fea0400000000000000006199bae3b241df60418e258d046c22c8c1a5de2f4f325753554e7fd9c650afec959793a935b0c02b860238732cff351bef70d82af806ce56223205ee6d89f76fedb8fb4b5ae0004bced6db5e5fc6283c3d8a78a1a54a4de197dc75bef0b1210a")
+}
+
+//resolves multisig account modification change delta
+func TestMultisigTransaction2(t *testing.T) {
+	network  := getNetworkInfo()
+	deadline := getDeadline(network)
+	tx1 := map[string]any{
+		"type" : "MULTISIG_ACCOUNT_MODIFICATION",
+		"signer_public_key" : "66adb706bc9a93e6e803b2b76a1341a8acd98690ef204b402643ae3d4701ee77",
+		"min_removal_delta":1,
+		"min_approval_delta":1,
+	}
+	aggTx := map[string]any{
+		"type" : "AGGREGATE_COMPLETE",
+		"signer_public_key" : "5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
+		"fee" : 1000000,
+		"deadline" : deadline,
+		"transactions": []any{tx1},
+	}
+	payload := getPayload(aggTx,network)
+	assert.Equal(t, payload,"e00000000000000000e3f627769675a51f98c7a9745e8540e74f33a2ed63932e7de26f87b98dc94af51b133ab7d6826e1de86c9cbaa160a7aec5da4d9972ce915da8bf0c85a3010f5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb000000000198414140420f000000000000dd6d0000000000be95dbbb0adf29fe5f5a766fbf3c10e4a60e0d71c216d263e2b167e06c70dac93800000000000000380000000000000066adb706bc9a93e6e803b2b76a1341a8acd98690ef204b402643ae3d4701ee7700000000019855410101000000000000")
+}
+
+//resolves multisig account modification address_deletions
+func TestMultisigTransaction3(t *testing.T) {
+	
+	network  := getNetworkInfo()
+	deadline := getDeadline(network)
+
+	tx1 := map[string]any{
+		"type" : "MULTISIG_ACCOUNT_MODIFICATION",
+		"signer_public_key":"66adb706bc9a93e6e803b2b76a1341a8acd98690ef204b402643ae3d4701ee77",
+		"min_removal_delta":-1,
+		"min_approval_delta":-1,
+		"address_additions":[]any{
+		},
+		"address_deletions":[]any{
+			generateAddressId("TCO7HLVDQUX6V7C737BCM3VYJ3MKP6REE2EKROA"),
+		
+		},
+	}
+
+	cosignature2 := map[string]any{
+		"version":0,
+		"signer_public_key":"6199bae3b241df60418e258d046c22c8c1a5de2f4f325753554e7fd9c650afec",
+		"signature":"",
+	}	
 
 
 	aggTx := map[string]any{
 		"type" : "AGGREGATE_COMPLETE",
 		"signer_public_key" : "5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
 		"fee" : 1000000,
-		"deadline" : "deadline",
+		"deadline" : deadline,
 		"transactions": []any{tx1},
-	};
-	_ = tx1
+		"cosignatures": []any{cosignature2},
 
+	}
 
 	catjson := loadCatjson(aggTx,network)
 	layout := loadLayout(aggTx,catjson,false)
@@ -899,13 +1115,380 @@ func xTestB(t *testing.T) {
 	signature := signTransaction(builtTx,"94ee0f4d7fe388ac4b04a6a6ae2ba969617879b83616e4d25710d688a89d80c7",network)
 	builtTx = updateTransaction(builtTx,"signature","value",signature)
 	txHash := hashTransaction(aggTx["signer_public_key"].(string),signature,builtTx,network);
-	payload := hexlifyTransaction(builtTx,0)
-	_=signature
-	_=builtTx
-	_=preparedTx
-	_= parsedTx
-	_=txHash
-	_=payload
-	//    fmt.Println(payload)
-		fmt.Println("txHash")
+//	fmt.Println(txHash)
+
+	preparedTx["cosignatures"].([]any)[0].(map[string]any)["signature"] = cosignTransaction(txHash,"fa6373f4f497773c5cc55c103e348b139461d61fd4b45387e69d08a68000e06b")
+
+	idx := slices.IndexFunc(layout, func(item any) bool {return item.(map[string]any)["name"] == "cosignatures"})
+	if idx >= 0 {
+		cosignaturesLayout := layout[idx].(map[string]any)
+		parsedCosignatures := parseTransaction(preparedTx,[]any{cosignaturesLayout},catjson,network)
+		builtTx = updateTransaction(builtTx,"cosignatures","layout",parsedCosignatures[0].(map[string]any)["layout"])
+	}
+	payload := hexlifyTransaction(builtTx,0);
+	assert.Equal(t, payload,"6001000000000000a119633807603dffcfa86a981b4e31d97f6d21a024470139aeee0400ea748695943486743bf3fa3c6edf6207b47afbdfec3b086b8560e9ba3460f43a70391c0e5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb000000000198414140420f000000000000dd6d0000000000317c15bcbe4d9edadca95ed3fbeabe47fe41e749fbc120e9b83abf57083163745000000000000000500000000000000066adb706bc9a93e6e803b2b76a1341a8acd98690ef204b402643ae3d4701ee770000000001985541ffff000100000000989df3aea3852feafc5fdfc2266eb84ed8a7fa242688a8b800000000000000006199bae3b241df60418e258d046c22c8c1a5de2f4f325753554e7fd9c650afeccf75de4350bbfd1a8f4e7fb3c42e7c50725a9403ca5234fb71268c5eb6691734007a5fe0f8cc14a93011e76a6477e0e8ae1d7a0f9607e4deed709d1a3937c309")
 }
+
+//resolves multisig account modification address_deletions 2
+func TestMultisigTransaction4(t *testing.T) {
+	network  := getNetworkInfo()
+	deadline := getDeadline(network)
+	tx1 := map[string]any{
+		"type" : "MULTISIG_ACCOUNT_MODIFICATION",
+		"signer_public_key" : "66adb706bc9a93e6e803b2b76a1341a8acd98690ef204b402643ae3d4701ee77",
+		"min_removal_delta":-1,
+		"min_approval_delta":-1,
+		"address_deletions":[]any{
+			generateAddressId("TBUXMJAYYW3EH3XHBZXSBVGVKXKZS4EH26TINKI"),
+		
+		},
+	}
+	aggTx := map[string]any{
+		"type" : "AGGREGATE_COMPLETE",
+		"signer_public_key" : "5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
+		"fee" : 1000000,
+		"deadline" : deadline,
+		"transactions": []any{tx1},
+	}
+	payload := getPayload(aggTx,network)
+	assert.Equal(t, payload,"f800000000000000434d6772e7f92dc5daf56ec8310afce152203a8c3b1dc25d87d1fe1d2300f452d28801cb6e1e59f77ad4f73cac28cdd027e17a44040c7bbb8185462359f1ad005f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb000000000198414140420f000000000000dd6d0000000000bdbccdc54cb19c89113a1c58ecfa776ded496a0b55568d7338530208137922fb5000000000000000500000000000000066adb706bc9a93e6e803b2b76a1341a8acd98690ef204b402643ae3d4701ee770000000001985541ffff0001000000009869762418c5b643eee70e6f20d4d555d5997087d7a686a9")
+}
+
+////account restriction transaction
+
+//resolves 2 address restriction_additions transfer
+func TestAccountRestrictionTransaction1(t *testing.T) {
+	network  := getNetworkInfo()
+	deadline := getDeadline(network)
+	tx1 := map[string]any{
+		"type" : "ACCOUNT_ADDRESS_RESTRICTION",
+		"signer_public_key" : "5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
+		"fee":25000,
+		"deadline" : deadline,
+		"restriction_flags":"ADDRESS BLOCK OUTGOING",
+		"restriction_additions":[]any{
+			generateAddressId("TCO7HLVDQUX6V7C737BCM3VYJ3MKP6REE2EKROA"),
+			generateAddressId("TDZBCWHAVA62R4JFZJJUXQWXLIRTUK5KZHFR5AQ"),
+		},
+		"restriction_deletions":[]any{},
+
+
+	}
+	payload := getPayload(tx1,network)
+	assert.Equal(t, payload,"b8000000000000005dd7b8579be90231ada1d6f4158ff6ce47f17a7946f0f9872a5a2d451ab5920c389e8237e25560e71e4e4e2dfcb3c8e297642f1ed78975ab206a984feef2de095f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb0000000001985041a86100000000000000dd6d000000000001c0020000000000989df3aea3852feafc5fdfc2266eb84ed8a7fa242688a8b898f21158e0a83da8f125ca534bc2d75a233a2baac9cb1e82")
+
+}
+
+//resolves 2 address restriction_additions by namespace
+func TestAccountRestrictionTransaction2(t *testing.T) {
+	network  := getNetworkInfo()
+	deadline := getDeadline(network)
+	tx1 := map[string]any{
+		"type" : "ACCOUNT_ADDRESS_RESTRICTION",
+		"signer_public_key" : "5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
+		"fee":25000,
+		"deadline" : deadline,
+		"restriction_flags":"ADDRESS BLOCK OUTGOING",
+		"restriction_additions":[]any{
+
+			convertAddressAliasId(
+				generateNamespaceId("bob",generateNamespaceId("xembook",0)),
+			),
+			generateAddressId("TDZBCWHAVA62R4JFZJJUXQWXLIRTUK5KZHFR5AQ"),
+		},
+		"restriction_deletions":[]any{},
+
+
+	}
+	payload := getPayload(tx1,network)
+	assert.Equal(t, payload,"b8000000000000005cdc385106ea9a1896d12d2c7c171f1975df38298ddb065eab1fa63dad9f87eb19ab72611d3e28d1841b5dd708f489bc8266f27e66d7d8400e15aff0b8da4e045f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb0000000001985041a86100000000000000dd6d000000000001c0020000000000993a7f6395187cb7c800000000000000000000000000000098f21158e0a83da8f125ca534bc2d75a233a2baac9cb1e82")
+}
+
+//resolves 2 address restriction_deletions transfer
+func TestAccountRestrictionTransaction3(t *testing.T) {
+	network  := getNetworkInfo()
+	deadline := getDeadline(network)
+	tx1 := map[string]any{
+		"type" : "ACCOUNT_ADDRESS_RESTRICTION",
+		"signer_public_key" : "5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
+		"fee":25000,
+		"deadline" : deadline,
+		"restriction_flags":"ADDRESS BLOCK OUTGOING",
+		"restriction_additions":[]any{},
+		"restriction_deletions":[]any{
+			generateAddressId("TCO7HLVDQUX6V7C737BCM3VYJ3MKP6REE2EKROA"),
+			generateAddressId("TDZBCWHAVA62R4JFZJJUXQWXLIRTUK5KZHFR5AQ"),
+		},
+	}
+	payload := getPayload(tx1,network)
+	assert.Equal(t, payload,"b8000000000000000f2d19602306a1418229fa0ba8a67bbd0cbc777e9aa51a14647528ae5477ce26cc1bb5f4ceaf8d4a36b58955f324d76a520278438125b2df676fa6089f6ac3035f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb0000000001985041a86100000000000000dd6d000000000001c0000200000000989df3aea3852feafc5fdfc2266eb84ed8a7fa242688a8b898f21158e0a83da8f125ca534bc2d75a233a2baac9cb1e82")
+}
+
+//resolves 2 mosaic restriction_additions transfer
+func TestAccountRestrictionTransaction4(t *testing.T) {
+	network  := getNetworkInfo()
+	deadline := getDeadline(network)
+	tx1 := map[string]any{
+		"type" : "ACCOUNT_MOSAIC_RESTRICTION",
+		"signer_public_key" : "5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
+		"fee":25000,
+		"deadline" : deadline,
+		"restriction_flags":"MOSAIC_ID BLOCK",
+		"restriction_additions":[]any{
+			0x4DAFFBE5505DE676,
+			0x2A09B7F9097934C2,
+		},
+		"restriction_deletions":[]any{},
+	}
+	payload := getPayload(tx1,network)
+	assert.Equal(t, payload,"9800000000000000e876104b9595db102728e39715c548b5992a3743348fe2a01f53e155ca27d955482c1a2ca05d3a2f1784db510427d14431f112a6bf339b1f709e95f4d441f4015f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb0000000001985042a86100000000000000dd6d0000000000028002000000000076e65d50e5fbaf4dc2347909f9b7092a")
+}
+
+//resolves 2 mosaic restriction_deletions transfer
+func TestAccountRestrictionTransaction5(t *testing.T) {
+	network  := getNetworkInfo()
+	deadline := getDeadline(network)
+	tx1 := map[string]any{
+		"type" : "ACCOUNT_MOSAIC_RESTRICTION",
+		"signer_public_key" : "5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
+		"fee":25000,
+		"deadline" : deadline,
+		"restriction_flags":"MOSAIC_ID BLOCK",
+		"restriction_additions":[]any{},
+		"restriction_deletions":[]any{
+			0x4DAFFBE5505DE676,
+			0x2A09B7F9097934C2,
+		},
+	}
+	payload := getPayload(tx1,network)
+	assert.Equal(t, payload,"980000000000000063ccbdc7a6bd545d6751a1ed5dad87eda2efbef52462d19ba2e9a1f39d36999539b833a4732d12b87e8ea6802002fb575ac8d04ab4398827e12a41f0a425600c5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb0000000001985042a86100000000000000dd6d0000000000028000020000000076e65d50e5fbaf4dc2347909f9b7092a")
+}
+
+//resolves 2 operation restriction_additions transfer
+func TestAccountRestrictionTransaction6(t *testing.T) {
+	network  := getNetworkInfo()
+	deadline := getDeadline(network)
+	tx1 := map[string]any{
+		"type" : "ACCOUNT_OPERATION_RESTRICTION",
+		"signer_public_key" : "5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
+		"fee":25000,
+		"deadline" : deadline,
+		"restriction_flags":"TRANSACTION_TYPE BLOCK OUTGOING",
+		"restriction_additions":[]any{"TRANSFER","AGGREGATE_COMPLETE"},
+		"restriction_deletions":[]any{},
+	}
+	payload := getPayload(tx1,network)
+	assert.Equal(t, payload,"8c00000000000000d78ef15ed98496bc101c340ef9862fccca5e73aea04b93612ec00c4bd745674c1173827b81449a1e120bb960c176d56339f2b3d8ce7b7cd95d4b438f6e96ad075f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb0000000001985043a86100000000000000dd6d000000000004c002000000000054414141")
+}
+//resolves 2 operation restriction_deletions transfer
+func TestAccountRestrictionTransaction7(t *testing.T) {
+	network  := getNetworkInfo()
+	deadline := getDeadline(network)
+	tx1 := map[string]any{
+		"type" : "ACCOUNT_OPERATION_RESTRICTION",
+		"signer_public_key" : "5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
+		"fee":25000,
+		"deadline" : deadline,
+		"restriction_flags":"TRANSACTION_TYPE BLOCK OUTGOING",
+		"restriction_additions":[]any{},
+		"restriction_deletions":[]any{"TRANSFER","AGGREGATE_COMPLETE"},
+	}
+	payload := getPayload(tx1,network)
+	assert.Equal(t, payload,"8c000000000000000d553c66bdddc3e1a91cd7cf8ee3fe1bd92f4a9c25a876b78ad95876d03856bb8bcb7cff0bc64ed8a672d1d8592068140a040dbd83e5970ebd57e30be3a31a0a5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb0000000001985043a86100000000000000dd6d000000000004c000020000000054414141")
+}
+
+
+
+////global mosaic restriction transaction
+
+//resolves global mosaic restriction transfer
+func TestGlobalMosaicRestrictionTransaction1(t *testing.T) {
+	network  := getNetworkInfo()
+	deadline := getDeadline(network)
+	tx1 := map[string]any{
+		"type" : "MOSAIC_GLOBAL_RESTRICTION",
+		"signer_public_key" : "5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
+		"fee":25000,
+		"deadline" : deadline,
+		"mosaic_id":0x4DAFFBE5505DE676,
+		"reference_mosaic_id":0,
+		"restriction_key":uint64(0x9772B71B058127D7),
+		"previous_restriction_value":0,
+		"new_restriction_value":0x1,
+		"previous_restriction_type":"NONE",
+		"new_restriction_type":"EQ",
+	}
+	payload := getPayload(tx1,network)
+	assert.Equal(t, payload,"aa0000000000000083b18a9467dd39067ef18dc9eb5d7ee69b51fc68c954586d4291e68407ab41feca86224ddafcd9fd2b5375f33e1e4bb4de031b47fa42c742d4adb82fc60caf0e5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb0000000001985141a86100000000000000dd6d000000000076e65d50e5fbaf4d0000000000000000d72781051bb77297000000000000000001000000000000000001")
+}
+
+//resolves global mosaic restriction transfer
+func TestGlobalMosaicRestrictionTransaction2(t *testing.T) {
+	network  := getNetworkInfo()
+	deadline := getDeadline(network)
+	tx1 := map[string]any{
+		"type" : "MOSAIC_ADDRESS_RESTRICTION",
+		"signer_public_key" : "5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
+		"fee":25000,
+		"deadline" : deadline,
+		"mosaic_id":0x4DAFFBE5505DE676,
+		"restriction_key":uint64(0x9772B71B058127D7) ,
+		"previous_restriction_value":uint64(0xFFFFFFFFFFFFFFFF),
+		"new_restriction_value":0x1,
+		"target_address":generateAddressId("TBUXMJAYYW3EH3XHBZXSBVGVKXKZS4EH26TINKI"),
+	}
+	payload := getPayload(tx1,network)
+	assert.Equal(t, payload,"b80000000000000040748328e8dab01fee7f82b4e23b3ed2c6336783790f286aa75eab0982c2a60af9eb5a2c524a427ec5d7e451d47a3f1620e5478ae37d048441fd7f2675e4880e5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb0000000001985142a86100000000000000dd6d000000000076e65d50e5fbaf4dd72781051bb77297ffffffffffffffff01000000000000009869762418c5b643eee70e6f20d4d555d5997087d7a686a9")
+}
+
+////mosaic supply revocation transaction
+func TestMosaicSupplyRevocationTransaction1(t *testing.T) {
+	network  := getNetworkInfo()
+	deadline := getDeadline(network)
+	tx1 := map[string]any{
+		"type" : "MOSAIC_SUPPLY_REVOCATION",
+		"signer_public_key" : "5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
+		"fee":25000,
+		"deadline" : deadline,
+		"source_address":generateAddressId("TBUXMJAYYW3EH3XHBZXSBVGVKXKZS4EH26TINKI"),
+		"mosaic":[]any{
+			map[string]any{"mosaic_id": 0x0552BC5EF5BD589D, "amount": 100},
+		},
+	}
+	payload := getPayload(tx1,network)
+	assert.Equal(t, payload,"a800000000000000fd67cc1e3962d068da002cc79531e8972575a771cddf8b9317492bc1022dfc80944540bfca1aba09c44aedf56aef5a7c00eb7f569ef7f94a7f0dad46eebcb70a5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb0000000001984d43a86100000000000000dd6d00000000009869762418c5b643eee70e6f20d4d555d5997087d7a686a99d58bdf55ebc52056400000000000000")
+}
+
+
+
+////secret lock-proof transaction
+
+//resolves secret lock
+func TestSecretLockProofTransaction1(t *testing.T) {
+	network  := getNetworkInfo()
+	deadline := getDeadline(network)
+	tx1 := map[string]any{
+		"type" : "SECRET_LOCK",
+		"signer_public_key" : "5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
+		"fee":25000,
+		"deadline" : deadline,
+		"recipient_address":generateAddressId("TBUXMJAYYW3EH3XHBZXSBVGVKXKZS4EH26TINKI"),
+		"secret":"f260bfb53478f163ee61ee3e5fb7cfcaf7f0b663bc9dd4c537b958d4ce00e240",
+		"mosaic":[]any{
+			map[string]any{"mosaic_id": 0x3A8416DB2D53B6C8, "amount": 10000000},
+		},
+		"duration": 480,
+		"hash_algorithm":"SHA3_256",
+	}
+	payload := getPayload(tx1,network)
+	assert.Equal(t, payload,"d1000000000000000117860215bbc73d6ab56fa39f5ae1495ff55ad76104c3371701de042d6a0865bfb551ece7549abf636d60d443d690beee087f9417290b65da230abf280039085f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb0000000001985241a86100000000000000dd6d00000000009869762418c5b643eee70e6f20d4d555d5997087d7a686a9f260bfb53478f163ee61ee3e5fb7cfcaf7f0b663bc9dd4c537b958d4ce00e240c8b6532ddb16843a8096980000000000e00100000000000000")
+}
+
+//resolves secret proof
+func TestSecretLockProofTransaction2(t *testing.T) {
+	network  := getNetworkInfo()
+	deadline := getDeadline(network)
+	tx1 := map[string]any{
+		"type" : "SECRET_PROOF",
+		"signer_public_key" : "5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
+		"fee":25000,
+		"deadline" : deadline,
+		"recipient_address":generateAddressId("TBUXMJAYYW3EH3XHBZXSBVGVKXKZS4EH26TINKI"),
+		"secret":"f260bfb53478f163ee61ee3e5fb7cfcaf7f0b663bc9dd4c537b958d4ce00e240",
+		"hash_algorithm":"SHA3_256",
+		"proof":"7944496ac0f572173c2549baf9ac18f893aab6d0",
+	}
+	payload := getPayload(tx1,network)
+	assert.Equal(t, payload,"cf000000000000008a17b7e88005e436580b8b500bf01da70fb22906065590412c458f31094a11c4fee2b08cc1025f40642f96285ffa54bb1a88c4cf373f11b6c240ce146b41a4055f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb0000000001985242a86100000000000000dd6d00000000009869762418c5b643eee70e6f20d4d555d5997087d7a686a9f260bfb53478f163ee61ee3e5fb7cfcaf7f0b663bc9dd4c537b958d4ce00e2401400007944496ac0f572173c2549baf9ac18f893aab6d0")
+}
+
+//resolves secret lock with aggregate
+func TestSecretLockProofTransaction3(t *testing.T) {
+	network  := getNetworkInfo()
+	deadline := getDeadline(network)
+	tx1 := map[string]any{
+		"type" : "SECRET_LOCK",
+		"signer_public_key" : "5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
+		"recipient_address":generateAddressId("TBUXMJAYYW3EH3XHBZXSBVGVKXKZS4EH26TINKI"),
+		"secret":"0debb816347a49c5121b07c1ec2e9f7443eef6451d260cc646f32520237fa68c",
+		"mosaic":[]any{
+			map[string]any{"mosaic_id": 0x3A8416DB2D53B6C8, "amount": 10000000},
+		},
+		"duration": 480,
+		"hash_algorithm":"SHA3_256",
+	}
+	aggTx := map[string]any{
+		"type" : "AGGREGATE_COMPLETE",
+		"signer_public_key" : "5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
+		"fee" : 1000000,
+		"deadline" : deadline,
+		"transactions": []any{tx1},
+	}
+	payload := getPayload(aggTx,network)
+	assert.Equal(t, payload,"3001000000000000185b61702bbf8298e2c117f0b262f644f59269ceaf7dbce9851543a62a01f726a08a3409da1d6ecd9ed30d6aa56289c3cfeba7377e66dbc36751493cdc28920e5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb000000000198414140420f000000000000dd6d0000000000944643651ac8d446192f0dcbe1c370610552ddd0be94a9ba77ce7063e693cb29880000000000000081000000000000005f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb00000000019852419869762418c5b643eee70e6f20d4d555d5997087d7a686a90debb816347a49c5121b07c1ec2e9f7443eef6451d260cc646f32520237fa68cc8b6532ddb16843a8096980000000000e0010000000000000000000000000000")
+}
+
+
+//resolves secret proof with aggregate
+func TestSecretLockProofTransaction4(t *testing.T) {
+	network  := getNetworkInfo()
+	deadline := getDeadline(network)
+	tx1 := map[string]any{
+		"type" : "SECRET_PROOF",
+		"signer_public_key" : "5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
+		"recipient_address":generateAddressId("TBUXMJAYYW3EH3XHBZXSBVGVKXKZS4EH26TINKI"),
+		"secret":"0debb816347a49c5121b07c1ec2e9f7443eef6451d260cc646f32520237fa68c",
+		"hash_algorithm":"SHA3_256",
+		"proof":"d91a8258175a6213225bd4ec240f1971c8742dca",
+	}
+	aggTx := map[string]any{
+		"type" : "AGGREGATE_COMPLETE",
+		"signer_public_key" : "5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
+		"fee" : 1000000,
+		"deadline" : deadline,
+		"transactions": []any{tx1},
+	}
+	payload := getPayload(aggTx,network)
+	assert.Equal(t, payload,"2801000000000000b26c51b84114750e4005ab6002c5d6646f6de025bdf1fadbe429953044be5e61c1ecf6adaaf4cba51f0748a1cb17f82c9adf091eb7c05f4f5b5b226ead64f9065f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb000000000198414140420f000000000000dd6d0000000000bd584e6eb97627993d2157bc630a4c95ec783e201678539ce671e3d36367372c80000000000000007f000000000000005f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb00000000019852429869762418c5b643eee70e6f20d4d555d5997087d7a686a90debb816347a49c5121b07c1ec2e9f7443eef6451d260cc646f32520237fa68c140000d91a8258175a6213225bd4ec240f1971c8742dca00")
+}
+
+//resolves secret lock by namespace
+func TestSecretLockProofTransaction5(t *testing.T) {
+	network  := getNetworkInfo()
+	deadline := getDeadline(network)
+	tx1 := map[string]any{
+		"type" : "SECRET_LOCK",
+		"signer_public_key" : "5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
+		"fee":25000,
+		"deadline" : deadline,
+		"recipient_address":convertAddressAliasId(generateNamespaceId("xembook",0)),
+		"secret":"760b4407e82970bc86f5a3063b445c0cfec35c6720cbf1f8b5ca643d51bb5a00",
+		"mosaic" : []any{
+			map[string]any{"mosaic_id" :  generateNamespaceId("xym",generateNamespaceId("symbol",0)), "amount" : 10000000},
+		},
+		"duration": 480,
+		"hash_algorithm":"SHA3_256",
+	}
+	payload := getPayload(tx1,network)
+	assert.Equal(t, payload,"d100000000000000936ffff90a654017eb900af35ea4f5a687b38b111190e2c1f9992e542c5be0bb25f22c14440b67442149de0cf5c7ea0e9642f19badcbc8b6aec8bda707c4a2075f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb0000000001985241a86100000000000000dd6d00000000009985738c26eb1534a4000000000000000000000000000000760b4407e82970bc86f5a3063b445c0cfec35c6720cbf1f8b5ca643d51bb5a00eeaff441ba994be78096980000000000e00100000000000000")
+}
+
+
+//resolves secret proof by namespace
+func TestSecretLockProofTransaction6(t *testing.T) {
+	network  := getNetworkInfo()
+	deadline := getDeadline(network)
+	tx1 := map[string]any{
+		"type" : "SECRET_PROOF",
+		"signer_public_key" : "5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
+		"fee":25000,
+		"deadline" : deadline,
+		"recipient_address":convertAddressAliasId(generateNamespaceId("xembook",0)),
+		"secret":"760b4407e82970bc86f5a3063b445c0cfec35c6720cbf1f8b5ca643d51bb5a00",
+		"hash_algorithm":"SHA3_256",
+		"proof":"336b7e682903606a2fef4c91d83c4af7da3e7486",
+	}
+	payload := getPayload(tx1,network)
+	assert.Equal(t, payload,"cf0000000000000043d7a84b4c20435ffdd50644a2a0eaaed667326975d8af93015013899f5b4741f92d66ea7b2d23ad57fb5cd8d71344ffe34dd9654dbc58d9a447aaab70814d0b5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb0000000001985242a86100000000000000dd6d00000000009985738c26eb1534a4000000000000000000000000000000760b4407e82970bc86f5a3063b445c0cfec35c6720cbf1f8b5ca643d51bb5a00140000336b7e682903606a2fef4c91d83c4af7da3e7486")
+}
+
