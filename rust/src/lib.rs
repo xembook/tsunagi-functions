@@ -21,7 +21,7 @@ fn load_catjson(tx: &JsonValue, network: &JsonValue) -> Vec<JsonValue> {
     }
 }
 
-fn load_layout(tx: &JsonValue, catjson: &Vec<JsonValue>, is_emmbeded: bool) -> JsonValue{
+fn load_layout(tx: &JsonValue, catjson: &Vec<JsonValue>, is_emmbeded: bool) -> Vec<JsonValue>{
     let prefix;
     if is_emmbeded {
         prefix = "Embedded".to_string();
@@ -38,17 +38,28 @@ fn load_layout(tx: &JsonValue, catjson: &Vec<JsonValue>, is_emmbeded: bool) -> J
 		layout_name = prefix.to_string() + &tx["type"].to_string().to_lowercase();
     }
 
-    let factory = catjson.iter().find(|&item| (item["factory_type"] == prefix.clone() + "Transaction") &&  (item["name"] == layout_name)).unwrap();
-    factory.clone()
+    let factory = catjson.iter().find(|&item| (item["factory_type"] == prefix.clone() + "Transaction") && (item["name"] == layout_name)).unwrap();
+
+    match factory["layout"] {
+        JsonValue::Array(ref json_array) => json_array.clone(),
+        _ => Vec::new()
+    }
+    
 }
 
-// fn prepare_transaction(tx: &JsonValue, layout: &JsonValue, network: &JsonValue) {
+// fn prepare_transaction(tx: &JsonValue, layout: &JsonValue, network: &JsonValue)
+// {
+    
 //     let mut prepared_tx = tx.clone();
 //     prepared_tx["network"] = network["network"].clone();
 //     prepared_tx["version"] = network["version"].clone();
 
 //     if prepared_tx.contains("message") {
-//         prepared_tx["message"] = "00".to_string() + tx["message"].
+//         let mut txt_sum = "00".to_string();
+//         for byte_data in "Hello Tsunagi(Catjson) SDK!".as_bytes(){
+//             txt_sum = txt_sum + &format!("{:x}", byte_data);
+//         }
+//         prepared_tx["message"] = txt_sum.into();
 //     }
 // }
 
