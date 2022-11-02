@@ -3,7 +3,7 @@ use reqwest;
 use json::{self, JsonValue};
 use json::object::Object;
 
-fn load_catjson(tx: JsonValue, network: JsonValue) -> JsonValue {
+fn load_catjson(tx: &JsonValue, network: &JsonValue) -> Vec<JsonValue> {
 
     let json_file;
 	if tx["type"] == "AGGREGATE_COMPLETE" || tx["type"] == "AGGREGATE_BONDED" {
@@ -14,12 +14,14 @@ fn load_catjson(tx: JsonValue, network: JsonValue) -> JsonValue {
 
     let url = Url::parse(&(network["catjasonBase"].to_string() + &json_file)).unwrap();
     let resp = reqwest::blocking::get(url).unwrap().text().unwrap();
-    let parsed = json::parse(&resp).unwrap();
 
-    parsed
+    match json::parse(&resp).unwrap() {
+        JsonValue::Array(ref json_array) => json_array.clone(),
+        _ => Vec::new()
+    }
 }
 
-fn load_layout(tx: JsonValue, catjson: JsonValue, is_emmbeded: bool) -> JsonValue{
+fn load_layout(tx: &JsonValue, catjson: &Vec<JsonValue>, is_emmbeded: bool) -> JsonValue{
     let prefix;
     if is_emmbeded {
         prefix = "Embedded".to_string();
@@ -36,13 +38,19 @@ fn load_layout(tx: JsonValue, catjson: JsonValue, is_emmbeded: bool) -> JsonValu
 		layout_name = prefix.to_string() + &tx["type"].to_string().to_lowercase();
     }
 
-    let factory = match catjson {
-        JsonValue::Array(ref json_array) => 
-            json_array.iter().find(|&item| (item["factory_type"] == prefix.clone() + "Transaction") &&  (item["name"] == layout_name)).unwrap(),
-        _ => &JsonValue::Null
-    };
+    let factory = catjson.iter().find(|&item| (item["factory_type"] == prefix.clone() + "Transaction") &&  (item["name"] == layout_name)).unwrap();
     factory.clone()
 }
+
+// fn prepare_transaction(tx: &JsonValue, layout: &JsonValue, network: &JsonValue) {
+//     let mut prepared_tx = tx.clone();
+//     prepared_tx["network"] = network["network"].clone();
+//     prepared_tx["version"] = network["version"].clone();
+
+//     if prepared_tx.contains("message") {
+//         prepared_tx["message"] = "00".to_string() + tx["message"].
+//     }
+// }
 
 fn main() {
 
