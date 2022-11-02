@@ -1053,22 +1053,7 @@ void main() {
 				"transactions":[tx1],
 			};
 
-			var catjson = await loadCatjson(aggTx,network);
-			var layout = loadLayout(aggTx,catjson,false); //isEmbedded false
-
-			var preparedTx = await prepareTransaction(aggTx,layout,network); //TX事前準備
-			var parsedTx   = await parseTransaction(preparedTx,layout,catjson,network); //TX解析
-			var builtTx    = buildTransaction(parsedTx); //TX構築
-
-			var signature = signTransaction(builtTx,"94ee0f4d7fe388ac4b04a6a6ae2ba969617879b83616e4d25710d688a89d80c7",network);
-			builtTx = updateTransaction(builtTx,"signature","value",signature);
-
-			//トランザクションハッシュ作成
-			var txHash = hashTransaction(aggTx["signer_public_key"],signature,builtTx,network);
-
-
-			var payload = hexlifyTransaction(builtTx,0);
-			expect(payload, "e00000000000000000e3f627769675a51f98c7a9745e8540e74f33a2ed63932e7de26f87b98dc94af51b133ab7d6826e1de86c9cbaa160a7aec5da4d9972ce915da8bf0c85a3010f5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb000000000198414140420f000000000000dd6d0000000000be95dbbb0adf29fe5f5a766fbf3c10e4a60e0d71c216d263e2b167e06c70dac93800000000000000380000000000000066adb706bc9a93e6e803b2b76a1341a8acd98690ef204b402643ae3d4701ee7700000000019855410101000000000000");
+			expect(await getPayload(aggTx), "e00000000000000000e3f627769675a51f98c7a9745e8540e74f33a2ed63932e7de26f87b98dc94af51b133ab7d6826e1de86c9cbaa160a7aec5da4d9972ce915da8bf0c85a3010f5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb000000000198414140420f000000000000dd6d0000000000be95dbbb0adf29fe5f5a766fbf3c10e4a60e0d71c216d263e2b167e06c70dac93800000000000000380000000000000066adb706bc9a93e6e803b2b76a1341a8acd98690ef204b402643ae3d4701ee7700000000019855410101000000000000");
 		});
 
 		test('resolves multisig account modification address_deletions',  () async {
