@@ -53,7 +53,9 @@ func loadLayout(tx map[string]any,catjson  []any,isEmbedded bool) []any{
 		layoutName = prefix + toCamelCase(tx["type"].(string)) + "Transaction"
 	}
 	
-	idx := slices.IndexFunc(catjson, func(item any) bool {return item.(map[string]any)["factory_type"] == prefix + "Transaction" && item.(map[string]any)["name"] == layoutName})
+	idx := slices.IndexFunc(catjson, func(item any) bool {
+		return item.(map[string]any)["factory_type"] == prefix + "Transaction" && item.(map[string]any)["name"] == layoutName
+	})
 	return catjson[idx].(map[string]any)["layout"].([]any)
 }
 
@@ -148,7 +150,6 @@ func prepareTransaction(tx map[string]any,layout []any,network map[string]any) m
 func containsKey(item map[string]any,str any) bool{
 
 	if _, ok := item[str.(string)]; ok{
-
 		return true
 	}
 	return false
@@ -172,16 +173,11 @@ func parseTransaction(tx  map[string]any,layout  []any,catjson  []any,network ma
 		layerType := layerMap["type"]
 		layerDisposition := ""
 
-		_=layerType
-		_=layerDisposition
 		if _, ok := layerMap["disposition"]; ok{
 			layerDisposition = layerMap["disposition"].(string);
 		}
 
-		idx := slices.IndexFunc(catjson, func(item any) bool {
-			return item.(map[string]any)["name"].(string) == layerType.(string)
-		})
-
+		idx := getSliceIndex(catjson,"name",layerType.(string))
 		catitem := make(map[string]any)
 		if idx >= 0 {
 			for k, v := range catjson[idx].(map[string]any) {
@@ -235,7 +231,7 @@ func parseTransaction(tx  map[string]any,layout  []any,catjson  []any,network ma
 			items := make([]any,0)
 			for _,item := range tx[layerMap["name"].(string)].([]any) {
 
-				idx := slices.IndexFunc(catjson, func(item2 any) bool {return item2.(map[string]any)["name"] == layerType})
+				idx := getSliceIndex(catjson,"name",layerType.(string))
 				itemParsedTx := parseTransaction(item.(map[string]any),catjson[idx].(map[string]any)["layout"].([]any),catjson,network); //再帰
 				items = append(items,itemParsedTx);
 			}
@@ -247,10 +243,10 @@ func parseTransaction(tx  map[string]any,layout  []any,catjson  []any,network ma
 		}else if layerType == "UnresolvedAddress"{
 			//アドレスに30個の0が続く場合はネームスペースとみなします。
 			
-			if containsKey(tx,layerMap["name"]) && fmt.Sprintf("%T",tx[layerMap["name"].(string)]) == "string" && strings.Contains(tx[layerMap["name"].(string)].(string), "000000000000000000000000000000") {
+			if containsKey(tx,layerMap["name"]) && isType(tx[layerMap["name"].(string)],"string")  && strings.Contains(tx[layerMap["name"].(string)].(string), "000000000000000000000000000000") {
 				
-				idx := slices.IndexFunc(catjson, func(item any) bool {return item.(map[string]any)["name"] == "NetworkType"})
-				idx2 := slices.IndexFunc(catjson[idx].(map[string]any)["values"].([]any), func(item any) bool {return item.(map[string]any)["name"].(string) == tx["network"].(string)})
+				idx := getSliceIndex(catjson,"name","NetworkType")
+				idx2 := getSliceIndex(catjson[idx].(map[string]any)["values"].([]any),"name",tx["network"])
 				prefix := fmt.Sprintf("%x", int(catjson[idx].(map[string]any)["values"].([]any)[idx2].(map[string]any)["value"].(float64)) + 1)
 				
 				tx[layerMap["name"].(string)] =  prefix + tx[layerMap["name"].(string)].(string);
@@ -270,12 +266,12 @@ func parseTransaction(tx  map[string]any,layout  []any,catjson  []any,network ma
 			}else if strings.Contains(layerDisposition,"array") {
 				values := make([]any,0)
 				for _,item := range tx[layerMap["name"].(string)].([]any) {
-					idx := slices.IndexFunc(catitem["values"].([]any), func(value any) bool {return value.(map[string]any)["name"] == item.(string)})
+					idx := getSliceIndex(catitem["values"].([]any),"name",item.(string))
 					values = append(values,catitem["values"].([]any)[idx].(map[string]any)["value"])
 				}
 				tx[layerMap["name"].(string)] = values
 			}else{
-				idx := slices.IndexFunc(catitem["values"].([]any), func(item any) bool {return item.(map[string]any)["name"] == tx[layerMap["name"].(string)]})
+				idx := getSliceIndex(catitem["values"].([]any),"name",tx[layerMap["name"].(string)])
 				if idx >= 0 {
 					catitem["value"] = catitem["values"].([]any)[idx].(map[string]any)["value"]
 				}
@@ -304,11 +300,6 @@ func parseTransaction(tx  map[string]any,layout  []any,catjson  []any,network ma
 					}
 					subLayout["layout"] = items
 					parsedTx = append(parsedTx,subLayout)
-
-
-				}else{
-//					fmt.Println("not implemented yet")
-
 				}
 			}else if containsKey(tx,layerMap["name"]) {
 				subLayout := make(map[string]any)
@@ -317,10 +308,8 @@ func parseTransaction(tx  map[string]any,layout  []any,catjson  []any,network ma
 				}
 				items := make([]any,0)
 				for _,txItem := range tx[layerMap["name"].(string)].([]any) {
-					idx := slices.IndexFunc(catjson, func(item any) bool {
-						return item.(map[string]any)["name"] == layerType
-					})
-			
+
+					idx := getSliceIndex(catjson,"name",layerType)
 					txLayer := make(map[string]any)
 					if idx >= 0 {
 						for k, v := range catjson[idx].(map[string]any) {
@@ -332,8 +321,8 @@ func parseTransaction(tx  map[string]any,layout  []any,catjson  []any,network ma
 					if layerType == "UnresolvedAddress"{
 						if strings.Contains(txItem.(string),"000000000000000000000000000000") {
 
-							idx := slices.IndexFunc(catjson, func(item any) bool {return item.(map[string]any)["name"] == "NetworkType"})
-							idx2 := slices.IndexFunc(catjson[idx].(map[string]any)["values"].([]any), func(item any) bool {return item.(map[string]any)["name"].(string) == tx["network"].(string)})
+							idx := getSliceIndex(catjson,"name","NetworkType")
+							idx2 := getSliceIndex(catjson[idx].(map[string]any)["values"].([]any),"name",tx["network"])
 							prefix := fmt.Sprintf("%x", int(catjson[idx].(map[string]any)["values"].([]any)[idx2].(map[string]any)["value"].(float64)) + 1)
 										
 							txLayer["value"] =  prefix + txLayer["value"].(string)
@@ -343,9 +332,6 @@ func parseTransaction(tx  map[string]any,layout  []any,catjson  []any,network ma
 				}
 				subLayout["layout"] = items
 				parsedTx = append(parsedTx,subLayout)
-
-			}else{
-//				fmt.Println("not implemented yet")
 			}
 		}else{
 
@@ -362,18 +348,12 @@ func parseTransaction(tx  map[string]any,layout  []any,catjson  []any,network ma
 
 			if containsKey(tx,layerMap["name"]) && catitem["type"] != "enum" {
 				txLayer["value"] = tx[layerMap["name"].(string)]
-			}else{
 			}
 
 			parsedTx = append(parsedTx,txLayer)
 		}
 	}
-	idx := slices.IndexFunc(parsedTx, func(item any) bool {
-		if item != nil {
-			return item.(map[string]any)["name"] == "size"
-		}
-		return false
-	})
+	idx := getSliceIndex(parsedTx,"name","size")
 	if idx >= 0 {
 		layerSize := parsedTx[idx].(map[string]any)
 		layerSize["value"] = countSize(parsedTx,0)
@@ -384,7 +364,7 @@ func parseTransaction(tx  map[string]any,layout  []any,catjson  []any,network ma
 func countSize(item any, alignment int) int {
 
 	totalSize := 0
-	if fmt.Sprintf("%T",item) == "[]interface {}" {
+	if isType(item,"[]interface {}")  {
 		layoutSize := 0
 		for _,layout := range item.([]any) {
 			layoutSize += countSize(layout.(map[string]any),alignment)
@@ -420,22 +400,23 @@ func buildTransaction(parsedTx []any) []any {
 	}		
 
 	layerPayloadSize := make(map[string]any)
-	idx := slices.IndexFunc(builtTx, func(item any) bool {return item.(map[string]any)["name"] == "payload_size"})
+	idx := getSliceIndex(builtTx,"name","payload_size")
 	if idx >= 0 {
 		layerPayloadSize = builtTx[idx].(map[string]any)
-		idx2 := slices.IndexFunc(builtTx, func(item any) bool {return item.(map[string]any)["name"] == "transactions"})
+		idx2 := getSliceIndex(builtTx,"name","transactions")
 		if idx2 >= 0 {
 			layerPayloadSize["value"] = countSize(builtTx[idx2].(map[string]any),0)
 		}
 	}
 
 	layerTransactionsHash := make(map[string]any)
-	idx = slices.IndexFunc(builtTx, func(item any) bool {return item.(map[string]any)["name"] == "transactions_hash"})
+	idx = getSliceIndex(builtTx,"name","transactions_hash")
+	
 	if idx >= 0 {
 		layerTransactionsHash = builtTx[idx].(map[string]any)
 		hashes := make([]any,0)
 
-		idx2 := slices.IndexFunc(builtTx, func(item any) bool {return item.(map[string]any)["name"] == "transactions"})
+		idx2 := getSliceIndex(builtTx,"name","transactions")
 		if idx2 >= 0 {
 			txLayout := builtTx[idx2].(map[string]any)["layout"].([]any)
 			for _,eTx := range txLayout {
@@ -450,7 +431,7 @@ func buildTransaction(parsedTx []any) []any {
 			for i < numRemainingHashes {
 				hasher := sha3.New256()
 
-				if(fmt.Sprintf("%T",hashes[i]) == "[]uint8") {
+				if isType(hashes[i],"[]uint8")  {
 					hasher.Write(hashes[i].([]byte))
 				}else{
 					arrayHashi := hashes[i].([32]byte)
@@ -460,7 +441,7 @@ func buildTransaction(parsedTx []any) []any {
 		
 				if i+1 < numRemainingHashes {
 
-					if(fmt.Sprintf("%T",hashes[i]) == "[]uint8") {
+					if isType(hashes[i],"[]uint8")  {
 						hasher.Write(hashes[i+1].([]byte))
 					}else{
 						arrayHaship1 := hashes[i+1].([32]byte)
@@ -468,7 +449,7 @@ func buildTransaction(parsedTx []any) []any {
 						hasher.Write(byteHaship1)
 					}					
 				}else{
-					if(fmt.Sprintf("%T",hashes[i]) == "[]uint8") {
+					if isType(hashes[i],"[]uint8")  {
 						hasher.Write(hashes[i].([]byte))
 					}else{
 						arrayHashi := hashes[i].([32]byte)
@@ -483,7 +464,7 @@ func buildTransaction(parsedTx []any) []any {
 			numRemainingHashes = int(numRemainingHashes/2)
 		}
 
-		if(fmt.Sprintf("%T",hashes[0]) == "[]uint8") {
+		if isType(hashes[0],"[]uint8") {
 			layerTransactionsHash["value"] = hex.EncodeToString(hashes[0].([]byte))
 		}else{
 			arrayHash0 := hashes[0].([32]byte)
@@ -494,10 +475,28 @@ func buildTransaction(parsedTx []any) []any {
 	return builtTx
 }
 
+func isValueType(item any, typeName string) bool {
+	return fmt.Sprintf("%T",item.(map[string]any)["value"]) == typeName
+}
+
+func isType(item any, typeName string) bool {
+	return fmt.Sprintf("%T",item) == typeName
+}
+
+func getSliceIndex(slice []any,key any,val any) int {
+
+	return slices.IndexFunc(slice, func(item any) bool {
+		if item != nil {
+			return item.(map[string]any)[key.(string)].(string) == val.(string)
+		}
+		return false
+	})
+}
+
 func hexlifyTransaction(item any, alignment int)string{
 	
 	payload := ""
-	if fmt.Sprintf("%T",item) == "[]interface {}" {
+	if isType(item,"[]interface {}") {
 		subLayoutHex := ""
 		for _,layout := range item.([]any) {
 			subLayoutHex += hexlifyTransaction(layout.(map[string]any),alignment)
@@ -532,36 +531,36 @@ func hexlifyTransaction(item any, alignment int)string{
 				payload = item.(map[string]any)["value"].(string)
 			}else{
 				varint := make([]byte, 2)
-				if fmt.Sprintf("%T",item.(map[string]any)["value"]) == "int" {
-					binary.LittleEndian.PutUint16(varint, uint16(item.(map[string]any)["value"].(int)))
-				}else if fmt.Sprintf("%T",item.(map[string]any)["value"]) == "float64" {
+				if isValueType(item,"int") {
+						binary.LittleEndian.PutUint16(varint, uint16(item.(map[string]any)["value"].(int)))
+				}else if isValueType(item,"float64") {
 					binary.LittleEndian.PutUint16(varint, uint16(item.(map[string]any)["value"].(float64)))
 				}
 				payload = hex.EncodeToString(varint[:1])
 			}
 		}else if size == 2 {
 			varint := make([]byte, 2)
-			if fmt.Sprintf("%T",item.(map[string]any)["value"]) == "int" {
+			if  isValueType(item,"int") {
 				binary.LittleEndian.PutUint16(varint,uint16(item.(map[string]any)["value"].(int)))
-			}else if fmt.Sprintf("%T",item.(map[string]any)["value"]) == "float64" {
+			}else if isValueType(item,"float64") {
 				binary.LittleEndian.PutUint16(varint,uint16(item.(map[string]any)["value"].(float64)))
 			}
 			payload = hex.EncodeToString(varint)
 		}else if size == 4 {
 		
 			varint := make([]byte, 4)
-			if fmt.Sprintf("%T",item.(map[string]any)["value"]) == "int" {
+			if isValueType(item,"int") {
 				binary.LittleEndian.PutUint32(varint,uint32(item.(map[string]any)["value"].(int)))
-			}else if fmt.Sprintf("%T",item.(map[string]any)["value"]) == "float64" {
+			}else if  isValueType(item,"float64")  {
 				binary.LittleEndian.PutUint32(varint,uint32(item.(map[string]any)["value"].(float64)))
 			}
 			payload = hex.EncodeToString(varint)
 
 		}else if size == 8 {
 			varint := make([]byte, 8)
-			if fmt.Sprintf("%T",item.(map[string]any)["value"]) == "int" {
+			if isValueType(item,"int") {
 				binary.LittleEndian.PutUint64(varint,uint64(item.(map[string]any)["value"].(int)))
-			}else if fmt.Sprintf("%T",item.(map[string]any)["value"]) == "uint64" {
+			}else if isValueType(item,"uint64")  {
 				binary.LittleEndian.PutUint64(varint,uint64(item.(map[string]any)["value"].(uint64)))
 			}
 			payload = hex.EncodeToString(varint)
@@ -588,7 +587,7 @@ func signTransaction(builtTx []any, priKey string,network map[string]any) string
 }
 
 func getVerifiableData(builtTx []any)[]any{
-	idx := slices.IndexFunc(builtTx, func(item any) bool {return item.(map[string]any)["name"] == "type"})
+	idx := getSliceIndex(builtTx,"name","type")
 	if idx >= 0 {
 		typeLayer := builtTx[idx].(map[string]any)["value"]
 		if(contains([]int{16705, 16961}, int(typeLayer.(float64)))){
@@ -621,7 +620,7 @@ func updateTransaction(builtTx []any,name string,typeString string,value any) []
 		updatedTx = append(updatedTx,builtTx[idx])
 	}	
 
-	idx := slices.IndexFunc(updatedTx, func(item any) bool {return item.(map[string]any)["name"] == name})
+	idx := getSliceIndex(updatedTx,"name",name)
 	if idx >= 0 {
 		updatedTx[idx].(map[string]any)[typeString] = value
 	}

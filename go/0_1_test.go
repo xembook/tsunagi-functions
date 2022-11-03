@@ -96,8 +96,8 @@ func TestTransferTransaction3(t *testing.T) {
 		"deadline" : deadline,
 		"recipient_address" : generateAddressId("TCO7HLVDQUX6V7C737BCM3VYJ3MKP6REE2EKROA"),
 		"mosaics" : []any{
-			map[string]any{"mosaic_id" :  0x3A8416DB2D53B6C8, "amount" : 100},
-			map[string]any{"mosaic_id" :  0x2A09B7F9097934C2, "amount" : 1},
+			map[string]any{"mosaic_id" :  uint64(0x3A8416DB2D53B6C8), "amount" : 100},
+			map[string]any{"mosaic_id" :  uint64(0x2A09B7F9097934C2), "amount" : 1},
 		},
 		"message" : "Hello Tsunagi(Catjson) SDK!",
 	}
