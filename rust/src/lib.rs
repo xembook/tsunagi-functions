@@ -2,6 +2,7 @@ use url::{Url, ParseError};
 use reqwest;
 use json::{self, JsonValue};
 use json::object::Object;
+use convert_case::{Case, Casing};
 
 fn load_catjson(tx: &JsonValue, network: &JsonValue) -> Vec<JsonValue> {
 
@@ -21,7 +22,7 @@ fn load_catjson(tx: &JsonValue, network: &JsonValue) -> Vec<JsonValue> {
     }
 }
 
-fn load_layout(tx: &JsonValue, catjson: &Vec<JsonValue>, is_emmbeded: bool) -> Vec<JsonValue>{
+fn load_layout(tx: &JsonValue, catjson: &Vec<JsonValue>, is_emmbeded: bool) -> Vec<JsonValue> {
     let prefix;
     if is_emmbeded {
         prefix = "Embedded".to_string();
@@ -35,7 +36,7 @@ fn load_layout(tx: &JsonValue, catjson: &Vec<JsonValue>, is_emmbeded: bool) -> V
     } else if tx["type"] == "AGGREGATE_BONDED" {
 		layout_name = "AggregateBondedTransaction".to_string();
     } else {
-		layout_name = prefix.to_string() + &tx["type"].to_string().to_lowercase();
+		layout_name = prefix.to_string() + &tx["type"].to_string().to_case(Case::Camel) + "Transaction";
     }
 
     let factory = catjson.iter().find(|&item| (item["factory_type"] == prefix.clone() + "Transaction") && (item["name"] == layout_name)).unwrap();
