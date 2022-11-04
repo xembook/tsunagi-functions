@@ -103,6 +103,40 @@ describe('tsunagi-sdk.0.1',() => {
 		
 	});
 
+	describe('function unit test', () => {
+		it('loadCatjson', async () => {
+			let tx1 = {type:'TRANSFER'}
+			let catjson = await loadCatjson(tx1,this.network);
+			expect(catjson.find(cj=>cj.name === "TransferTransaction")["layout"][1]["value"]).toEqual("TRANSFER");
+	
+			let tx2 = {type:'AGGREGATE_COMPLETE'}
+			let catjson2 = await loadCatjson(tx2,this.network);
+			expect(catjson2.find(cj=>cj.name === "AggregateCompleteTransaction")["layout"][1]["value"]).toEqual("AGGREGATE_COMPLETE");
+		});	
+
+		it('loadLayout', async () => {
+			let tx1 = {type:'TRANSFER'}
+
+			let catjson = await loadCatjson(tx1,this.network);
+			let layout = loadLayout(tx1,catjson,false); //isEmbedded false
+			expect(layout[1]["value"]).toEqual("TRANSFER");
+			expect(layout[3]["name"]).toEqual("verifiable_entity_header_reserved_1");
+
+			let elayout = loadLayout(tx1,catjson,true); //isEmbedded true
+			expect(elayout[1]["value"]).toEqual("TRANSFER");
+			expect(elayout[3]["name"]).toEqual("embedded_transaction_header_reserved_1");
+
+	
+			let tx2 = {type:'AGGREGATE_COMPLETE'}
+			let catjson2 = await loadCatjson(tx2,this.network);
+			let layout2 = loadLayout(tx2,catjson2,false); //isEmbedded false
+			expect(layout2[1]["value"]).toEqual("AGGREGATE_COMPLETE");
+			expect(layout2[3]["name"]).toEqual("verifiable_entity_header_reserved_1");
+
+		});	
+	
+	})
+
 	describe('transfer transaction', () => {
 
 		it('resolves 2 mosaic transfer', async () => {
