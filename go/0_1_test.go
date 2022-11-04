@@ -314,7 +314,7 @@ func TestAggregateCompleteTransaction2(t *testing.T) {
 
 	idx := slices.IndexFunc(layout, func(item any) bool {return item.(map[string]any)["name"] == "cosignatures"})
 	if idx >= 0 {
-		cosignaturesLayout := layout[idx].(map[string]any)
+		cosignaturesLayout := layout[idx]
 		parsedCosignatures := parseTransaction(preparedTx,[]any{cosignaturesLayout},catjson,network)
 		builtTx = updateTransaction(builtTx,"cosignatures","layout",parsedCosignatures[0].(map[string]any)["layout"])
 	}
@@ -396,7 +396,7 @@ func TestAggregateCompleteTransaction3(t *testing.T) {
 
 	idx := slices.IndexFunc(layout, func(item any) bool {return item.(map[string]any)["name"] == "cosignatures"})
 	if idx >= 0 {
-		cosignaturesLayout := layout[idx].(map[string]any)
+		cosignaturesLayout := layout[idx]
 		parsedCosignatures := parseTransaction(preparedTx,[]any{cosignaturesLayout},catjson,network)
 		builtTx = updateTransaction(builtTx,"cosignatures","layout",parsedCosignatures[0].(map[string]any)["layout"])
 	}
@@ -649,7 +649,7 @@ func TestAggregateBondedTransaction4(t *testing.T) {
 
 	idx := slices.IndexFunc(layout, func(item any) bool {return item.(map[string]any)["name"] == "cosignatures"})
 	if idx >= 0 {
-		cosignaturesLayout := layout[idx].(map[string]any)
+		cosignaturesLayout := layout[idx]
 		parsedCosignatures := parseTransaction(preparedTx,[]any{cosignaturesLayout},catjson,network)
 		builtTx = updateTransaction(builtTx,"cosignatures","layout",parsedCosignatures[0].(map[string]any)["layout"])
 	}
@@ -1042,7 +1042,7 @@ func TestMultisigTransaction1(t *testing.T) {
 
 	idx := slices.IndexFunc(layout, func(item any) bool {return item.(map[string]any)["name"] == "cosignatures"})
 	if idx >= 0 {
-		cosignaturesLayout := layout[idx].(map[string]any)
+		cosignaturesLayout := layout[idx]
 		parsedCosignatures := parseTransaction(preparedTx,[]any{cosignaturesLayout},catjson,network)
 		builtTx = updateTransaction(builtTx,"cosignatures","layout",parsedCosignatures[0].(map[string]any)["layout"])
 	}
@@ -1121,7 +1121,7 @@ func TestMultisigTransaction3(t *testing.T) {
 
 	idx := slices.IndexFunc(layout, func(item any) bool {return item.(map[string]any)["name"] == "cosignatures"})
 	if idx >= 0 {
-		cosignaturesLayout := layout[idx].(map[string]any)
+		cosignaturesLayout := layout[idx]
 		parsedCosignatures := parseTransaction(preparedTx,[]any{cosignaturesLayout},catjson,network)
 		builtTx = updateTransaction(builtTx,"cosignatures","layout",parsedCosignatures[0].(map[string]any)["layout"])
 	}
