@@ -1,10 +1,11 @@
-use url::{Url, ParseError};
+use std::cmp::Ordering;
+
+use url::Url;
 use reqwest;
 use json::{self, JsonValue};
-use json::object::Object;
-use convert_case::{Case, Casing};
+use rustc_serialize::hex::ToHex;
 
-fn load_catjson(tx: &JsonValue, network: &JsonValue) -> Vec<JsonValue> {
+pub fn load_catjson(tx: &JsonValue, network: &JsonValue) -> Vec<JsonValue> {
 
     let json_file;
 	if tx["type"] == "AGGREGATE_COMPLETE" || tx["type"] == "AGGREGATE_BONDED" {
@@ -22,7 +23,7 @@ fn load_catjson(tx: &JsonValue, network: &JsonValue) -> Vec<JsonValue> {
     }
 }
 
-fn load_layout(tx: &JsonValue, catjson: &Vec<JsonValue>, is_emmbeded: bool) -> Vec<JsonValue> {
+pub fn load_layout(tx: &JsonValue, catjson: &Vec<JsonValue>, is_emmbeded: bool) -> Vec<JsonValue> {
     let prefix;
     if is_emmbeded {
         prefix = "Embedded".to_string();
@@ -36,10 +37,10 @@ fn load_layout(tx: &JsonValue, catjson: &Vec<JsonValue>, is_emmbeded: bool) -> V
     } else if tx["type"] == "AGGREGATE_BONDED" {
 		layout_name = "AggregateBondedTransaction".to_string();
     } else {
-		layout_name = prefix.to_string() + &tx["type"].to_string().to_case(Case::Camel) + "Transaction";
+		layout_name = prefix.to_string() + &to_camelcase(tx["type"].to_string()) + "Transaction";
     }
 
-    let factory = catjson.iter().find(|&item| (item["factory_type"] == prefix.clone() + "Transaction") && (item["name"] == layout_name)).unwrap();
+    let factory = catjson.iter().find(|&item| (item["factory_type"].to_string() == prefix.clone() + "Transaction") && (item["name"].to_string() == layout_name)).unwrap();
 
     match factory["layout"] {
         JsonValue::Array(ref json_array) => json_array.clone(),
@@ -48,7 +49,14 @@ fn load_layout(tx: &JsonValue, catjson: &Vec<JsonValue>, is_emmbeded: bool) -> V
     
 }
 
-// fn prepare_transaction(tx: &JsonValue, layout: &JsonValue, network: &JsonValue)
+fn to_camelcase(snake_case: String) -> String {
+    let lowercase = snake_case.replace("_", "").to_lowercase();
+    let (lowercase_head, lowercase_other) = lowercase.split_at(1);
+    let camelcase = lowercase_head.to_uppercase() + lowercase_other;
+    camelcase
+}
+
+// pub fn prepare_transaction(tx: &JsonValue, layout: &JsonValue, network: &JsonValue) // -> JsonValue
 // {
     
 //     let mut prepared_tx = tx.clone();
@@ -56,31 +64,95 @@ fn load_layout(tx: &JsonValue, catjson: &Vec<JsonValue>, is_emmbeded: bool) -> V
 //     prepared_tx["version"] = network["version"].clone();
 
 //     if prepared_tx.contains("message") {
-//         let mut txt_sum = "00".to_string();
-//         for byte_data in "Hello Tsunagi(Catjson) SDK!".as_bytes(){
-//             txt_sum = txt_sum + &format!("{:x}", byte_data);
+//         let message = "00".to_string() + &prepared_tx["message"].to_string().as_bytes().to_hex();
+//         prepared_tx["message"] = message.into();
+//     }
+
+//     if prepared_tx.contains("name") {
+//         prepared_tx["name"] = prepared_tx["name"].to_string().as_bytes().to_hex().into();
+//     }
+
+//     if prepared_tx.contains("value") {
+//         prepared_tx["value"] = prepared_tx["value"].to_string().as_bytes().to_hex().into();
+//     }
+
+//     if prepared_tx.contains("mosaics") {
+//         match prepared_tx["mosaics"] {
+//             JsonValue::Array(ref mut json_array) => 
+//                 json_array.sort_by(|a, b|
+//                     if a["mosaic_id"].as_u64() < b["mosaic_id"].as_u64() {
+//                         Ordering::Less
+//                     } else {
+//                         Ordering::Greater
+//                     }
+//                 ),
+//             _ => ()
 //         }
-//         prepared_tx["message"] = txt_sum.into();
 //     }
 // }
 
-fn main() {
+#[cfg(test)]
+mod tests {
+    use super::*;
 
-	let parsed = json::parse(r#"
+    // let mut network = JsonValue::new_object();
+    // network["version"] = 1.into();
+    // network["network"] = "TESTNET".into();
+    // network["generationHash"] = "7fccd304802016bebbcd342a332f91ff1f3bb5e902988b352697be245f48e836".into();
+    // network["currencyMosaicId"] = 0x3A8416DB2D53B6C8u64.into();
+    // network["currencyNamespaceId"] = 0xE74B99BA41F4AFEEu64.into();
+    // network["currencyDivisibility"] = 6.into();
+    // network["epochAdjustment"] = 1637848847.into();
+    // network["catjasonBase"] = "https://xembook.github.io/tsunagi-sdk/catjson/".into();
+    // network["wellknownNodes"] = vec![
+    //     "https://sym-test.opening-line.jp:3001",
+    //     "https://sym-test.opening-line.jp:3001",
+    //     "https://sym-test.opening-line.jp:3001",].into();
 
-    {
-        "code": 200,
-        "success": true,
-        "payload": {
-            "features": [
-                "awesome",
-                "easyAPI",
-                "lowLearningCurve"
-            ]
-        }
+    #[test]
+    fn test_load_catjson() {
+
+        let mut network = JsonValue::new_object();
+        network["catjasonBase"] = "https://xembook.github.io/tsunagi-sdk/catjson/".into();
+
+    
+        // case 1
+        let mut tx = JsonValue::new_object();
+        tx["type"] = "TRANSFER".into();
+        let catjson = load_catjson(&tx, &network);
+        assert_eq!(catjson.iter().find(|&cj| cj["name"] == "TransferTransaction").unwrap()["layout"][1]["value"], "TRANSFER");
+
+        // case 2
+        let mut tx = JsonValue::new_object();
+        tx["type"] = "AGGREGATE_COMPLETE".into();
+        let catjson = load_catjson(&tx, &network);
+        assert_eq!(catjson.iter().find(|&cj| cj["name"] == "AggregateCompleteTransaction").unwrap()["layout"][1]["value"], "AGGREGATE_COMPLETE");
     }
 
-    "#).unwrap();
+    #[test]
+    fn test_load_layout() {
+        let mut network = JsonValue::new_object();
+        network["catjasonBase"] = "https://xembook.github.io/tsunagi-sdk/catjson/".into();
 
-	println!("{}", "ASDadfaDFA".to_string().to_lowercase())
+        // case 1
+        let mut tx = JsonValue::new_object();
+        tx["type"] = "TRANSFER".into();
+
+        let catjson = load_catjson(&tx, &network);
+        let layout = load_layout(&tx, &catjson, false);
+        assert_eq!(layout[1]["value"], "TRANSFER");
+        assert_eq!(layout[3]["name"], "verifiable_entity_header_reserved_1");
+
+        let elayout = load_layout(&tx, &catjson, true);
+        assert_eq!(elayout[1]["value"], "TRANSFER");
+        assert_eq!(elayout[3]["name"], "embedded_transaction_header_reserved_1");
+
+        // case 2
+        let mut tx = JsonValue::new_object();
+        tx["type"] = "AGGREGATE_COMPLETE".into();
+        let catjson = load_catjson(&tx, &network);
+        let layout = load_layout(&tx, &catjson, false);
+        assert_eq!(layout[1]["value"], "AGGREGATE_COMPLETE");
+        assert_eq!(layout[3]["name"], "verifiable_entity_header_reserved_1");
+    }
 }
