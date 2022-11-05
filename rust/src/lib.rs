@@ -56,40 +56,91 @@ fn to_camelcase(snake_case: String) -> String {
     camelcase
 }
 
-// pub fn prepare_transaction(tx: &JsonValue, layout: &JsonValue, network: &JsonValue) // -> JsonValue
-// {
+pub fn prepare_transaction(tx: &JsonValue, layout: &Vec<JsonValue>, network: &JsonValue) -> JsonValue
+{
     
-//     let mut prepared_tx = tx.clone();
-//     prepared_tx["network"] = network["network"].clone();
-//     prepared_tx["version"] = network["version"].clone();
+    let mut prepared_tx = tx.clone();
+    prepared_tx["network"] = network["network"].clone();
+    prepared_tx["version"] = network["version"].clone();
 
-//     if prepared_tx.contains("message") {
-//         let message = "00".to_string() + &prepared_tx["message"].to_string().as_bytes().to_hex();
-//         prepared_tx["message"] = message.into();
-//     }
+    if prepared_tx.contains("message") {
+        let message = "00".to_string() + &prepared_tx["message"].to_string().as_bytes().to_hex();
+        prepared_tx["message"] = message.into();
+    }
 
-//     if prepared_tx.contains("name") {
-//         prepared_tx["name"] = prepared_tx["name"].to_string().as_bytes().to_hex().into();
-//     }
+    if prepared_tx.contains("name") {
+        prepared_tx["name"] = prepared_tx["name"].to_string().as_bytes().to_hex().into();
+    }
 
-//     if prepared_tx.contains("value") {
-//         prepared_tx["value"] = prepared_tx["value"].to_string().as_bytes().to_hex().into();
-//     }
+    if prepared_tx.contains("value") {
+        prepared_tx["value"] = prepared_tx["value"].to_string().as_bytes().to_hex().into();
+    }
 
-//     if prepared_tx.contains("mosaics") {
-//         match prepared_tx["mosaics"] {
-//             JsonValue::Array(ref mut json_array) => 
-//                 json_array.sort_by(|a, b|
-//                     if a["mosaic_id"].as_u64() < b["mosaic_id"].as_u64() {
-//                         Ordering::Less
-//                     } else {
-//                         Ordering::Greater
-//                     }
-//                 ),
-//             _ => ()
-//         }
-//     }
-// }
+    if prepared_tx.contains("mosaics") {
+        match prepared_tx["mosaics"] {
+            JsonValue::Array(ref mut json_array) => {
+                json_array.sort_by(|a, b|
+                    if a["mosaic_id"].as_u64() < b["mosaic_id"].as_u64() {
+                        Ordering::Less
+                    } else {
+                        Ordering::Greater
+                    }
+                )
+            }
+            _ => ()
+        }
+        println!("{:?}", prepared_tx["mosaics"]);
+    }
+
+    for layer in layout {
+        let layer_map = layer.clone();
+        if layer_map.contains("size") {
+            let mut size = 0;
+
+            if layer_map.contains("element_disposition") {
+                if prepared_tx.contains(layer_map["name"].to_string()) {
+                    let s1 = prepared_tx[layer_map["name"].to_string()].len() as u64;
+                    let s2 = (layer_map["element_disposition"].as_f64().unwrap() * 2.0) as u64;
+                    size = (s1 / s2) as u64;
+                }
+            } else if layer_map["size"].to_string().contains("_count") {
+                if prepared_tx.contains(layer_map["name"].to_string()) {
+                    size = prepared_tx[layer_map["name"].to_string()].len() as u64;
+                } else {
+                    size = 0;
+                }
+            } else {
+                //その他のsize値はPayloadの長さを入れるため現時点では不明
+            }
+            prepared_tx[layer_map["size"].to_string()] = size.into();
+        }
+    }
+
+    if tx.contains("transactions") {
+        let mut txes = Vec::new();
+        let mut e_tx_map;
+        let mut e_catjson;
+        let mut e_layout;
+        let mut e_prepared_tx;
+
+        match tx["transactions"] {
+            JsonValue::Array(ref e_txes) => {
+                for e_tx in e_txes {
+                    e_tx_map = e_tx;
+                    e_catjson = load_catjson(&e_tx_map, &network);
+                    e_layout = load_layout(&e_tx_map, &e_catjson, true);
+
+                    // 再帰処理
+                    e_prepared_tx = prepare_transaction(&e_tx_map, &e_layout, network);
+                    txes.push(e_prepared_tx);
+                }
+                prepared_tx["transactions"] = txes.into();
+            }   
+            _ => ()
+        }
+    }
+    prepared_tx
+}
 
 #[cfg(test)]
 mod tests {
@@ -155,4 +206,8 @@ mod tests {
         assert_eq!(layout[1]["value"], "AGGREGATE_COMPLETE");
         assert_eq!(layout[3]["name"], "verifiable_entity_header_reserved_1");
     }
+
+    // #[test]
+    // fn test_prepare_transaction() {
+    // }
 }
