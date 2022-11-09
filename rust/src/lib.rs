@@ -1,9 +1,9 @@
-use std::cmp::Ordering;
+use std::{cmp::Ordering};
 
 use url::Url;
 use reqwest;
 use json::{self, JsonValue};
-use rustc_serialize::hex::ToHex;
+use rustc_serialize::{hex::ToHex};
 
 pub fn load_catjson(tx: &JsonValue, network: &JsonValue) -> Vec<JsonValue> {
 
@@ -141,6 +141,245 @@ pub fn prepare_transaction(tx: &JsonValue, layout: &Vec<JsonValue>, network: &Js
     }
     prepared_tx
 }
+
+fn type_of<T>(_: T) -> String{
+    let a = std::any::type_name::<T>();
+    return a.to_string();
+}
+
+fn parse_transaction(tx: &mut JsonValue, layout: &Vec<JsonValue>, catjson: &mut Vec<JsonValue>, network: &JsonValue) -> Vec<JsonValue> 
+{
+    let mut parsed_tx = Vec::new();
+
+    for layer in layout {
+        let mut layer_map = layer.clone();
+        let layer_type = layer_map["type"].to_string();
+        let mut layer_disposition = "".to_string();
+
+        if layer_map.contains("disposition") {
+            layer_disposition = layer_map["disposition"].to_string();
+        }
+
+        let idx = catjson.iter().position(|x| x["name"].to_string() == layer_type).unwrap();
+        let mut catitem;
+        //if idx >= 0 {
+            catitem = catjson[idx].clone();
+        //}
+
+        if layer_map.contains("condition") {
+            if layer_map["condition_operation"] == "equals" {
+                if layer_map["condition_value"] != tx[layer_map["condition"].to_string()] {
+                    continue;
+                }
+            }
+        }
+
+        if layer_disposition == "const" {
+            continue;
+        } else if layer_type == "EmbeddedTransaction" {
+            let mut tx_layer = layer_map.clone();
+
+            let mut items = Vec::new();
+            match tx["transactions"] {
+                JsonValue::Array(ref mut  e_txes) => {
+                    for e_tx in e_txes {
+                        //TODO: e_txがnil辺りがよくわからない
+                        //if e_tx != None {
+                            let mut e_tx_map = e_tx.clone();
+                            let mut e_catjson = load_catjson(&e_tx_map, &network);
+                            let e_layout = load_layout(&e_tx_map, &e_catjson, true);
+
+                            // 再帰処理
+                            let e_prepared_tx = parse_transaction(&mut e_tx_map, &e_layout, &mut e_catjson, &network);
+                            items.push(e_prepared_tx);
+                        //}
+                    }
+                }
+                _ => ()
+            }
+            
+            tx_layer["layout"] = items.into();
+            parsed_tx.push(tx_layer);
+            continue;
+        } else if catitem.contains("layout") && tx.contains(layer_map["name"].to_string()) {
+            let mut tx_layer = layer_map.clone();
+            let mut items = Vec::new();
+
+            match tx[layer_map["name"].to_string()] {
+                JsonValue::Array(ref mut json_array) => {
+                    for item in json_array {
+                        let idx = catjson.iter().position(|x| x["name"].to_string() == layer_type).unwrap();
+                        match catjson[idx]["layout"].clone() {
+                            JsonValue::Array(ref mut json_array) => {
+                                let item_parsed_tx = parse_transaction(item, &json_array, catjson, &network); // 再帰
+                                items.push(item_parsed_tx);
+                            }
+                            _ => panic!("error")
+                        }
+                        
+                    }
+                }
+                _ => ()
+            }
+
+            tx_layer["layout"] = items.into();
+            parsed_tx.push(tx_layer);
+            continue;
+        } else if layer_type == "UnresolvedAddress" {
+            //アドレスに30個の0が続く場合はネームスペースとみなします。
+            if tx.contains(layer_map["name"].to_string()) && 
+                //type_of(tx[layer_map["name"].to_string()]) == "String" && 
+                tx[layer_map["name"].to_string()].contains("000000000000000000000000000000") {
+                    let idx = catjson.iter().position(|x| x["name"].to_string() == "NetworkType").unwrap();
+                    let cat_json_idx_value = catjson[idx]["values"].clone();
+                    let idx2 = match cat_json_idx_value {
+                        JsonValue::Array(ref json_array) => {
+                            json_array.iter().position(|x| x["name"].to_string() == tx["network"].to_string()).unwrap()
+                        }
+                        _ => panic!("error")
+                    };
+                    let prefix = match cat_json_idx_value {
+                        JsonValue::Array(ref json_array) => {
+                            format!("{:x}", json_array[idx2]["value"].as_i32().unwrap() + 1)
+                        }
+                        _ => panic!("error")
+                    };
+                    tx[layer_map["name"].to_string()] = (prefix + &tx[layer_map["name"].to_string()].to_string()).into();
+            }
+
+
+        } else if catitem["type"] == "enum" {
+            if catitem["name"].contains("Flags") {
+                let mut value = 0;
+                match catitem["values"] {
+                    JsonValue::Array(ref item_layers) => {
+                        for item_layer in item_layers {
+                            if tx[layer_map["name"].to_string()].contains(item_layer["name"].to_string()) {
+                                value += item_layer["value"].as_i32().unwrap();
+                            }
+                        }
+                    }
+                    _ => ()
+                }
+                catitem["value"] = value.into();
+            } else if layer_disposition.contains("array") {
+                let mut values = Vec::new();
+                match tx[layer_map["name"].to_string()] {
+                    JsonValue::Array(ref mut json_array) => {
+                        for item in json_array {
+                            match catitem["values"] {
+                                JsonValue::Array(ref mut json_array) => {
+                                    let idx = json_array.iter().position(|x| x["name"].to_string() == item.to_string()).unwrap();
+                                    values.push(json_array[idx]["value"].clone());
+                                }
+                                _ => panic!("error")
+                            };
+
+                            values.push(catitem["values"].clone());
+                        }
+                        tx[layer_map["name"].to_string()] = values.into();
+                    }
+                    _ => panic!("error")
+                }
+            } else {
+                let idx = match catitem["values"] {
+                    JsonValue::Array(ref mut json_array) => {
+                        json_array.iter().position(|x| x["name"] == tx[layer_map["name"].to_string()]).unwrap()
+                    }
+                    _ => panic!("error")
+                };
+                if idx >= 0 {
+                    catitem["value"] = match catitem["values"] {
+                        JsonValue::Array(ref mut json_array) => {
+                            json_array[idx]["value"].clone()
+                        }
+                        _ => panic!("error")
+                    }
+                }
+            }
+        }
+
+        if layer_disposition.contains("array") {
+            if layer_type == "byte" {
+                let size = tx[layer_map["name"].to_string()].as_usize().unwrap();
+                if layer_map.contains("element_disposition") {
+                    let mut sub_layout = layer_map.clone();
+
+                    let mut items = Vec::new();
+                    for i in 0..size {
+                        let mut tx_layer = JsonValue::new_object();
+                        tx_layer["signedness"] = layer_map["element_disposition"]["signedness"].clone();
+                        tx_layer["name"] = "element_disposition".clone().into();
+                        tx_layer["size"] = layer_map["element_disposition"]["size"].clone();
+                        tx_layer["value"] = (&tx[layer_map["name"].to_string()].to_string())[i*2 .. i*2+2].into();
+                        tx_layer["type"] = layer_type.clone().into();
+
+                        items.push(tx_layer);
+                    }
+                    sub_layout["layout"] = items.into();
+                    parsed_tx.push(sub_layout);
+                }
+            } else if tx.contains(layer_map["name"].clone()) {
+                let mut sub_layout = layer_map.clone();
+                let mut items = Vec::new();
+
+                match tx[layer_map["name"].to_string()].clone() {
+                    JsonValue::Array(ref mut json_array) => {
+                        for tx_item in json_array {
+                            let idx = catjson.iter().position(|x| x["name"].to_string() == layer_type).unwrap();
+                            let mut tx_layer = if idx >= 0 { catjson[idx].clone() } else { JsonValue::new_object() };
+                            tx_layer["value"] = tx_item.clone();
+
+                            if layer_type == "UnresolvedAddress" {
+                                if tx_item.contains("000000000000000000000000000000") {
+                                    let idx = catjson.iter().position(|x| x["name"].to_string() == "NetworkType").unwrap();
+                                    match catjson[idx]["values"] {
+                                        JsonValue::Array(ref mut json_array) => {
+                                            let idx2 = json_array.iter().position(|x| x["name"] == tx["network"]).unwrap();
+                                            let prefix = format!("{:x}", json_array[idx2]["value"].as_i32().unwrap() + 1);
+                                            tx_layer["value"] = (prefix + &tx[layer_map["name"].to_string()].to_string()).into();
+                                        }
+                                        _ => panic!("error")
+                                    }
+                                }
+                            }
+                            items.push(tx_layer);
+                        }
+                        sub_layout["layout"] = items.into();
+                        parsed_tx.push(sub_layout);
+                    }
+                    _ => panic!("error")
+                }
+            }
+        } else {
+            let mut tx_layer = layer_map.clone();
+
+            if catitem.len() > 0 {
+                tx_layer["signedness"] = catitem["signedness"].clone();
+				tx_layer["type"] = catitem["type"].clone();
+				tx_layer["value"] = catitem["value"].clone();
+				tx_layer["size"] = catitem["size"].clone();
+            }
+
+            if tx.contains(layer_map["name"].to_string()) && catitem["type"] != "enum" {
+                tx_layer["value"] = tx[layer_map["name"].to_string()].clone()
+            }
+
+            parsed_tx.push(tx_layer);
+        }
+    }
+    let idx = parsed_tx.iter().position(|x| x["name"] == "size").unwrap();
+    if idx >= 0 {
+        parsed_tx[idx]["value"] = count_size(&parsed_tx, 0).into();
+    }
+    parsed_tx
+}
+
+fn count_size(item: &Vec<JsonValue>, aligment: i32) -> i32{
+    // TODO: 型による分岐の実装方法を知らない。
+    100
+}
+
 
 #[cfg(test)]
 mod tests {
