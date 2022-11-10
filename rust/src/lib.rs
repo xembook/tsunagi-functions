@@ -21,17 +21,24 @@ pub fn load_catjson(tx: &JsonValue, network: &JsonValue) -> json::Array {
     let json_txt_resp = reqwest::blocking::get(url).unwrap().text().unwrap();
 
     let json_value_parsed = json::parse(&json_txt_resp).unwrap();
-    let catjson = must_json_array(&json_value_parsed);
+    let catjson = must_json_array_as_ref(&json_value_parsed);
 
-    catjson
+    catjson.clone()
 }
 
 /// 列挙型JsonValue内のArray形式である事を確認する。
 /// Array形式に違いない時にのみ使用する。
 /// Array形式でない時、panicして終了する。
-fn must_json_array(json_value: &JsonValue) -> json::Array {
+fn must_json_array_as_ref(json_value: &JsonValue) -> &json::Array {
     match json_value {
-        JsonValue::Array(json_array) => json_array.clone(),
+        JsonValue::Array(ref json_array) => json_array,
+        _ => panic!("error: このcaseにmatchすることは想定していない。")
+    }
+}
+
+fn must_json_array_as_ref_mut(json_value: &mut JsonValue) -> &mut json::Array {
+    match json_value {
+        JsonValue::Array(ref mut json_array) => json_array,
         _ => panic!("error: このcaseにmatchすることは想定していない。")
     }
 }
@@ -58,8 +65,8 @@ pub fn load_layout(tx: &JsonValue, catjson: &json::Array, is_emmbeded: bool) -> 
         |&item| (item["factory_type"].to_string() == prefix.clone() + "Transaction") && (item["name"].to_string() == layout_name)
     ).unwrap();
 
-    let layout = must_json_array(&factory["layout"]);
-    layout
+    let layout = must_json_array_as_ref(&factory["layout"]);
+    layout.clone()
 }
 
 /// camelcaseに変換する。
@@ -91,7 +98,7 @@ pub fn prepare_transaction(tx: &JsonValue, layout: &json::Array, network: &JsonV
     }
 
     if prepared_tx.contains("mosaics") {
-        let mut prepared_tx_mosaics = must_json_array(&prepared_tx["mosaics"]);
+        let mut prepared_tx_mosaics = must_json_array_as_ref(&prepared_tx["mosaics"]).clone();
         prepared_tx_mosaics.sort_by(|a, b|
             if a["mosaic_id"].as_u64() < b["mosaic_id"].as_u64() {
                 Ordering::Less
@@ -129,7 +136,7 @@ pub fn prepare_transaction(tx: &JsonValue, layout: &json::Array, network: &JsonV
     if tx.contains("transactions") {
         let mut txes = Vec::new();
 
-        let e_txes = must_json_array(&tx["transactions"]);
+        let e_txes = must_json_array_as_ref(&tx["transactions"]);
         for e_tx in e_txes {
             let e_tx_map = e_tx;
             let e_catjson = load_catjson(&e_tx_map, &network);
@@ -174,7 +181,7 @@ fn parse_transaction(tx: &JsonValue, layout: &json::Array, catjson: &json::Array
             let mut tx_layer = layer.clone();
 
             let mut items = Vec::new();
-            let e_txes = must_json_array(&tx["transactions"]);
+            let e_txes = must_json_array_as_ref(&tx["transactions"]);
             for e_tx in e_txes {
 
                 let e_tx_map = e_tx.clone();
@@ -194,11 +201,11 @@ fn parse_transaction(tx: &JsonValue, layout: &json::Array, catjson: &json::Array
             let mut tx_layer = layer.clone();
             let mut items = Vec::new();
 
-            let tx_layer_name = must_json_array(&tx_layer_name);
+            let tx_layer_name = must_json_array_as_ref(&tx_layer_name);
 
             for item in tx_layer_name {
                 let catjson_at_layer_type = catjson.iter().find(|x| x["name"].to_string() == layer_type).unwrap();
-                let catjson_layout = must_json_array(&catjson_at_layer_type["layout"]);
+                let catjson_layout = must_json_array_as_ref(&catjson_at_layer_type["layout"]);
                 let item_parsed_tx = parse_transaction(&item, &catjson_layout, catjson, &network); // 再帰
                 items.push(item_parsed_tx);
             }
@@ -304,7 +311,7 @@ fn parse_transaction(tx: &JsonValue, layout: &json::Array, catjson: &json::Array
                 let mut sub_layout = layer.clone();
                 let mut items = Vec::new();
 
-                let tx_items = must_json_array(&tx_layer_name);
+                let tx_items = must_json_array_as_ref(&tx_layer_name);
 
                 for tx_item in tx_items {
                     let mut tx_layer = catjson.iter().find(|x| x["name"].to_string() == layer_type).unwrap().clone();
@@ -312,7 +319,7 @@ fn parse_transaction(tx: &JsonValue, layout: &json::Array, catjson: &json::Array
                     if layer_type == "UnresolvedAddress" {
                         if tx_item.contains("000000000000000000000000000000") {
                             let catjson_name_networktype = catjson.iter().find(|x| x["name"].to_string() == "NetworkType").unwrap();
-                            let catjson_name_networktype_values = must_json_array(&catjson_name_networktype["values"]);
+                            let catjson_name_networktype_values = must_json_array_as_ref(&catjson_name_networktype["values"]);
                             let catjson_name_networktype_values_name_network = 
                                 catjson_name_networktype_values.iter().find(|x| x["name"] == tx["network"]).unwrap();
 
