@@ -132,8 +132,133 @@ describe('tsunagi-sdk.0.1',() => {
 			let layout2 = loadLayout(tx2,catjson2,false); //isEmbedded false
 			expect(layout2[1]["value"]).toEqual("AGGREGATE_COMPLETE");
 			expect(layout2[3]["name"]).toEqual("verifiable_entity_header_reserved_1");
+		});	
+
+		it('prepareTransaction', async () => {
+			let tx1 = {
+				type:'TRANSFER',
+				name:"xembook",
+				value:"value",
+				mosaics:[
+					{mosaic_id: 0x3A8416DB2D53B6C8n, amount: 100n},
+					{mosaic_id: 0x2A09B7F9097934C2n, amount: 1n},
+				],
+				message:"Hello Tsunagi(Catjson) SDK!",
+			}
+
+			let catjson = await loadCatjson(tx1,this.network);
+			let layout = loadLayout(tx1,catjson,false); //isEmbedded false
+			let preparedTx = await prepareTransaction(tx1,layout,this.network); //TX事前準備
+			console.log(preparedTx);
+			expect(preparedTx["name"]).toEqual("78656d626f6f6b");
+			expect(preparedTx["value"]).toEqual("76616c7565");
+			expect(preparedTx["mosaics"][0]["mosaic_id"]).toEqual(3029154504617047234n);
+			expect(preparedTx["message"]).toEqual("0048656c6c6f205473756e616769284361746a736f6e292053444b21");
+			expect(preparedTx["message_size"]).toEqual(28);
+			expect(preparedTx["mosaics_count"]).toEqual(2);
+			
+			let tx2 = {
+				type:'AGGREGATE_COMPLETE',
+				transactions:[tx1],
+			}
+
+			let catjson2 = await loadCatjson(tx2,this.network);
+			let layout2 = loadLayout(tx2,catjson2,false); //isEmbedded false
+			let preparedTx2 = await prepareTransaction(tx2,layout2,this.network); //TX事前準備
+			console.log(preparedTx2);
+			expect(preparedTx2["payload_size"]).toEqual(0);
+			expect(preparedTx2["transactions"][0]["name"]).toEqual("78656d626f6f6b");
+			expect(preparedTx2["transactions"][0]["value"]).toEqual("76616c7565");
+			expect(preparedTx2["transactions"][0]["mosaics"][0]["mosaic_id"]).toEqual(3029154504617047234n);
+			expect(preparedTx2["transactions"][0]["message"]).toEqual("0048656c6c6f205473756e616769284361746a736f6e292053444b21");
+			expect(preparedTx2["transactions"][0]["message_size"]).toEqual(28);
+			expect(preparedTx2["transactions"][0]["mosaics_count"]).toEqual(2);
 
 		});	
+
+
+		it('parseTransaction', async () => {
+
+
+			let tx1 = {
+				type:'TRANSFER',
+				signer_public_key:"5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
+				fee:1000000n,
+				deadline:this.deadline,
+				recipient_address:generateAddressId("TCO7HLVDQUX6V7C737BCM3VYJ3MKP6REE2EKROA"),
+				mosaics:[
+					{mosaic_id: 0x2A09B7F9097934C2n, amount: 1n},
+					{mosaic_id: 0x3A8416DB2D53B6C8n, amount: 100n},
+				],
+				message:"Hello Tsunagi(Catjson) SDK!",
+			}
+
+			let catjson = await loadCatjson(tx1,this.network);
+			let layout = loadLayout(tx1,catjson,false); //isEmbedded false
+
+			let preparedTx = await prepareTransaction(tx1,layout,this.network); //TX事前準備
+			let parsedTx   = await parseTransaction(preparedTx,layout,catjson,this.network); //TX解析
+			console.log(parsedTx);
+			
+			expect(parsedTx[0]["value"]).toEqual(220);
+			expect(parsedTx[1]["value"]).toEqual(0);
+			expect(parsedTx[6]["value"]).toEqual(152);
+			expect(parsedTx[10]["value"]).toEqual("989df3aea3852feafc5fdfc2266eb84ed8a7fa242688a8b8");
+			expect(parsedTx[15]["layout"].length).toEqual(2);
+			expect(parsedTx[15]["layout"][0][0]["value"]).toEqual(3029154504617047234n);
+			expect(parsedTx[15]["layout"][0][1]["value"]).toEqual(1n);
+			expect(parsedTx[16]["layout"].length).toEqual(28);
+			expect(parsedTx[16]["layout"][0][0]["value"]).toEqual("00");
+			expect(parsedTx[16]["layout"][1][0]["value"]).toEqual("48");
+			
+			let tx2 = {
+				type:'TRANSFER',
+				signer_public_key:"5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
+				recipient_address:generateAddressId("TCO7HLVDQUX6V7C737BCM3VYJ3MKP6REE2EKROA"),
+				mosaics:[
+					{mosaic_id: 0x2A09B7F9097934C2n, amount: 1n},
+					{mosaic_id: 0x3A8416DB2D53B6C8n, amount: 100n},
+				],
+				message:"Hello Tsunagi(Catjson) SDK!",
+			}
+
+			let aggTx = {
+				type:'AGGREGATE_COMPLETE',
+				signer_public_key:"5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
+				fee:1000000n,
+				deadline:this.deadline,
+				transactions:[tx2],
+			}
+
+
+			let catjson2 = await loadCatjson(aggTx,this.network);
+			let layout2 = loadLayout(aggTx,catjson2,false); //isEmbedded false
+
+			let preparedTx2 = await prepareTransaction(aggTx,layout2,this.network); //TX事前準備
+			let parsedTx2   = await parseTransaction(preparedTx2,layout2,catjson2,this.network); //TX解析
+			console.log(parsedTx2);
+			
+			expect(parsedTx2[8]["value"]).toEqual(1000000n);
+			expect(parsedTx2[9]["value"]).toEqual(7200000n);
+			expect(parsedTx2[13]["layout"][0][0]["value"]).toEqual(140);
+			
+			expect(parsedTx2[13]["layout"][0][1]["value"]).toEqual(0);
+			expect(parsedTx2[13]["layout"][0][5]["value"]).toEqual(152);
+			expect(parsedTx2[13]["layout"][0][7]["value"]).toEqual("989df3aea3852feafc5fdfc2266eb84ed8a7fa242688a8b8");
+			expect(parsedTx2[13]["layout"][0][9]["value"]).toEqual(2);
+			expect(parsedTx2[13]["layout"][0][12]["layout"][0][0]["value"]).toEqual(3029154504617047234n);
+			expect(parsedTx2[13]["layout"][0][12]["layout"][0][1]["value"]).toEqual(1n);
+			expect(parsedTx2[13]["layout"][0][13]["layout"].length).toEqual(28);
+			expect(parsedTx2[13]["layout"][0][13]["layout"][0][0]["value"]).toEqual("00");
+			expect(parsedTx2[13]["layout"][0][13]["layout"][1][0]["value"]).toEqual("48");
+			
+
+		});	
+
+			
+			
+			
+			
 	
 	})
 
