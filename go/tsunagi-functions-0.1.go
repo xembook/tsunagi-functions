@@ -206,7 +206,7 @@ func parseTransaction(tx  map[string]any,layout  []any,catjson  []any,network ma
 			items := make([]any,0)
 			for _,eTx := range tx["transactions"].([]any){
 				eTxMap := make(map[string]any)
-				if eTx != nil {
+//				if eTx != nil {
 					eTxMap = eTx.(map[string]any)
 					eCatjson := loadCatjson(eTxMap,network)
 					eLayout := loadLayout(eTxMap,eCatjson,true)
@@ -214,7 +214,7 @@ func parseTransaction(tx  map[string]any,layout  []any,catjson  []any,network ma
 					//再帰処理
 					ePreparedTx := parseTransaction(eTxMap,eLayout,eCatjson,network)
 					items = append(items ,ePreparedTx)
-				}
+//				}
 			}
 
 			txLayer["layout"] = items
