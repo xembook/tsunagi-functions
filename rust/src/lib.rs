@@ -84,20 +84,20 @@ pub fn prepare_transaction(tx: &JsonValue, layout: &json::Array, network: &JsonV
     prepared_tx["network"] = network["network"].clone();
     prepared_tx["version"] = network["version"].clone();
 
-    if prepared_tx.contains("message") {
+    if prepared_tx.has_key("message") {
         let message = "00".to_string() + &prepared_tx["message"].to_string().as_bytes().to_hex();
         prepared_tx["message"] = message.into();
     }
 
-    if prepared_tx.contains("name") {
+    if prepared_tx.has_key("name") {
         prepared_tx["name"] = prepared_tx["name"].to_string().as_bytes().to_hex().into();
     }
 
-    if prepared_tx.contains("value") {
+    if prepared_tx.has_key("value") {
         prepared_tx["value"] = prepared_tx["value"].to_string().as_bytes().to_hex().into();
     }
 
-    if prepared_tx.contains("mosaics") {
+    if prepared_tx.has_key("mosaics") {
         let mut prepared_tx_mosaics = must_json_array_as_ref(&prepared_tx["mosaics"]).clone();
         prepared_tx_mosaics.sort_by(|a, b|
             if a["mosaic_id"].as_u64() < b["mosaic_id"].as_u64() {
@@ -110,30 +110,29 @@ pub fn prepare_transaction(tx: &JsonValue, layout: &json::Array, network: &JsonV
     }
 
     for layer in layout {
-        let layer_map = layer.clone();
-        if layer_map.contains("size") {
+        if layer.has_key("size") {
             let mut size = 0;
 
-            if layer_map.contains("element_disposition") {
-                if prepared_tx.contains(layer_map["name"].to_string()) {
-                    let s1 = prepared_tx[layer_map["name"].to_string()].len() as u64;
-                    let s2 = (layer_map["element_disposition"].as_f64().unwrap() * 2.0) as u64;
+            if layer.has_key("element_disposition") {
+                if prepared_tx.has_key(&layer["name"].to_string()) {
+                    let s1 = prepared_tx[layer["name"].to_string()].to_string().len() as u64;
+                    let s2 = (layer["element_disposition"]["size"].as_f64().unwrap() * 2.0) as u64;
                     size = s1 / s2;
                 }
-            } else if layer_map["size"].to_string().contains("_count") {
-                if prepared_tx.contains(layer_map["name"].to_string()) {
-                    size = prepared_tx[layer_map["name"].to_string()].len() as u64;
+            } else if layer["size"].to_string().contains("_count") {
+                if prepared_tx.has_key(&layer["name"].to_string()) {
+                    size = prepared_tx[layer["name"].to_string()].len() as u64;
                 } else {
                     size = 0;
                 }
             } else {
                 //その他のsize値はPayloadの長さを入れるため現時点では不明
             }
-            prepared_tx[layer_map["size"].to_string()] = size.into();
+            prepared_tx[layer["size"].to_string()] = size.into();
         }
     }
 
-    if tx.contains("transactions") {
+    if tx.has_key("transactions") {
         let mut txes = Vec::new();
 
         let e_txes = must_json_array_as_ref(&tx["transactions"]);
@@ -147,7 +146,6 @@ pub fn prepare_transaction(tx: &JsonValue, layout: &json::Array, network: &JsonV
             txes.push(e_prepared_tx);
         }
         prepared_tx["transactions"] = txes.into();
-
     }
     prepared_tx
 }
@@ -161,13 +159,13 @@ fn parse_transaction(tx: &JsonValue, layout: &json::Array, catjson: &json::Array
         let mut layer_disposition = "".to_string();
         let mut tx_layer_name = tx[layer["name"].to_string()].clone();
 
-        if layer.contains("disposition") {
+        if layer.has_key("disposition") {
             layer_disposition = layer["disposition"].to_string();
         }
 
         let mut catitem = catjson.iter().find(|x| x["name"].to_string() == layer_type).unwrap().clone();
 
-        if layer.contains("condition") {
+        if layer.has_key("condition") {
             if layer["condition_operation"] == "equals" {
                 if layer["condition_value"] != tx[layer["condition"].to_string()] {
                     continue;
@@ -364,6 +362,7 @@ fn count_size(item: &json::Array, aligment: i64) -> i64{
 #[cfg(test)]
 mod tests {
     use super::*;
+    use json::object;
 
     #[test]
     fn test_load_catjson() {
@@ -371,14 +370,12 @@ mod tests {
         let network = get_network_info();
     
         // case 1
-        let mut tx = JsonValue::new_object();
-        tx["type"] = "TRANSFER".into();
+        let tx = object!{"type": "TRANSFER"};
         let catjson = load_catjson(&tx, &network);
         assert_eq!(catjson.iter().find(|&cj| cj["name"] == "TransferTransaction").unwrap()["layout"][1]["value"], "TRANSFER");
 
         // case 2
-        let mut tx = JsonValue::new_object();
-        tx["type"] = "AGGREGATE_COMPLETE".into();
+        let tx = object!{"type": "AGGREGATE_COMPLETE"};
         let catjson = load_catjson(&tx, &network);
         assert_eq!(catjson.iter().find(|&cj| cj["name"] == "AggregateCompleteTransaction").unwrap()["layout"][1]["value"], "AGGREGATE_COMPLETE");
     }
@@ -388,9 +385,7 @@ mod tests {
         let network = get_network_info();
 
         // case 1
-        let mut tx = JsonValue::new_object();
-        tx["type"] = "TRANSFER".into();
-
+        let tx = object!{"type": "TRANSFER"};
         let catjson = load_catjson(&tx, &network);
         let layout = load_layout(&tx, &catjson, false);
         assert_eq!(layout[1]["value"], "TRANSFER");
@@ -401,33 +396,74 @@ mod tests {
         assert_eq!(elayout[3]["name"], "embedded_transaction_header_reserved_1");
 
         // case 2
-        let mut tx = JsonValue::new_object();
-        tx["type"] = "AGGREGATE_COMPLETE".into();
+        let tx = object!{"type": "AGGREGATE_COMPLETE"};
         let catjson = load_catjson(&tx, &network);
         let layout = load_layout(&tx, &catjson, false);
         assert_eq!(layout[1]["value"], "AGGREGATE_COMPLETE");
         assert_eq!(layout[3]["name"], "verifiable_entity_header_reserved_1");
     }
 
-    // #[test]
-    // fn test_prepare_transaction() {
-    // }
+    #[test]
+    fn test_prepare_transaction() {
+        let network = get_network_info();
+
+        // case 1
+        let tx1 = object! {
+            type:"TRANSFER",
+            name:"xembook",
+            value:"value",
+            mosaics:[
+                {mosaic_id: 0x3A8416DB2D53B6C8u64, amount: 100u64},
+                {mosaic_id: 0x2A09B7F9097934C2u64, amount: 1u64},
+            ],
+            message:"Hello Tsunagi(Catjson) SDK!",
+        };
+        let catjson = load_catjson(&tx1, &network);
+        let layout = load_layout(&tx1, &catjson, false);
+        let prepared_tx = prepare_transaction(&tx1, &layout, &network);
+        assert_eq!(prepared_tx["name"], "78656d626f6f6b");
+        assert_eq!(prepared_tx["value"], "76616c7565");
+        assert_eq!(prepared_tx["mosaics"][0]["mosaic_id"], 3029154504617047234u64);
+        assert_eq!(prepared_tx["message"], "0048656c6c6f205473756e616769284361746a736f6e292053444b21");
+        assert_eq!(prepared_tx["message_size"], 28);
+        assert_eq!(prepared_tx["mosaics_count"], 2);
+
+
+        // case 2
+        let tx2 = object! {
+            type: "AGGREGATE_COMPLETE",
+			transactions: [tx1],
+        };
+        let catjson = load_catjson(&tx2, &network);
+        let layout = load_layout(&tx2, &catjson, false);
+        let prepared_tx = prepare_transaction(&tx2, &layout, &network);
+        assert_eq!(prepared_tx["payload_size"], 0);
+        assert_eq!(prepared_tx["transactions"][0]["name"], "78656d626f6f6b");
+        assert_eq!(prepared_tx["transactions"][0]["value"], "76616c7565");
+        assert_eq!(prepared_tx["transactions"][0]["mosaics"][0]["mosaic_id"], 3029154504617047234u64);
+        assert_eq!(prepared_tx["transactions"][0]["message"], "0048656c6c6f205473756e616769284361746a736f6e292053444b21");
+        assert_eq!(prepared_tx["transactions"][0]["message_size"], 28);
+        assert_eq!(prepared_tx["transactions"][0]["mosaics_count"], 2);
+    }
+
+    
 
     fn get_network_info() -> JsonValue {
-        let mut network = JsonValue::new_object();
-        network["version"] = 1.into();
-        network["network"] = "TESTNET".into();
-        network["generationHash"] = "7fccd304802016bebbcd342a332f91ff1f3bb5e902988b352697be245f48e836".into();
-        network["currencyMosaicId"] = 0x3A8416DB2D53B6C8u64.into();
-        network["currencyNamespaceId"] = 0xE74B99BA41F4AFEEu64.into();
-        network["currencyDivisibility"] = 6.into();
-        network["epochAdjustment"] = 1637848847.into();
-        network["catjasonBase"] = "https://xembook.github.io/tsunagi-sdk/catjson/".into();
-        network["wellknownNodes"] = vec![
-            "https://sym-test.opening-line.jp:3001",
-            "https://sym-test.opening-line.jp:3001",
-            "https://sym-test.opening-line.jp:3001",].into();
-
+        let network = object!{
+			version:1,
+			network:"TESTNET",
+			generationHash:"7fccd304802016bebbcd342a332f91ff1f3bb5e902988b352697be245f48e836",
+			currencyMosaicId:0x3A8416DB2D53B6C8u64,
+			currencyNamespaceId:0xE74B99BA41F4AFEEu64,
+			currencyDivisibility:6,
+			epochAdjustment:1637848847,
+			catjasonBase:"https://xembook.github.io/tsunagi-sdk/catjson/",
+			wellknownNodes:[
+				"https://sym-test.opening-line.jp:3001",
+				"https://sym-test.opening-line.jp:3001",
+				"https://sym-test.opening-line.jp:3001",
+			]
+		};
         network
     }
 }
