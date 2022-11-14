@@ -22,12 +22,12 @@ func loadCatjson( tx map[string]any, network map[string]any) []any{
 
 	var jsonFile string
 	if(tx["type"] == "AGGREGATE_COMPLETE" || tx["type"] == "AGGREGATE_BONDED"){
-		jsonFile =  "aggregate.json"
+		jsonFile =	"aggregate.json"
 	}else{
-		jsonFile =  strings.ToLower(tx["type"].(string)) + ".json"
+		jsonFile =	strings.ToLower(tx["type"].(string)) + ".json"
 	}
 
-	req, _ := http.NewRequest(http.MethodGet, "https://xembook.github.io/tsunagi-sdk/catjson/" + jsonFile, nil)
+	req, _ := http.NewRequest(http.MethodGet, network["catjasonBase"].(string) + jsonFile, nil)
 	resp, _ := http.DefaultClient.Do(req)
 	body, _ := ioutil.ReadAll(resp.Body)
 
@@ -47,10 +47,10 @@ func loadLayout(tx map[string]any,catjson  []any,isEmbedded bool) []any{
 	}
 
 	var layoutName string
-	if(      tx["type"].(string) == "AGGREGATE_COMPLETE"){ layoutName = "AggregateCompleteTransaction"
-	}else if(tx["type"].(string) == "AGGREGATE_BONDED"){   layoutName = "AggregateBondedTransaction"
+	if( 	 tx["type"].(string) == "AGGREGATE_COMPLETE"){ layoutName = "AggregateCompleteTransactionV2"
+	}else if(tx["type"].(string) == "AGGREGATE_BONDED"){   layoutName = "AggregateBondedTransactionV2"
 	}else{
-		layoutName = prefix + toCamelCase(tx["type"].(string)) + "Transaction"
+		layoutName = prefix + toCamelCase(tx["type"].(string)) + "TransactionV1"
 	}
 	
 	idx := slices.IndexFunc(catjson, func(item any) bool {
@@ -72,7 +72,14 @@ func prepareTransaction(tx map[string]any,layout []any,network map[string]any) m
 	}
 
 	preparedTx["network"] = network["network"];
-	preparedTx["version"] = network["version"];
+//	preparedTx["version"] = network["version"];
+
+	if tx["type"].(string) == "AGGREGATE_COMPLETE" || tx["type"].(string) == "AGGREGATE_BONDED" {
+		preparedTx["version"] = 2
+	}else{
+		preparedTx["version"] = 1
+	}
+
 
 	if _, ok := preparedTx["message"]; ok {
 		message := []byte(preparedTx["message"].(string))
@@ -98,7 +105,7 @@ func prepareTransaction(tx map[string]any,layout []any,network map[string]any) m
 		})
 	}
 
-    for _,layer := range layout {
+	for _,layer := range layout {
 		layerMap := layer.(map[string]any)
 
 		if _, ok := layerMap["size"].(string); ok{
@@ -127,7 +134,7 @@ func prepareTransaction(tx map[string]any,layout []any,network map[string]any) m
 			}
 			preparedTx[layerMap["size"].(string)]  = size
 		}
-    }
+	}
 
 	if _, ok := tx["transactions"]; ok{
 		txes := make([]any,0)
@@ -164,11 +171,11 @@ func contains(s []int, e int) bool {
 	return false
 }
 
-func parseTransaction(tx  map[string]any,layout  []any,catjson  []any,network map[string]any) []any{
+func parseTransaction(tx  map[string]any,layout  []any,catjson	[]any,network map[string]any) []any{
 
 	parsedTx := make([]any,0)
 
-    for _,layer := range layout {
+	for _,layer := range layout {
 		layerMap := layer.(map[string]any)
 		layerType := layerMap["type"]
 		layerDisposition := ""
@@ -205,16 +212,14 @@ func parseTransaction(tx  map[string]any,layout  []any,catjson  []any,network ma
 
 			items := make([]any,0)
 			for _,eTx := range tx["transactions"].([]any){
-				eTxMap := make(map[string]any)
-//				if eTx != nil {
-					eTxMap = eTx.(map[string]any)
-					eCatjson := loadCatjson(eTxMap,network)
-					eLayout := loadLayout(eTxMap,eCatjson,true)
-	
-					//再帰処理
-					ePreparedTx := parseTransaction(eTxMap,eLayout,eCatjson,network)
-					items = append(items ,ePreparedTx)
-//				}
+//				eTxMap := make(map[string]any)
+				eTxMap := eTx.(map[string]any)
+				eCatjson := loadCatjson(eTxMap,network)
+				eLayout := loadLayout(eTxMap,eCatjson,true)
+
+				//再帰処理
+				ePreparedTx := parseTransaction(eTxMap,eLayout,eCatjson,network)
+				items = append(items ,ePreparedTx)
 			}
 
 			txLayer["layout"] = items
@@ -325,7 +330,7 @@ func parseTransaction(tx  map[string]any,layout  []any,catjson  []any,network ma
 							idx2 := getSliceIndex(catjson[idx].(map[string]any)["values"].([]any),"name",tx["network"])
 							prefix := fmt.Sprintf("%x", int(catjson[idx].(map[string]any)["values"].([]any)[idx2].(map[string]any)["value"].(float64)) + 1)
 										
-							txLayer["value"] =  prefix + txLayer["value"].(string)
+							txLayer["value"] =	prefix + txLayer["value"].(string)
 						}
 					}
 					items = append(items,txLayer)
@@ -370,7 +375,7 @@ func countSize(item any, alignment int) int {
 			layoutSize += countSize(layout.(map[string]any),alignment)
 		}
 		if alignment > 0 {
-			layoutSize = int((layoutSize + alignment - 1)/alignment) *  alignment
+			layoutSize = int((layoutSize + alignment - 1)/alignment) *	alignment
 		}
 		totalSize += layoutSize
 
@@ -431,7 +436,7 @@ func buildTransaction(parsedTx []any) []any {
 			for i < numRemainingHashes {
 				hasher := sha3.New256()
 
-				if isType(hashes[i],"[]uint8")  {
+				if isType(hashes[i],"[]uint8")	{
 					hasher.Write(hashes[i].([]byte))
 				}else{
 					arrayHashi := hashes[i].([32]byte)
@@ -441,7 +446,7 @@ func buildTransaction(parsedTx []any) []any {
 		
 				if i+1 < numRemainingHashes {
 
-					if isType(hashes[i],"[]uint8")  {
+					if isType(hashes[i],"[]uint8")	{
 						hasher.Write(hashes[i+1].([]byte))
 					}else{
 						arrayHaship1 := hashes[i+1].([32]byte)
@@ -449,7 +454,7 @@ func buildTransaction(parsedTx []any) []any {
 						hasher.Write(byteHaship1)
 					}					
 				}else{
-					if isType(hashes[i],"[]uint8")  {
+					if isType(hashes[i],"[]uint8")	{
 						hasher.Write(hashes[i].([]byte))
 					}else{
 						arrayHashi := hashes[i].([32]byte)
@@ -540,7 +545,7 @@ func hexlifyTransaction(item any, alignment int)string{
 			}
 		}else if size == 2 {
 			varint := make([]byte, 2)
-			if  isValueType(item,"int") {
+			if	isValueType(item,"int") {
 				binary.LittleEndian.PutUint16(varint,uint16(item.(map[string]any)["value"].(int)))
 			}else if isValueType(item,"float64") {
 				binary.LittleEndian.PutUint16(varint,uint16(item.(map[string]any)["value"].(float64)))
@@ -591,7 +596,7 @@ func getVerifiableData(builtTx []any)[]any{
 	if idx >= 0 {
 		typeLayer := builtTx[idx].(map[string]any)["value"]
 		if(contains([]int{16705, 16961}, int(typeLayer.(float64)))){
-			return  builtTx[5:11]
+			return	builtTx[5:11]
 		}else{
 			return builtTx[5:]
 		}
