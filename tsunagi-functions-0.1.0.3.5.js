@@ -1,12 +1,12 @@
 async function loadCatjson(tx,network){
 
 	let jsonFile;
+
 	if(tx.type === 'AGGREGATE_COMPLETE' || tx.type === 'AGGREGATE_BONDED'){
 		jsonFile =  'aggregate.json';
 	}else{
 		jsonFile =  tx.type.toLowerCase() + '.json';
 	}
-
 	let res = await fetch(network.catjasonBase + jsonFile);
 	let catjson = await res.json();
 	
@@ -16,6 +16,7 @@ async function loadCatjson(tx,network){
 function loadLayout(tx,catjson,isEmbedded){
 
 	let prefix;
+
 	if(isEmbedded){
 		prefix = "Embedded";
 	}else{
@@ -23,7 +24,6 @@ function loadLayout(tx,catjson,isEmbedded){
 	}
 
 	let layoutName;
-
 	if(      tx.type === "AGGREGATE_COMPLETE"){ layoutName = "AggregateCompleteTransactionV2";
 	}else if(tx.type === "AGGREGATE_BONDED"){   layoutName = "AggregateBondedTransactionV2";
 	}else{
@@ -31,6 +31,7 @@ function loadLayout(tx,catjson,isEmbedded){
 	}
 
 	let factory = catjson.find(item => item.factory_type === prefix + "Transaction" && item.name === layoutName);
+
 	return factory.layout;
 }
 
@@ -41,16 +42,11 @@ function toCamelCase(str) {
 	}).join('');
 }
 
-
-
-
 //事前準備
 async function prepareTransaction(tx,layout,network){
 
 	let preparedTx = Object.assign({}, tx);
 	preparedTx.network = network.network;
-//	preparedTx.version = network.version;
-
 
 	if(tx.type === "AGGREGATE_COMPLETE" || tx.type === "AGGREGATE_BONDED"){
 		preparedTx.version = 2;
@@ -97,8 +93,6 @@ async function prepareTransaction(tx,layout,network){
 				}else{
 					size = 0;
 				}
-
-
 			}else{
 				//その他のsize値はPayloadの長さを入れるため現時点では不明
 			}
@@ -117,8 +111,6 @@ async function prepareTransaction(tx,layout,network){
 		}
 		preparedTx.transactions = txes;
 	}
-	
-	console.log(preparedTx);
 	return preparedTx;
 }
 
@@ -144,8 +136,6 @@ async function parseTransaction(tx,layout,catjson,network){
 
 		if(layerDisposition === "const"){
 			continue;
-
-
 		}else if(layerType === "EmbeddedTransaction"){
 			
 			let txLayer = Object.assign({}, layer);
@@ -175,14 +165,12 @@ async function parseTransaction(tx,layout,catjson,network){
 
 		}else if(layerType === "UnresolvedAddress"){
 			//アドレスに30個の0が続く場合はネームスペースとみなします。
-//			if(tx[layer.name] !== undefined  && tx[layer.name].indexOf("000000000000000000000000000000")>=0){
 			if(layer.name in tx && tx[layer.name].indexOf("000000000000000000000000000000")>=0){
 				let prefix = (catjson.find(cf=>cf.name==="NetworkType").values.find(vf=>vf.name===tx.network).value + 1).toString(16);
 				tx[layer.name] =  prefix + tx[layer.name];
 			}
 		}else if(catitem.type === "enum"){
 			if(catitem.name.indexOf('Flags') != -1){
-
 				let value = 0;
 				for(let itemLayer of catitem.values){
 					if(tx[layer.name].indexOf(itemLayer.name) != -1){
@@ -219,7 +207,7 @@ async function parseTransaction(tx,layout,catjson,network){
 						txLayer.size = layer.element_disposition.size;
 						txLayer.value = tx[layer.name].substr(count * 2, 2);
 						txLayer.type = layerType;
-						items.push([txLayer]);
+						items.push(txLayer);
 					}
 					subLayout.layout = items;
 					parsedTx.push(subLayout);
@@ -240,12 +228,10 @@ async function parseTransaction(tx,layout,catjson,network){
 							txLayer.value =  prefix + txLayer.value;
 						}
 					}			
-					items.push([txLayer]);
+					items.push(txLayer);
 				}
 				subLayout.layout = items;
 				parsedTx.push(subLayout);
-
-
 			}// else{console.log("not yet");}
 		}else{ //reserved またはそれ以外(定義なし)
 
@@ -264,7 +250,6 @@ async function parseTransaction(tx,layout,catjson,network){
 				txLayer.value = tx[layer.name];
 			}else{
 				/* そのままtxLayerを追加 */
-				console.log(layer.name);
 			}
 			parsedTx.push(txLayer);
 		}
@@ -275,10 +260,8 @@ async function parseTransaction(tx,layout,catjson,network){
 		layerSize.value = countSize(parsedTx);
 	}
 
-	console.log(parsedTx);
 	return parsedTx;
 }
-
 
 function buildTransaction(parsedTx){
 
@@ -322,7 +305,6 @@ function buildTransaction(parsedTx){
 	return builtTx;
 }
 
-
 function getVerifiableData(builtTx){
 	let typeLayer = builtTx.find(bf=>bf.name==="type");
 	if([16705,16961].includes(typeLayer.value)){
@@ -331,7 +313,6 @@ function getVerifiableData(builtTx){
 		return builtTx.slice(5,builtTx.length);
 	}
 }
-
 
 function hashTransaction(signer,signature,builtTx,network){
 
@@ -347,13 +328,10 @@ function hashTransaction(signer,signature,builtTx,network){
 function updateTransaction(builtTx,name,type,value){
 
 	let updatedTx = Object.assign([], builtTx);
-
 	let layer = updatedTx.find(bf=>bf.name === name);
 	layer[type] = value;
-	console.log(layer);
 	return updatedTx;
 }
-
 
 function countSize(item,alignment){
 
@@ -384,10 +362,8 @@ function countSize(item,alignment){
 	}else{
 		if("size" in item){
 			totalSize += item.size;
-			console.log(item.name + ":" + item.size);
 		}else{console.error("no size:" + item.name);}
 	}
-	console.log(totalSize);
 	return totalSize;
 }
 
@@ -443,7 +419,6 @@ function hexlifyTransaction(item,alignment){
 			console.error("unknown size order");
 		}
 	}
-	console.log(hex);
 	return hex;
 }
 
@@ -462,7 +437,6 @@ function signTransaction(builtTx,priKey,network){
 		])
 	);
 	let signature = buffer.Buffer(sig).toString("hex");
-	console.log(signature);
 	return signature; 
 }
 
@@ -706,5 +680,3 @@ const generateMosaicAliasId = fullyQualifiedName => {
 	const path = generateNamespacePath(fullyQualifiedName);
 	return path[path.length - 1];
 };
-
-
