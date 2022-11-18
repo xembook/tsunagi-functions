@@ -382,7 +382,613 @@ describe('tsunagi-sdk.0.1',() => {
 
 		});	
 
-	})
+
+		it('buildTransaction', async () => {
+			
+			let tx1 = {
+				type:'TRANSFER',
+				signer_public_key:"5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
+				recipient_address:"989df3aea3852feafc5fdfc2266eb84ed8a7fa242688a8b8",
+				mosaics:[
+					{mosaic_id: 0x2A09B7F9097934C2n, amount: 1n},
+					{mosaic_id: 0x3A8416DB2D53B6C8n, amount: 100n},
+				],
+				message:"Hello Tsunagi(Catjson) SDK!",
+			}
+
+			let aggTx = {
+				type:'AGGREGATE_COMPLETE',
+				signer_public_key:"5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
+				fee:1000000n,
+				deadline:this.deadline,
+				transactions:[tx1],
+			}
+
+			let catjson = await loadCatjson(aggTx,this.network);
+			let layout = loadLayout(aggTx,catjson,false); //isEmbedded false
+
+			let preparedTx = await prepareTransaction(aggTx,layout,this.network); //TX事前準備
+			let parsedTx   = await parseTransaction(preparedTx,layout,catjson,this.network); //TX解析
+			let builtTx    = buildTransaction(parsedTx); //TX構築
+
+			expect(builtTx[11]["value"]).toEqual(144);
+			expect(builtTx[10]["value"]).toEqual("a5b60f432c88daaf89d3154c5f1e6f7be3090c1af95ba0f21c308ecf119b2222");
+
+			console.log(builtTx);
+
+		});	
+
+		it('buildTransaction2', async () => {
+			
+			//Alice->Bob
+			let tx1 = {
+				type:'TRANSFER',
+				signer_public_key:"5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
+				recipient_address:'989df3aea3852feafc5fdfc2266eb84ed8a7fa242688a8b8',
+				mosaics:[
+					{mosaic_id: 0x2A09B7F9097934C2n, amount: 1n},
+					{mosaic_id: 0x3A8416DB2D53B6C8n, amount: 100n},
+				],
+				message:"Hello Tsunagi(Catjson) SDK!",
+			}
+			//Bob->Caroll
+			let tx2 = {
+				type:'TRANSFER',
+				signer_public_key:"5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
+				recipient_address:'98f21158e0a83da8f125ca534bc2d75a233a2baac9cb1e82',
+				mosaics:[
+					{mosaic_id: 0x3A8416DB2D53B6C8n, amount: 100n},
+					{mosaic_id: 0x2A09B7F9097934C2n, amount: 1n},
+				],
+				message:"Hello Carol! This is Alice.",
+			}
+
+			let aggTx = {
+				type:'AGGREGATE_COMPLETE',
+				signer_public_key:"5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
+				fee:1000000n,
+				deadline:this.deadline,
+				transactions:[tx1,tx2],
+			}
+
+
+			let catjson = await loadCatjson(aggTx,this.network);
+			let layout = loadLayout(aggTx,catjson,false); //isEmbedded false
+
+			let preparedTx = await prepareTransaction(aggTx,layout,this.network); //TX事前準備
+			let parsedTx   = await parseTransaction(preparedTx,layout,catjson,this.network); //TX解析
+			let builtTx    = buildTransaction(parsedTx); //TX構築
+
+			expect(builtTx[11]["value"]).toEqual(288);
+			expect(builtTx[10]["value"]).toEqual("00de2f57a150d1073330b9d3273c651b675ed9ce2f200cac1d29717dffe6fe31");
+
+			console.log(builtTx);
+
+		});	
+
+		it('buildTransaction3', async () => {
+			
+			//Alice->Bob
+			let tx1 = {
+				type:'TRANSFER',
+				signer_public_key:"5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
+				recipient_address:'989df3aea3852feafc5fdfc2266eb84ed8a7fa242688a8b8',
+				mosaics:[
+					{mosaic_id: 0x2A09B7F9097934C2n, amount: 1n},
+					{mosaic_id: 0x3A8416DB2D53B6C8n, amount: 100n},
+				],
+				message:"Hello Tsunagi(Catjson) SDK!",
+			}
+			//Bob->Caroll
+			let tx2 = {
+				type:'TRANSFER',
+				signer_public_key:"6199BAE3B241DF60418E258D046C22C8C1A5DE2F4F325753554E7FD9C650AFEC",
+				recipient_address:'98f21158e0a83da8f125ca534bc2d75a233a2baac9cb1e82',
+				mosaics:[
+					{mosaic_id: 0x3A8416DB2D53B6C8n, amount: 100n},
+					{mosaic_id: 0x2A09B7F9097934C2n, amount: 1n},
+				],
+				message:"Hello Carol! This is Bob.",
+			}
+			//Caroll->Alice
+			let tx3 = {
+				type:'TRANSFER',
+				signer_public_key:"886ADFBD4213576D63EA7E7A4BECE61C6933C27CD2FF36F85155C8FEBFB6EB4E",
+				recipient_address:'9869762418c5b643eee70e6f20d4d555d5997087d7a686a9',
+				mosaics:[
+					{mosaic_id: 0x3A8416DB2D53B6C8n, amount: 100n},
+					{mosaic_id: 0x2A09B7F9097934C2n, amount: 1n},
+				],
+				message:"Hello Alice, This is Carol.",
+			}
+
+			let aggTx = {
+				type:'AGGREGATE_COMPLETE',
+				signer_public_key:"5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
+				fee:1000000n,
+				deadline:this.deadline,
+				transactions:[tx1,tx2,tx3],
+			}
+
+
+			let catjson = await loadCatjson(aggTx,this.network);
+			let layout = loadLayout(aggTx,catjson,false); //isEmbedded false
+
+			let preparedTx = await prepareTransaction(aggTx,layout,this.network); //TX事前準備
+			let parsedTx   = await parseTransaction(preparedTx,layout,catjson,this.network); //TX解析
+			let builtTx    = buildTransaction(parsedTx); //TX構築
+
+			expect(builtTx[11]["value"]).toEqual(432);
+			expect(builtTx[10]["value"]).toEqual("ae67220a53b24a241f2da951ba6cfe044aedc42a0afb5f2742c5a454e3c9c6e1");
+
+			console.log(builtTx);
+
+		});	
+
+		it('getVerifiableData', async () => {
+			
+			//Alice->Bob
+			let tx1 = {
+				type:'TRANSFER',
+				signer_public_key:"5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
+				recipient_address:'989df3aea3852feafc5fdfc2266eb84ed8a7fa242688a8b8',
+				mosaics:[
+					{mosaic_id: 0x2A09B7F9097934C2n, amount: 1n},
+					{mosaic_id: 0x3A8416DB2D53B6C8n, amount: 100n},
+				],
+				message:"Hello Tsunagi(Catjson) SDK!",
+			}
+			//Bob->Caroll
+			let tx2 = {
+				type:'TRANSFER',
+				signer_public_key:"6199BAE3B241DF60418E258D046C22C8C1A5DE2F4F325753554E7FD9C650AFEC",
+				recipient_address:'98f21158e0a83da8f125ca534bc2d75a233a2baac9cb1e82',
+				mosaics:[
+					{mosaic_id: 0x3A8416DB2D53B6C8n, amount: 100n},
+					{mosaic_id: 0x2A09B7F9097934C2n, amount: 1n},
+				],
+				message:"Hello Carol! This is Bob.",
+			}
+			//Caroll->Alice
+			let tx3 = {
+				type:'TRANSFER',
+				signer_public_key:"886ADFBD4213576D63EA7E7A4BECE61C6933C27CD2FF36F85155C8FEBFB6EB4E",
+				recipient_address:'9869762418c5b643eee70e6f20d4d555d5997087d7a686a9',
+				mosaics:[
+					{mosaic_id: 0x3A8416DB2D53B6C8n, amount: 100n},
+					{mosaic_id: 0x2A09B7F9097934C2n, amount: 1n},
+				],
+				message:"Hello Alice, This is Carol.",
+			}
+
+			let aggTx = {
+				type:'AGGREGATE_COMPLETE',
+				signer_public_key:"5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
+				fee:1000000n,
+				deadline:this.deadline,
+				transactions:[tx1,tx2,tx3],
+			}
+
+
+			let catjson = await loadCatjson(aggTx,this.network);
+			let layout = loadLayout(aggTx,catjson,false); //isEmbedded false
+
+			let preparedTx = await prepareTransaction(aggTx,layout,this.network); //TX事前準備
+			let parsedTx   = await parseTransaction(preparedTx,layout,catjson,this.network); //TX解析
+			let builtTx    = buildTransaction(parsedTx); //TX構築
+			let verifiableData = getVerifiableData(builtTx);
+
+			expect(verifiableData[0]["name"]).toEqual("version");
+			expect(verifiableData[5]["value"]).toEqual("ae67220a53b24a241f2da951ba6cfe044aedc42a0afb5f2742c5a454e3c9c6e1");
+
+
+		});	
+
+
+
+		it('getVerifiableData2', async () => {
+			
+			let tx1 = {
+				type:'TRANSFER',
+				signer_public_key:"5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
+				fee:1000000n,
+				deadline:this.deadline,
+				recipient_address:"989df3aea3852feafc5fdfc2266eb84ed8a7fa242688a8b8",
+				mosaics:[
+					{mosaic_id: 0x2A09B7F9097934C2n, amount: 1n},
+					{mosaic_id: 0x3A8416DB2D53B6C8n, amount: 100n},
+				],
+				message:"Hello Tsunagi(Catjson) SDK!",
+			}
+
+
+			let catjson = await loadCatjson(tx1,this.network);
+			let layout = loadLayout(tx1,catjson,false); //isEmbedded false
+
+			let preparedTx = await prepareTransaction(tx1,layout,this.network); //TX事前準備
+			let parsedTx   = await parseTransaction(preparedTx,layout,catjson,this.network); //TX解析
+			let builtTx    = buildTransaction(parsedTx); //TX構築
+			let verifiableData = getVerifiableData(builtTx);
+
+			expect(verifiableData[0]["name"]).toEqual("version");
+			expect(verifiableData[11]["name"]).toEqual("message");
+
+		});	
+
+		it('signTransaction', async () => {
+			
+			let tx1 = {
+				type:'TRANSFER',
+				signer_public_key:"5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
+				fee:1000000n,
+				deadline:this.deadline,
+				recipient_address:"989df3aea3852feafc5fdfc2266eb84ed8a7fa242688a8b8",
+				mosaics:[
+					{mosaic_id: 0x2A09B7F9097934C2n, amount: 1n},
+					{mosaic_id: 0x3A8416DB2D53B6C8n, amount: 100n},
+				],
+				message:"Hello Tsunagi(Catjson) SDK!",
+			}
+
+
+			let catjson = await loadCatjson(tx1,this.network);
+			let layout = loadLayout(tx1,catjson,false); //isEmbedded false
+
+			let preparedTx = await prepareTransaction(tx1,layout,this.network); //TX事前準備
+			let parsedTx   = await parseTransaction(preparedTx,layout,catjson,this.network); //TX解析
+			let builtTx    = buildTransaction(parsedTx); //TX構築
+
+			let signature = signTransaction(builtTx,this.privateKey,this.network);
+
+			expect(signature).toEqual("478839283a58f4167d6f308e472c0a8e5ba410e8ac20b252af2102bfd955efc56d0250b80e07e83fecaff4d63be2f607823da0aadaa1ed13e96a75be8770780e");
+
+		});	
+
+		it('signTransaction2', async () => {
+			
+			//Alice->Bob
+			let tx1 = {
+				type:'TRANSFER',
+				signer_public_key:"5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
+				recipient_address:'989df3aea3852feafc5fdfc2266eb84ed8a7fa242688a8b8',
+				mosaics:[
+					{mosaic_id: 0x2A09B7F9097934C2n, amount: 1n},
+					{mosaic_id: 0x3A8416DB2D53B6C8n, amount: 100n},
+				],
+				message:"Hello Tsunagi(Catjson) SDK!",
+			}
+
+			let aggTx = {
+				type:'AGGREGATE_COMPLETE',
+				signer_public_key:"5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
+				fee:1000000n,
+				deadline:this.deadline,
+				transactions:[tx1],
+			}
+
+
+			let catjson = await loadCatjson(aggTx,this.network);
+			let layout = loadLayout(aggTx,catjson,false); //isEmbedded false
+
+			let preparedTx = await prepareTransaction(aggTx,layout,this.network); //TX事前準備
+			let parsedTx   = await parseTransaction(preparedTx,layout,catjson,this.network); //TX解析
+			let builtTx    = buildTransaction(parsedTx); //TX構築
+			let signature = signTransaction(builtTx,this.privateKey,this.network);
+
+			expect(signature).toEqual("48b5dad7211f0ff1aee442484bac4def33fe600b37a52a39966e61ed93e54ddcb3517a60471ba4fb37660e5abf164c1ac364bdc485da5cad00cd1b7282145b08");
+		});	
+
+		it('hexlifyTransaction', async () => {
+			
+			let tx1 = {
+				type:'TRANSFER',
+				signer_public_key:"5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
+				recipient_address:"989df3aea3852feafc5fdfc2266eb84ed8a7fa242688a8b8",
+				mosaics:[
+					{mosaic_id: 0x2A09B7F9097934C2n, amount: 1n},
+					{mosaic_id: 0x3A8416DB2D53B6C8n, amount: 100n},
+				],
+				message:"Hello Tsunagi(Catjson) SDK!",
+			}
+
+			let aggTx = {
+				type:'AGGREGATE_COMPLETE',
+				signer_public_key:"5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
+				fee:1000000n,
+				deadline:this.deadline,
+				transactions:[tx1],
+			}
+
+			let catjson = await loadCatjson(aggTx,this.network);
+			let layout = loadLayout(aggTx,catjson,false); //isEmbedded false
+
+			let preparedTx = await prepareTransaction(aggTx,layout,this.network); //TX事前準備
+			let parsedTx   = await parseTransaction(preparedTx,layout,catjson,this.network); //TX解析
+			let builtTx    = buildTransaction(parsedTx); //TX構築
+
+			expect(hexlifyTransaction(getVerifiableData(builtTx))).toEqual("0198414140420f000000000000dd6d0000000000a5b60f432c88daaf89d3154c5f1e6f7be3090c1af95ba0f21c308ecf119b2222");
+		});	
+
+		it('hexlifyTransaction2', async () => {
+			
+			//Alice->Bob
+			let tx1 = {
+				type:'TRANSFER',
+				signer_public_key:"5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
+				recipient_address:'989df3aea3852feafc5fdfc2266eb84ed8a7fa242688a8b8',
+				mosaics:[
+					{mosaic_id: 0x2A09B7F9097934C2n, amount: 1n},
+					{mosaic_id: 0x3A8416DB2D53B6C8n, amount: 100n},
+				],
+				message:"Hello Tsunagi(Catjson) SDK!",
+			}
+			//Bob->Caroll
+			let tx2 = {
+				type:'TRANSFER',
+				signer_public_key:"5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
+				recipient_address:'98f21158e0a83da8f125ca534bc2d75a233a2baac9cb1e82',
+				mosaics:[
+					{mosaic_id: 0x3A8416DB2D53B6C8n, amount: 100n},
+					{mosaic_id: 0x2A09B7F9097934C2n, amount: 1n},
+				],
+				message:"Hello Carol! This is Alice.",
+			}
+
+			let aggTx = {
+				type:'AGGREGATE_COMPLETE',
+				signer_public_key:"5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
+				fee:1000000n,
+				deadline:this.deadline,
+				transactions:[tx1,tx2],
+			}
+
+
+			let catjson = await loadCatjson(aggTx,this.network);
+			let layout = loadLayout(aggTx,catjson,false); //isEmbedded false
+
+			let preparedTx = await prepareTransaction(aggTx,layout,this.network); //TX事前準備
+			let parsedTx   = await parseTransaction(preparedTx,layout,catjson,this.network); //TX解析
+			let builtTx    = buildTransaction(parsedTx); //TX構築
+
+			expect(hexlifyTransaction(getVerifiableData(builtTx))).toEqual("0198414140420f000000000000dd6d000000000000de2f57a150d1073330b9d3273c651b675ed9ce2f200cac1d29717dffe6fe31");
+		});	
+
+
+		it('countSize', async () => {
+			
+			let tx1 = {
+				type:'TRANSFER',
+				signer_public_key:"5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
+				recipient_address:"989df3aea3852feafc5fdfc2266eb84ed8a7fa242688a8b8",
+				mosaics:[
+					{mosaic_id: 0x2A09B7F9097934C2n, amount: 1n},
+					{mosaic_id: 0x3A8416DB2D53B6C8n, amount: 100n},
+				],
+				message:"Hello Tsunagi(Catjson) SDK!",
+			}
+
+			let aggTx = {
+				type:'AGGREGATE_COMPLETE',
+				signer_public_key:"5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
+				fee:1000000n,
+				deadline:this.deadline,
+				transactions:[tx1],
+			}
+
+			let catjson = await loadCatjson(aggTx,this.network);
+			let layout = loadLayout(aggTx,catjson,false); //isEmbedded false
+
+			let preparedTx = await prepareTransaction(aggTx,layout,this.network); //TX事前準備
+			let parsedTx   = await parseTransaction(preparedTx,layout,catjson,this.network); //TX解析
+
+			expect(countSize(parsedTx)).toEqual(312);
+		});	
+
+		it('countSize2', async () => {
+			
+			//Alice->Bob
+			let tx1 = {
+				type:'TRANSFER',
+				signer_public_key:"5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
+				recipient_address:'989df3aea3852feafc5fdfc2266eb84ed8a7fa242688a8b8',
+				mosaics:[
+					{mosaic_id: 0x2A09B7F9097934C2n, amount: 1n},
+					{mosaic_id: 0x3A8416DB2D53B6C8n, amount: 100n},
+				],
+				message:"Hello Tsunagi(Catjson) SDK!",
+			}
+			//Bob->Caroll
+			let tx2 = {
+				type:'TRANSFER',
+				signer_public_key:"5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
+				recipient_address:'98f21158e0a83da8f125ca534bc2d75a233a2baac9cb1e82',
+				mosaics:[
+					{mosaic_id: 0x3A8416DB2D53B6C8n, amount: 100n},
+					{mosaic_id: 0x2A09B7F9097934C2n, amount: 1n},
+				],
+				message:"Hello Carol! This is Alice.",
+			}
+
+			let aggTx = {
+				type:'AGGREGATE_COMPLETE',
+				signer_public_key:"5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
+				fee:1000000n,
+				deadline:this.deadline,
+				transactions:[tx1,tx2],
+			}
+
+
+			let catjson = await loadCatjson(aggTx,this.network);
+			let layout = loadLayout(aggTx,catjson,false); //isEmbedded false
+
+			let preparedTx = await prepareTransaction(aggTx,layout,this.network); //TX事前準備
+			let parsedTx   = await parseTransaction(preparedTx,layout,catjson,this.network); //TX解析
+			let builtTx    = buildTransaction(parsedTx); //TX構築
+
+			expect(countSize(builtTx.find(lf=>lf.name === "transactions"))).toEqual(288);
+		});	
+
+		it('updateTransaction', async () => {
+			
+
+			//Alice->Bob
+			let tx1 = {
+				type:'TRANSFER',
+				signer_public_key:"5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
+				recipient_address:generateAddressId("TCO7HLVDQUX6V7C737BCM3VYJ3MKP6REE2EKROA"),
+				mosaics:[
+					{mosaic_id: 0x2A09B7F9097934C2n, amount: 1n},
+					{mosaic_id: 0x3A8416DB2D53B6C8n, amount: 100n},
+				],
+				message:"Hello Tsunagi(Catjson) SDK!",
+			}
+			//Bob->Caroll
+			let tx2 = {
+				type:'TRANSFER',
+				signer_public_key:"6199BAE3B241DF60418E258D046C22C8C1A5DE2F4F325753554E7FD9C650AFEC",
+				recipient_address:generateAddressId("TDZBCWHAVA62R4JFZJJUXQWXLIRTUK5KZHFR5AQ"),
+				mosaics:[
+					{mosaic_id: 0x3A8416DB2D53B6C8n, amount: 100n},
+					{mosaic_id: 0x2A09B7F9097934C2n, amount: 1n},
+				],
+				message:"Hello Carol! This is Bob.",
+			}
+			//Caroll->Alice
+			let tx3 = {
+				type:'TRANSFER',
+				signer_public_key:"886ADFBD4213576D63EA7E7A4BECE61C6933C27CD2FF36F85155C8FEBFB6EB4E",
+				recipient_address:generateAddressId("TBUXMJAYYW3EH3XHBZXSBVGVKXKZS4EH26TINKI"),
+				mosaics:[
+					{mosaic_id: 0x3A8416DB2D53B6C8n, amount: 100n},
+					{mosaic_id: 0x2A09B7F9097934C2n, amount: 1n},
+				],
+				message:"Hello Alice, This is Carol.",
+			}
+
+			let cosignature1 = {
+				version:0n,
+				signer_public_key:"6199BAE3B241DF60418E258D046C22C8C1A5DE2F4F325753554E7FD9C650AFEC",
+				signature:"",
+			}
+
+			let cosignature2 = {
+				version:0n,
+				signer_public_key:"886ADFBD4213576D63EA7E7A4BECE61C6933C27CD2FF36F85155C8FEBFB6EB4E",
+				signature:"",
+			}
+
+			let aggTx = {
+				type:'AGGREGATE_COMPLETE',
+				signer_public_key:"5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
+				fee:1000000n,
+				deadline:this.deadline,
+				transactions:[tx1,tx2,tx3],
+				cosignatures:[cosignature1,cosignature2]
+			}
+
+			let catjson = await loadCatjson(aggTx,this.network);
+			let layout = loadLayout(aggTx,catjson,false); //isEmbedded false
+
+			let preparedTx = await prepareTransaction(aggTx,layout,this.network); //TX事前準備
+			let parsedTx   = await parseTransaction(preparedTx,layout,catjson,this.network); //TX解析
+			let builtTx    = buildTransaction(parsedTx); //TX構築
+
+			let signature = signTransaction(builtTx,this.privateKey,this.network);
+			builtTx = updateTransaction(builtTx,"signature","value",signature);
+
+			expect(builtTx[2]["value"]).toEqual("6f2651ea4046cbb9eca41fd2e38c4868915cae2ba4d77d00fc91eb5b3d0be60e243bb13248bb26b766ceecfc5f3452f6e25612160d476000694cfe39d867e60c");
+		});	
+
+		it('cosignTransaction', async () => {
+			
+
+			//Alice->Bob
+			let tx1 = {
+				type:'TRANSFER',
+				signer_public_key:"5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
+				recipient_address:generateAddressId("TCO7HLVDQUX6V7C737BCM3VYJ3MKP6REE2EKROA"),
+				mosaics:[
+					{mosaic_id: 0x2A09B7F9097934C2n, amount: 1n},
+					{mosaic_id: 0x3A8416DB2D53B6C8n, amount: 100n},
+				],
+				message:"Hello Tsunagi(Catjson) SDK!",
+			}
+			//Bob->Caroll
+			let tx2 = {
+				type:'TRANSFER',
+				signer_public_key:"6199BAE3B241DF60418E258D046C22C8C1A5DE2F4F325753554E7FD9C650AFEC",
+				recipient_address:generateAddressId("TDZBCWHAVA62R4JFZJJUXQWXLIRTUK5KZHFR5AQ"),
+				mosaics:[
+					{mosaic_id: 0x3A8416DB2D53B6C8n, amount: 100n},
+					{mosaic_id: 0x2A09B7F9097934C2n, amount: 1n},
+				],
+				message:"Hello Carol! This is Bob.",
+			}
+			//Caroll->Alice
+			let tx3 = {
+				type:'TRANSFER',
+				signer_public_key:"886ADFBD4213576D63EA7E7A4BECE61C6933C27CD2FF36F85155C8FEBFB6EB4E",
+				recipient_address:generateAddressId("TBUXMJAYYW3EH3XHBZXSBVGVKXKZS4EH26TINKI"),
+				mosaics:[
+					{mosaic_id: 0x3A8416DB2D53B6C8n, amount: 100n},
+					{mosaic_id: 0x2A09B7F9097934C2n, amount: 1n},
+				],
+				message:"Hello Alice, This is Carol.",
+			}
+
+			let cosignature1 = {
+				version:0n,
+				signer_public_key:"6199BAE3B241DF60418E258D046C22C8C1A5DE2F4F325753554E7FD9C650AFEC",
+				signature:"",
+			}
+
+			let cosignature2 = {
+				version:0n,
+				signer_public_key:"886ADFBD4213576D63EA7E7A4BECE61C6933C27CD2FF36F85155C8FEBFB6EB4E",
+				signature:"",
+			}
+
+			let aggTx = {
+				type:'AGGREGATE_COMPLETE',
+				signer_public_key:"5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
+				fee:1000000n,
+				deadline:this.deadline,
+				transactions:[tx1,tx2,tx3],
+				cosignatures:[cosignature1,cosignature2]
+			}
+
+			let catjson = await loadCatjson(aggTx,this.network);
+			let layout = loadLayout(aggTx,catjson,false); //isEmbedded false
+
+			let preparedTx = await prepareTransaction(aggTx,layout,this.network); //TX事前準備
+			let parsedTx   = await parseTransaction(preparedTx,layout,catjson,this.network); //TX解析
+			let builtTx    = buildTransaction(parsedTx); //TX構築
+
+			let signature = signTransaction(builtTx,this.privateKey,this.network);
+			builtTx = updateTransaction(builtTx,"signature","value",signature);
+
+			//トランザクションハッシュ作成
+			let txHash = hashTransaction(aggTx.signer_public_key,signature,builtTx,this.network);
+
+
+			expect(cosignTransaction(txHash,this.bobPrivateKey)).toEqual("e4b39b5be018de8141b3b0df3ceb358a197ff70b8be8da99fc9246dd979e6285e3547d01744df5a306150e51f49846bab0b2aecabb4d13ef1f3d49c08478a708");
+		});	
+
+		it('convert', async () => {
+			expect(generateNamespaceId("xembook")).toEqual(11832106220717372293n);
+			expect(convertAddressAliasId(generateNamespaceId("xembook"))).toEqual("85738c26eb1534a4000000000000000000000000000000");
+			expect(generateAddressId("TBUXMJAYYW3EH3XHBZXSBVGVKXKZS4EH26TINKI")).toEqual("9869762418c5b643eee70e6f20d4d555d5997087d7a686a9");
+			expect(generateNamespaceId("tomato",generateNamespaceId("xembook"))).toEqual(18038182949802959921n);
+
+			let nonce = 1700836761;
+			expect(generateMosaicId(generateAddressId("TBUXMJAYYW3EH3XHBZXSBVGVKXKZS4EH26TINKI"),nonce)).toEqual(5597969824159229558n);
+
+
+
+
+		
+		});	
+	});
 
 	describe('transfer transaction', () => {
 
