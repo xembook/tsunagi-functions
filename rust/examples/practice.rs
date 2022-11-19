@@ -1,17 +1,28 @@
-use url::{Url, ParseError};
-use reqwest;
-use json::{self, JsonValue};
-
+use tsunagi_sdk::*;
+use json::JsonValue;
 
 fn main() {
-	let url = Url::parse(&("https://xembook.github.io/tsunagi-sdk/catjson/0.2.0.3/".to_string() + "aggregate.json")).unwrap();
-    println!("{}", url.to_string());
+    let mut network = JsonValue::new_object();
+    network["catjasonBase"] = "https://xembook.github.io/tsunagi-sdk/catjson/".into();
 
-    let resp = reqwest::blocking::get(url).unwrap();
-    let resp_txt = resp.text().unwrap();
-    //println!("{:?}", resp_txt);
+    // case 1
+    let mut tx = JsonValue::new_object();
+    tx["type"] = "TRANSFER".into();
 
-    let parsed = json::parse(&resp_txt).unwrap();
+    let catjson = load_catjson(&tx, &network);
+    let layout = load_layout(&tx, &catjson, false);
+    assert_eq!(layout[1]["value"], "TRANSFER");
+    assert_eq!(layout[3]["name"], "verifiable_entity_header_reserved_1");
 
-    //println!("{:?}", parsed[0]["comments"].to_string());
+    let elayout = load_layout(&tx, &catjson, true);
+    assert_eq!(elayout[1]["value"], "TRANSFER");
+    assert_eq!(elayout[3]["name"], "embedded_transaction_header_reserved_1");
+
+    // case 2
+    let mut tx = JsonValue::new_object();
+    tx["type"] = "AGGREGATE_COMPLETE".into();
+    let catjson = load_catjson(&tx, &network);
+    let layout = load_layout(&tx, &catjson, false);
+    assert_eq!(layout[1]["value"], "AGGREGATE_COMPLETE");
+    assert_eq!(layout[3]["name"], "verifiable_entity_header_reserved_1");
 }
