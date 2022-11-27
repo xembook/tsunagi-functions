@@ -366,7 +366,7 @@ pub fn build_transaction(parsed_tx: &json::Array) -> json::Array {
                 Some(layer_transactions) => {
                     let tx_layout = must_json_array_as_ref(&layer_transactions["layout"]);
                     for e_tx in tx_layout {
-                        let hexed_string = hex::decode(hexlify_transaction(e_tx, 0)).unwrap();
+                        let hexed_string = hex::decode(hexlify_transaction(e_tx, 0)).unwrap(); 
                         let mut hasher = Sha3_256::new();
                         hasher.update(hexed_string);
                         hashes.push(hasher.finalize());
@@ -471,7 +471,6 @@ pub fn hexlify_transaction(item: &JsonValue, alignment: usize) -> String{
             }
         }
     }
-    //println!("{}", payload);
     payload
 }
 
@@ -482,4 +481,15 @@ pub fn get_verifiable_data(built_tx: &json::Array) -> json::Array {
     } else {
         built_tx[5..].to_vec()
     }
+}
+
+pub fn hash_transaction(signer: String, signature: String, built_tx: &json::Array, network: &JsonValue) -> String {
+    let mut hasher = Sha3_256::new();
+    hasher.update(hex::decode(signature).unwrap());
+    hasher.update(hex::decode(signer).unwrap());
+    hasher.update(hex::decode(network["generationHash"].to_string()).unwrap());
+    hasher.update(hex::decode(hexlify_transaction(&get_verifiable_data(&built_tx).into(), 0)).unwrap());
+
+    let tx_hash = hasher.finalize().to_hex(); // 正常に動作するか要確認
+    tx_hash
 }
