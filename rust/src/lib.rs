@@ -3,6 +3,8 @@ use url::Url;
 use reqwest;
 use json::{self, JsonValue};
 use rustc_serialize::hex::ToHex;
+use std::str::FromStr;
+use sha3::{Digest, Sha3_256};
 
 /// catjson(catapult json)をURLにあるjson形式テキストデータからloadする。
 /// URLはtx["type"]とnetwork["catjasonBase"]により、一意に定まる。
@@ -31,13 +33,6 @@ pub fn load_catjson(tx: &JsonValue, network: &JsonValue) -> json::Array {
 fn must_json_array_as_ref(json_value: &JsonValue) -> &json::Array {
     match json_value {
         JsonValue::Array(ref json_array) => json_array,
-        _ => panic!("error: このcaseにmatchすることは想定していない。")
-    }
-}
-
-fn must_json_array_as_ref_mut(json_value: &mut JsonValue) -> &mut json::Array {
-    match json_value {
-        JsonValue::Array(ref mut json_array) => json_array,
         _ => panic!("error: このcaseにmatchすることは想定していない。")
     }
 }
@@ -315,15 +310,15 @@ pub fn parse_transaction(tx: &JsonValue, layout: &json::Array, catjson: &json::A
     parsed_tx
 }
 
-fn count_size(item: &JsonValue, aligment: u64) -> u64{
+pub fn count_size(item: &JsonValue, alignment: u64) -> u64{
     let mut total_size = 0;
     match item {
         JsonValue::Array(json_array) => {
             let mut layout_size: u64 = json_array.iter() 
-                                                 .map(|layout| count_size(layout, aligment))
+                                                 .map(|layout| count_size(layout, alignment))
                                                  .sum();
-            if aligment > 0 {
-                layout_size = ((layout_size + aligment - 1) / aligment) * aligment;
+            if alignment > 0 {
+                layout_size = ((layout_size + alignment - 1) / alignment) * alignment;
             }
             total_size += layout_size;
         }
@@ -346,4 +341,145 @@ fn count_size(item: &JsonValue, aligment: u64) -> u64{
     total_size
 }
 
+pub fn build_transaction(parsed_tx: &json::Array) -> json::Array {
+    let mut built_tx = parsed_tx.clone();
 
+    let mut some_layer_payload_size = built_tx.iter_mut().find(|lf| lf["name"] == "payload_size");
+    let some_layer_transactions = parsed_tx.iter().find(|&lf| lf["name"] == "transactions");
+    match some_layer_payload_size {
+        Some(ref mut layer_payload_size) => {
+            match some_layer_transactions {
+                Some(layer_transactions) => {
+                    layer_payload_size["value"] = count_size(&layer_transactions, 0).into();
+                }
+                None => ()
+            }
+        }
+        None => ()
+    }
+
+    let mut some_leyer_transaction_hash = built_tx.iter_mut().find(|lf| lf["name"] == "transactions_hash");
+    match some_leyer_transaction_hash {
+        Some(ref mut layer_transaction_hash) => {
+            let mut hashes = Vec::new();
+            match some_layer_transactions {
+                Some(layer_transactions) => {
+                    let tx_layout = must_json_array_as_ref(&layer_transactions["layout"]);
+                    for e_tx in tx_layout {
+                        let hexed_string = hex::decode(hexlify_transaction(e_tx, 0)).unwrap();
+                        let mut hasher = Sha3_256::new();
+                        hasher.update(hexed_string);
+                        hashes.push(hasher.finalize());
+                    }
+                }
+                None => ()
+            }
+
+            let mut num_remaining_hashes = hashes.len();
+            while num_remaining_hashes > 1 {
+                let mut i = 0;
+                while i < num_remaining_hashes {
+                    let mut hasher = Sha3_256::new();
+                    hasher.update(hashes[i]);
+
+                    if i + 1 < num_remaining_hashes {
+                        hasher.update(hashes[i + 1]);
+                    } else {
+                        hasher.update(hashes[i]);
+                        num_remaining_hashes += 1;
+                    }
+                    hashes[i/2] = hasher.finalize();
+                    i += 2;
+                }
+                num_remaining_hashes = num_remaining_hashes / 2;
+            }
+            layer_transaction_hash["value"] = hashes[0].to_hex().into();
+        }
+        None => ()
+    }
+    println!("{:?}", built_tx.len());
+
+    built_tx
+}
+
+pub fn hexlify_transaction(item: &JsonValue, alignment: usize) -> String{
+    let mut payload = String::new();
+    match item {
+        JsonValue::Array(item) => {
+            let mut sub_layout_hex = "".to_string();
+            for layout in item {
+                sub_layout_hex += &hexlify_transaction(layout, alignment);
+            }
+            if alignment > 0 {
+                let aligned_size = ((sub_layout_hex.len() + (alignment * 2) - 2)/(alignment * 2)) * alignment * 2; // 浮動小数を削った、テスト時に注意
+                sub_layout_hex += &"0".repeat(aligned_size - sub_layout_hex.len());
+            }
+            payload += &sub_layout_hex;
+        }
+        _ => {
+            if item.has_key("layout") {
+                for layer in must_json_array_as_ref(&item["layout"]) {
+                    let item_alignment = if item.has_key("alignment") {
+                        item["alignment"].as_usize().unwrap() // 浮動小数を削った、テスト時に注意
+                    } else {
+                        0
+                    };
+                    payload += &hexlify_transaction(layer, item_alignment);
+                }
+            } else {
+                let size = item["size"].as_usize().unwrap();
+                let item_value = if item.has_key("value") {
+                    item["value"].clone()
+                } else {
+                    if size >= 24 {
+                        "00".repeat(size).into()
+                    } else {
+                        0.into()
+                    }
+                };
+
+                if size == 1 {
+                    if item["name"] == "element_disposition" {
+                        payload = item_value.to_string();
+                    } else {
+                        let hex_string = format!("{:02x}", u64::from_str(&item_value.to_string()).unwrap());
+                        payload = hex_string;
+                    }
+                } else if size == 2 || size == 4 || size == 8 {
+                    let mut buf = "".to_string();
+                    // 文字列(decimal)を数値(uint64)に変換
+                    let mut item_value_num = u64::from_str(&item_value.to_string()).unwrap();
+                    // 256進数と見なし、数値(uint64)を文字列(hex)に変換する
+                    while item_value_num / 256 >= 1 {
+                        let b = item_value_num % 256;
+                        buf += &format!("{:02x}", b);
+                        item_value_num /= 256;
+                    }
+                    let b = item_value_num % 256;
+                    buf += &format!("{:02x}", b);
+
+                    // 足りない分は"00"で埋める
+                    let len = buf.len() / 2;
+                    assert!(len <= size);
+                    let d = size - len;
+                    payload = buf + &"00".repeat(d);
+                } else if size == 24 || size == 32 || size == 64 {
+                    payload = item_value.to_string();
+                } else {
+                    println!("Unkown size");
+                }
+            }
+        }
+    }
+    //println!("{}", payload);
+    payload
+}
+
+pub fn get_verifiable_data(built_tx: &json::Array) -> json::Array {
+    let type_layer = built_tx.iter().find(|&bf| bf["name"] == "type").unwrap();
+    if ["16705".to_string(), "16961".to_string()].contains(&type_layer["value"].to_string()){
+        built_tx[5..11].to_vec()
+    } else {
+        built_tx[5..].to_vec()
+    }
+}
