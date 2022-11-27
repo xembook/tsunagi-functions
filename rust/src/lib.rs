@@ -3,6 +3,8 @@ use url::Url;
 use reqwest;
 use json::{self, JsonValue};
 use rustc_serialize::hex::ToHex;
+use std::str::FromStr;
+use sha3::{Digest, Sha3_256};
 
 /// catjson(catapult json)をURLにあるjson形式テキストデータからloadする。
 /// URLはtx["type"]とnetwork["catjasonBase"]により、一意に定まる。
@@ -31,13 +33,6 @@ pub fn load_catjson(tx: &JsonValue, network: &JsonValue) -> json::Array {
 fn must_json_array_as_ref(json_value: &JsonValue) -> &json::Array {
     match json_value {
         JsonValue::Array(ref json_array) => json_array,
-        _ => panic!("error: このcaseにmatchすることは想定していない。")
-    }
-}
-
-fn must_json_array_as_ref_mut(json_value: &mut JsonValue) -> &mut json::Array {
-    match json_value {
-        JsonValue::Array(ref mut json_array) => json_array,
         _ => panic!("error: このcaseにmatchすることは想定していない。")
     }
 }
@@ -150,7 +145,7 @@ pub fn prepare_transaction(tx: &JsonValue, layout: &json::Array, network: &JsonV
     prepared_tx
 }
 
-fn parse_transaction(tx: &JsonValue, layout: &json::Array, catjson: &json::Array, network: &JsonValue) -> json::Array 
+pub fn parse_transaction(tx: &JsonValue, layout: &json::Array, catjson: &json::Array, network: &JsonValue) -> json::Array 
 {
     let mut parsed_tx = Vec::new();
     
@@ -315,15 +310,15 @@ fn parse_transaction(tx: &JsonValue, layout: &json::Array, catjson: &json::Array
     parsed_tx
 }
 
-fn count_size(item: &JsonValue, aligment: u64) -> u64{
+pub fn count_size(item: &JsonValue, alignment: u64) -> u64{
     let mut total_size = 0;
     match item {
         JsonValue::Array(json_array) => {
             let mut layout_size: u64 = json_array.iter() 
-                                                 .map(|layout| count_size(layout, aligment))
+                                                 .map(|layout| count_size(layout, alignment))
                                                  .sum();
-            if aligment > 0 {
-                layout_size = ((layout_size + aligment - 1) / aligment) * aligment;
+            if alignment > 0 {
+                layout_size = ((layout_size + alignment - 1) / alignment) * alignment;
             }
             total_size += layout_size;
         }
@@ -346,315 +341,145 @@ fn count_size(item: &JsonValue, aligment: u64) -> u64{
     total_size
 }
 
+pub fn build_transaction(parsed_tx: &json::Array) -> json::Array {
+    let mut built_tx = parsed_tx.clone();
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use json::object;
-
-    #[test]
-    fn test_load_catjson_1() {
-        let network = get_network_info();
-    
-        // case 1
-        let tx = object!{"type": "TRANSFER"};
-        let catjson = load_catjson(&tx, &network);
-        assert_eq!(catjson.iter().find(|&cj| cj["name"] == "TransferTransaction").unwrap()["layout"][1]["value"], "TRANSFER");
-    }
-    #[test]
-    fn test_load_catjson_2() {
-        let network = get_network_info();
-
-        // case 2
-        let tx = object!{"type": "AGGREGATE_COMPLETE"};
-        let catjson = load_catjson(&tx, &network);
-        assert_eq!(catjson.iter().find(|&cj| cj["name"] == "AggregateCompleteTransaction").unwrap()["layout"][1]["value"], "AGGREGATE_COMPLETE");
+    let mut some_layer_payload_size = built_tx.iter_mut().find(|lf| lf["name"] == "payload_size");
+    let some_layer_transactions = parsed_tx.iter().find(|&lf| lf["name"] == "transactions");
+    match some_layer_payload_size {
+        Some(ref mut layer_payload_size) => {
+            match some_layer_transactions {
+                Some(layer_transactions) => {
+                    layer_payload_size["value"] = count_size(&layer_transactions, 0).into();
+                }
+                None => ()
+            }
+        }
+        None => ()
     }
 
-    #[test]
-    fn test_load_layout_1() {
-        let network = get_network_info();
-        let tx = object!{"type": "TRANSFER"};
-        let catjson = load_catjson(&tx, &network);
-        let layout = load_layout(&tx, &catjson, false);
-        assert_eq!(layout[1]["value"], "TRANSFER");
-        assert_eq!(layout[3]["name"], "verifiable_entity_header_reserved_1");
-        let elayout = load_layout(&tx, &catjson, true);
-        assert_eq!(elayout[1]["value"], "TRANSFER");
-        assert_eq!(elayout[3]["name"], "embedded_transaction_header_reserved_1");
+    let mut some_leyer_transaction_hash = built_tx.iter_mut().find(|lf| lf["name"] == "transactions_hash");
+    match some_leyer_transaction_hash {
+        Some(ref mut layer_transaction_hash) => {
+            let mut hashes = Vec::new();
+            match some_layer_transactions {
+                Some(layer_transactions) => {
+                    let tx_layout = must_json_array_as_ref(&layer_transactions["layout"]);
+                    for e_tx in tx_layout {
+                        let hexed_string = hex::decode(hexlify_transaction(e_tx, 0)).unwrap();
+                        let mut hasher = Sha3_256::new();
+                        hasher.update(hexed_string);
+                        hashes.push(hasher.finalize());
+                    }
+                }
+                None => ()
+            }
 
+            let mut num_remaining_hashes = hashes.len();
+            while num_remaining_hashes > 1 {
+                let mut i = 0;
+                while i < num_remaining_hashes {
+                    let mut hasher = Sha3_256::new();
+                    hasher.update(hashes[i]);
+
+                    if i + 1 < num_remaining_hashes {
+                        hasher.update(hashes[i + 1]);
+                    } else {
+                        hasher.update(hashes[i]);
+                        num_remaining_hashes += 1;
+                    }
+                    hashes[i/2] = hasher.finalize();
+                    i += 2;
+                }
+                num_remaining_hashes = num_remaining_hashes / 2;
+            }
+            layer_transaction_hash["value"] = hashes[0].to_hex().into();
+        }
+        None => ()
     }
-    #[test]
-    fn test_load_layout_2() {
-        let network = get_network_info();
-        let tx = object!{"type": "AGGREGATE_COMPLETE"};
-        let catjson = load_catjson(&tx, &network);
-        let layout = load_layout(&tx, &catjson, false);
-        assert_eq!(layout[1]["value"], "AGGREGATE_COMPLETE");
-        assert_eq!(layout[3]["name"], "verifiable_entity_header_reserved_1");
+    println!("{:?}", built_tx.len());
+
+    built_tx
+}
+
+pub fn hexlify_transaction(item: &JsonValue, alignment: usize) -> String{
+    let mut payload = String::new();
+    match item {
+        JsonValue::Array(item) => {
+            let mut sub_layout_hex = "".to_string();
+            for layout in item {
+                sub_layout_hex += &hexlify_transaction(layout, alignment);
+            }
+            if alignment > 0 {
+                let aligned_size = ((sub_layout_hex.len() + (alignment * 2) - 2)/(alignment * 2)) * alignment * 2; // 浮動小数を削った、テスト時に注意
+                sub_layout_hex += &"0".repeat(aligned_size - sub_layout_hex.len());
+            }
+            payload += &sub_layout_hex;
+        }
+        _ => {
+            if item.has_key("layout") {
+                for layer in must_json_array_as_ref(&item["layout"]) {
+                    let item_alignment = if item.has_key("alignment") {
+                        item["alignment"].as_usize().unwrap() // 浮動小数を削った、テスト時に注意
+                    } else {
+                        0
+                    };
+                    payload += &hexlify_transaction(layer, item_alignment);
+                }
+            } else {
+                let size = item["size"].as_usize().unwrap();
+                let item_value = if item.has_key("value") {
+                    item["value"].clone()
+                } else {
+                    if size >= 24 {
+                        "00".repeat(size).into()
+                    } else {
+                        0.into()
+                    }
+                };
+
+                if size == 1 {
+                    if item["name"] == "element_disposition" {
+                        payload = item_value.to_string();
+                    } else {
+                        let hex_string = format!("{:02x}", u64::from_str(&item_value.to_string()).unwrap());
+                        payload = hex_string;
+                    }
+                } else if size == 2 || size == 4 || size == 8 {
+                    let mut buf = "".to_string();
+                    // 文字列(decimal)を数値(uint64)に変換
+                    let mut item_value_num = u64::from_str(&item_value.to_string()).unwrap();
+                    // 256進数と見なし、数値(uint64)を文字列(hex)に変換する
+                    while item_value_num / 256 >= 1 {
+                        let b = item_value_num % 256;
+                        buf += &format!("{:02x}", b);
+                        item_value_num /= 256;
+                    }
+                    let b = item_value_num % 256;
+                    buf += &format!("{:02x}", b);
+
+                    // 足りない分は"00"で埋める
+                    let len = buf.len() / 2;
+                    assert!(len <= size);
+                    let d = size - len;
+                    payload = buf + &"00".repeat(d);
+                } else if size == 24 || size == 32 || size == 64 {
+                    payload = item_value.to_string();
+                } else {
+                    println!("Unkown size");
+                }
+            }
+        }
     }
+    //println!("{}", payload);
+    payload
+}
 
-    #[test]
-    fn test_prepare_transaction_1() {
-        let network = get_network_info();
-        let tx = object! {
-            type:"TRANSFER",
-            name:"xembook",
-            value:"value",
-            mosaics:[
-                {mosaic_id: 0x3A8416DB2D53B6C8u64, amount: 100u64},
-                {mosaic_id: 0x2A09B7F9097934C2u64, amount: 1u64},
-            ],
-            message:"Hello Tsunagi(Catjson) SDK!",
-        };
-        let catjson = load_catjson(&tx, &network);
-        let layout = load_layout(&tx, &catjson, false);
-        let prepared_tx = prepare_transaction(&tx, &layout, &network);
-        assert_eq!(prepared_tx["name"], "78656d626f6f6b");
-        assert_eq!(prepared_tx["value"], "76616c7565");
-        assert_eq!(prepared_tx["mosaics"][0]["mosaic_id"], 3029154504617047234u64);
-        assert_eq!(prepared_tx["message"], "0048656c6c6f205473756e616769284361746a736f6e292053444b21");
-        assert_eq!(prepared_tx["message_size"], 28);
-        assert_eq!(prepared_tx["mosaics_count"], 2);
-    }
-    #[test]
-
-    fn test_prepare_transaction_2() {
-        let network = get_network_info();
-        let tx = object! {
-            type:"TRANSFER",
-            name:"xembook",
-            value:"value",
-            mosaics:[
-                {mosaic_id: 0x3A8416DB2D53B6C8u64, amount: 100u64},
-                {mosaic_id: 0x2A09B7F9097934C2u64, amount: 1u64},
-            ],
-            message:"Hello Tsunagi(Catjson) SDK!",
-        };
-        let agg_tx = object! {
-            type: "AGGREGATE_COMPLETE",
-			transactions: [tx],
-        };
-        let catjson = load_catjson(&agg_tx, &network);
-        let layout = load_layout(&agg_tx, &catjson, false);
-        let prepared_tx = prepare_transaction(&agg_tx, &layout, &network);
-        assert_eq!(prepared_tx["payload_size"], 0);
-        assert_eq!(prepared_tx["transactions"][0]["name"], "78656d626f6f6b");
-        assert_eq!(prepared_tx["transactions"][0]["value"], "76616c7565");
-        assert_eq!(prepared_tx["transactions"][0]["mosaics"][0]["mosaic_id"], 3029154504617047234u64);
-        assert_eq!(prepared_tx["transactions"][0]["message"], "0048656c6c6f205473756e616769284361746a736f6e292053444b21");
-        assert_eq!(prepared_tx["transactions"][0]["message_size"], 28);
-        assert_eq!(prepared_tx["transactions"][0]["mosaics_count"], 2);
-    }
-
-    #[test]
-    fn test_parse_transaction_1() {
-        let network = get_network_info();
-
-        // case 1
-        let tx = object! {
-            type:"TRANSFER",
-                signer_public_key:"5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
-                fee:1000000u64,
-                deadline: get_deadline(&network),
-                recipient_address:"989df3aea3852feafc5fdfc2266eb84ed8a7fa242688a8b8",
-                mosaics:[
-                    {mosaic_id: 0x2A09B7F9097934C2u64, amount: 1u64},
-                    {mosaic_id: 0x3A8416DB2D53B6C8u64, amount: 100u64},
-                ],
-                message:"Hello Tsunagi(Catjson) SDK!",
-        };
-        let catjson = load_catjson(&tx, &network);
-        let layout = load_layout(&tx, &catjson, false);
-        let prepared_tx = prepare_transaction(&tx, &layout, &network);
-        let parsed_tx = parse_transaction(&prepared_tx, &layout, &catjson, &network);
-        
-        assert_eq!(parsed_tx[0]["value"], 220); // no
-        assert_eq!(parsed_tx[1]["value"], 0); // ok 
-        assert_eq!(parsed_tx[6]["value"], 152); // ok
-        assert_eq!(parsed_tx[10]["value"], "989df3aea3852feafc5fdfc2266eb84ed8a7fa242688a8b8"); //ok
-        assert_eq!(parsed_tx[15]["layout"].len(), 2);
-        assert_eq!(parsed_tx[15]["layout"][0][0]["value"], 3029154504617047234u64);
-        assert_eq!(parsed_tx[15]["layout"][0][1]["value"], 1u64);
-        assert_eq!(parsed_tx[16]["layout"].len(), 28);
-        assert_eq!(parsed_tx[16]["layout"][0]["value"], "00");
-        assert_eq!(parsed_tx[16]["layout"][1]["value"], "48"); //todo parseのtestを全て作成
-    }
-    #[test]
-    fn test_parse_transaction_2() {
-        let network = get_network_info();
-        let deadline = get_deadline(&network);
-        let tx = object! {
-            type:"TRANSFER",
-				signer_public_key:"5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
-				recipient_address:"989df3aea3852feafc5fdfc2266eb84ed8a7fa242688a8b8",
-				mosaics:[
-					{mosaic_id: 0x2A09B7F9097934C2u64, amount: 1u64},
-					{mosaic_id: 0x3A8416DB2D53B6C8u64, amount: 100u64},
-				],
-				message:"Hello Tsunagi(Catjson) SDK!",
-        };
-
-        let agg_tx = object!{
-            type:"AGGREGATE_COMPLETE",
-            signer_public_key:"5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
-            fee:1000000u64,
-            deadline:deadline,
-            transactions:[tx],
-        };
-
-        let catjson = load_catjson(&agg_tx, &network);
-        let layout = load_layout(&agg_tx, &catjson, false);
-        let prepared_tx = prepare_transaction(&agg_tx, &layout, &network);
-        let parsed_tx = parse_transaction(&prepared_tx, &layout, &catjson, &network);
-
-        assert_eq!(parsed_tx[8]["value"], 1000000u64);
-        assert_eq!(parsed_tx[9]["value"], 7200000u64);
-        assert_eq!(parsed_tx[13]["layout"][0][0]["value"], 140);
-        assert_eq!(parsed_tx[13]["layout"][0][1]["value"], 0);
-        assert_eq!(parsed_tx[13]["layout"][0][5]["value"], 152);
-        assert_eq!(parsed_tx[13]["layout"][0][7]["value"], "989df3aea3852feafc5fdfc2266eb84ed8a7fa242688a8b8");
-        assert_eq!(parsed_tx[13]["layout"][0][9]["value"], 2);
-        assert_eq!(parsed_tx[13]["layout"][0][12]["layout"][0][0]["value"], 3029154504617047234u64);
-        assert_eq!(parsed_tx[13]["layout"][0][12]["layout"][0][1]["value"], 1u64);
-        assert_eq!(parsed_tx[13]["layout"][0][13]["layout"].len(), 28);
-        assert_eq!(parsed_tx[13]["layout"][0][13]["layout"][0]["value"], "00");
-        assert_eq!(parsed_tx[13]["layout"][0][13]["layout"][1]["value"], "48");
-    }
-    #[test]
-    fn test_parse_transaction_3() {
-        let network = get_network_info();
-        let tx = object! {
-            type:"TRANSFER",
-            recipient_address:"85738c26eb1534a4000000000000000000000000000000",
-            mosaics:[
-                {mosaic_id: 18038182949802959921u64, amount: 1u64},
-                {mosaic_id: 16666583871264174062u64, amount: 100u64},
-            ],
-        };
-
-        let catjson = load_catjson(&tx, &network);
-        let layout = load_layout(&tx, &catjson, false);
-        let prepared_tx = prepare_transaction(&tx, &layout, &network);
-        let parsed_tx = parse_transaction(&prepared_tx, &layout, &catjson, &network);
-
-        assert_eq!(parsed_tx[10]["value"], "9985738c26eb1534a4000000000000000000000000000000");
-		assert_eq!(parsed_tx[15]["layout"][0][0]["value"], 16666583871264174062u64);
-
-        let cosignature = object! {
-            version:0u64,
-            signer_public_key:"6199BAE3B241DF60418E258D046C22C8C1A5DE2F4F325753554E7FD9C650AFEC",
-            signature:"",
-        };
-        let agg_tx = object! {
-            type:"AGGREGATE_COMPLETE",
-            signer_public_key:"5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
-            transactions:[tx],
-            cosignatures:[cosignature]
-        };
-
-        let catjson = load_catjson(&agg_tx, &network);
-        let layout = load_layout(&agg_tx, &catjson, false);
-        let prepared_tx = prepare_transaction(&agg_tx, &layout, &network);
-        let parsed_tx = parse_transaction(&prepared_tx, &layout, &catjson, &network);
-
-        assert_eq!(parsed_tx[13]["layout"][0][7]["value"], "9985738c26eb1534a4000000000000000000000000000000");
-        assert_eq!(parsed_tx[13]["layout"][0][12]["layout"][0][0]["value"], 16666583871264174062u64);
-        assert_eq!(parsed_tx[14]["layout"][0][1]["value"], "6199BAE3B241DF60418E258D046C22C8C1A5DE2F4F325753554E7FD9C650AFEC");
-    }
-    #[test]
-    fn test_parse_transaction_4() {
-        let network = get_network_info();
-        let tx = object! {
-            type:"MULTISIG_ACCOUNT_MODIFICATION",
-            address_additions:[
-                "989df3aea3852feafc5fdfc2266eb84ed8a7fa242688a8b8",
-                "9869762418c5b643eee70e6f20d4d555d5997087d7a686a9"
-            ],
-        };
-        
-        let catjson = load_catjson(&tx, &network);
-        let layout = load_layout(&tx, &catjson, false);
-        let prepared_tx = prepare_transaction(&tx, &layout, &network);
-        let parsed_tx = parse_transaction(&prepared_tx, &layout, &catjson, &network);
-
-        assert_eq!(parsed_tx[12]["value"], 2);
-        assert_eq!(parsed_tx[15]["layout"][0]["value"], "989df3aea3852feafc5fdfc2266eb84ed8a7fa242688a8b8");
-        
-
-        let agg_tx = object! {
-            type:"AGGREGATE_COMPLETE",
-            transactions:[tx],
-        };
-
-        let catjson = load_catjson(&agg_tx, &network);
-        let layout = load_layout(&agg_tx, &catjson, false);
-        let prepared_tx = prepare_transaction(&agg_tx, &layout, &network);
-        let parsed_tx = parse_transaction(&prepared_tx, &layout, &catjson, &network);
-        
-        assert_eq!(parsed_tx[13]["layout"][0][9]["value"], 2);
-        assert_eq!(parsed_tx[13]["layout"][0][12]["layout"][0]["value"], "989df3aea3852feafc5fdfc2266eb84ed8a7fa242688a8b8");
-    }
-
-
-    #[test]
-    fn test_parse_transaction_5() {
-        let network = get_network_info();
-        let tx = object! {
-            type:"ACCOUNT_ADDRESS_RESTRICTION",
-            restriction_flags:"ADDRESS BLOCK OUTGOING",
-            restriction_additions:["989df3aea3852feafc5fdfc2266eb84ed8a7fa242688a8b8","98f21158e0a83da8f125ca534bc2d75a233a2baac9cb1e82"],
-            restriction_deletions:[]
-        };
-                    
-        let catjson = load_catjson(&tx, &network);
-        let layout = load_layout(&tx, &catjson, false);
-        let prepared_tx = prepare_transaction(&tx, &layout, &network);
-        let parsed_tx = parse_transaction(&prepared_tx, &layout, &catjson, &network);
-
-
-        assert_eq!(parsed_tx[10]["value"], 49153);
-        assert_eq!(parsed_tx[14]["layout"][0]["value"], "989df3aea3852feafc5fdfc2266eb84ed8a7fa242688a8b8");
-        
-
-        let agg_tx = object! {
-            type:"AGGREGATE_COMPLETE",
-            transactions:[tx],
-        };
-
-        let catjson = load_catjson(&agg_tx, &network);
-        let layout = load_layout(&agg_tx, &catjson, false);
-        let prepared_tx = prepare_transaction(&agg_tx, &layout, &network);
-        let parsed_tx = parse_transaction(&prepared_tx, &layout, &catjson, &network);
-        
-    
-        assert_eq!(parsed_tx[13]["layout"][0][7]["value"], 49153);
-        assert_eq!(parsed_tx[13]["layout"][0][8]["value"], 2);
-        assert_eq!(parsed_tx[13]["layout"][0][11]["layout"][0]["value"], "989df3aea3852feafc5fdfc2266eb84ed8a7fa242688a8b8");
-    }
-
-    fn get_network_info() -> JsonValue {
-        let network = object!{
-			version:1,
-			network:"TESTNET",
-			generationHash:"7fccd304802016bebbcd342a332f91ff1f3bb5e902988b352697be245f48e836",
-			currencyMosaicId:0x3A8416DB2D53B6C8u64,
-			currencyNamespaceId:0xE74B99BA41F4AFEEu64,
-			currencyDivisibility:6,
-			epochAdjustment:1637848847,
-			catjasonBase:"https://xembook.github.io/tsunagi-sdk/catjson/",
-			wellknownNodes:[
-				"https://sym-test.opening-line.jp:3001",
-				"https://sym-test.opening-line.jp:3001",
-				"https://sym-test.opening-line.jp:3001",
-			]
-		};
-        network
-    }
-
-    fn get_deadline(network: &JsonValue) -> u64 {
-        let now = network["epochAdjustment"].as_u64().unwrap();
-        let deadline = ((now + 7200) - network["epochAdjustment"].as_u64().unwrap()) * 1000;
-        deadline
+pub fn get_verifiable_data(built_tx: &json::Array) -> json::Array {
+    let type_layer = built_tx.iter().find(|&bf| bf["name"] == "type").unwrap();
+    if ["16705".to_string(), "16961".to_string()].contains(&type_layer["value"].to_string()){
+        built_tx[5..11].to_vec()
+    } else {
+        built_tx[5..].to_vec()
     }
 }
