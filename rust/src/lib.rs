@@ -493,3 +493,9 @@ pub fn hash_transaction(signer: String, signature: String, built_tx: &json::Arra
     let tx_hash = hasher.finalize().to_hex(); // 正常に動作するか要確認
     tx_hash
 }
+
+pub fn updtae_transaction(built_tx: &json::Array, name: String, type_string: String, value: &JsonValue) -> json::Array {
+    let mut update_tx = built_tx.clone();
+    update_tx.iter_mut().find(|x| x["name"] == name).unwrap()[type_string] = value.clone();
+    update_tx
+}
