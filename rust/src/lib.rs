@@ -5,6 +5,7 @@ use json::{self, JsonValue};
 use rustc_serialize::hex::ToHex;
 use std::str::FromStr;
 use sha3::{Digest, Sha3_256};
+use ed25519_dalek::*;
 
 /// catjson(catapult json)をURLにあるjson形式テキストデータからloadする。
 /// URLはtx["type"]とnetwork["catjasonBase"]により、一意に定まる。
@@ -366,9 +367,9 @@ pub fn build_transaction(parsed_tx: &json::Array) -> json::Array {
                 Some(layer_transactions) => {
                     let tx_layout = must_json_array_as_ref(&layer_transactions["layout"]);
                     for e_tx in tx_layout {
-                        let hexed_string = hex::decode(hexlify_transaction(e_tx, 0)).unwrap(); 
+                        let hexed_vec = hex::decode(hexlify_transaction(e_tx, 0)).unwrap(); 
                         let mut hasher = Sha3_256::new();
-                        hasher.update(hexed_string);
+                        hasher.update(hexed_vec);
                         hashes.push(hasher.finalize());
                     }
                 }
@@ -498,4 +499,25 @@ pub fn updtae_transaction(built_tx: &json::Array, name: String, type_string: Str
     let mut update_tx = built_tx.clone();
     update_tx.iter_mut().find(|x| x["name"] == name).unwrap()[type_string] = value.clone();
     update_tx
+}
+
+pub fn sign_transaction(built_tx: &json::Array, my_secret_key: String, network: &JsonValue) -> String {
+    let tmp_sec_seed = hex::decode(my_secret_key).unwrap();
+    let tmp_key_pair = Keypair::from_bytes(&tmp_sec_seed).unwrap();
+    let verifiable_data = get_verifiable_data(built_tx);
+    let payload = network["generationHash"].to_string() + &hexlify_transaction(&verifiable_data.into(), 0);
+
+    let verifiable_buffer = hex::decode(payload).unwrap();
+    let signature = tmp_key_pair.sign(&verifiable_buffer);
+
+    signature.to_string()
+}
+
+pub fn cosign_transaction(tx_hash: String, my_secret_key: String) -> String {
+    let tmp_sec_seed = hex::decode(my_secret_key).unwrap();
+    let tmp_key_pair = Keypair::from_bytes(&tmp_sec_seed).unwrap();
+    let tx_hash_bytes = hex::decode(tx_hash).unwrap();
+    let signature = tmp_key_pair.sign(&tx_hash_bytes);
+
+    signature.to_string()
 }
