@@ -1,5 +1,6 @@
 #[cfg(test)]
 mod unit_test {
+
     use tsunagi_sdk::*;
     use json::{self, object, JsonValue};
     #[test]
@@ -653,6 +654,220 @@ mod unit_test {
         assert_eq!(count_size(&built_tx.iter().find(|&lf| lf["name"] == "transactions").unwrap(), 0), 288);
     }
 
+    #[test]
+    fn test_sign_transaction_1() {
+        let network = get_network_info();
+        let tx1 = object!{
+            type:"TRANSFER",
+            signer_public_key:"5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
+            fee:1000000u64,
+            deadline:get_deadline(&network),
+            recipient_address:"989df3aea3852feafc5fdfc2266eb84ed8a7fa242688a8b8",
+            mosaics:[
+                {mosaic_id: 0x2A09B7F9097934C2u64, amount: 1u64},
+                {mosaic_id: 0x3A8416DB2D53B6C8u64, amount: 100u64},
+            ],
+            message:"Hello Tsunagi(Catjson) SDK!",
+        };
+
+        let catjson = load_catjson(&tx1, &network);
+        let layout = load_layout(&tx1, &catjson, false);
+        let prepared_tx = prepare_transaction(&tx1, &layout, &network);
+        let parsed_tx = parse_transaction(&prepared_tx, &layout, &catjson, &network);
+        let built_tx    = build_transaction(&parsed_tx); //TX構築
+
+        let private_key = "94ee0f4d7fe388ac4b04a6a6ae2ba969617879b83616e4d25710d688a89d80c7";
+        let signature = sign_transaction(&built_tx, private_key, &network);
+        assert_eq!(signature, "478839283a58f4167d6f308e472c0a8e5ba410e8ac20b252af2102bfd955efc56d0250b80e07e83fecaff4d63be2f607823da0aadaa1ed13e96a75be8770780e");
+
+    }
+
+    #[test]
+    fn test_sign_transaction_2() {
+        let network = get_network_info();
+        let tx1 = object!{
+            type:"TRANSFER",
+            signer_public_key:"5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
+            recipient_address:"989df3aea3852feafc5fdfc2266eb84ed8a7fa242688a8b8",
+            mosaics:[
+                {mosaic_id: 0x2A09B7F9097934C2u64, amount: 1u64},
+                {mosaic_id: 0x3A8416DB2D53B6C8u64, amount: 100u64},
+            ],
+            message:"Hello Tsunagi(Catjson) SDK!",
+        };
+
+        let agg_tx = object!{
+            type:"AGGREGATE_COMPLETE",
+            signer_public_key:"5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
+            fee:1000000u64,
+            deadline:get_deadline(&network),
+            transactions:[tx1],
+        };
+
+        let catjson = load_catjson(&agg_tx, &network);
+        let layout = load_layout(&agg_tx, &catjson, false);
+        let prepared_tx = prepare_transaction(&agg_tx, &layout, &network);
+        let parsed_tx = parse_transaction(&prepared_tx, &layout, &catjson, &network);
+        let built_tx    = build_transaction(&parsed_tx); //TX構築
+
+        let private_key = "94ee0f4d7fe388ac4b04a6a6ae2ba969617879b83616e4d25710d688a89d80c7";
+        let signature = sign_transaction(&built_tx, private_key, &network);
+        assert_eq!(signature, "48b5dad7211f0ff1aee442484bac4def33fe600b37a52a39966e61ed93e54ddcb3517a60471ba4fb37660e5abf164c1ac364bdc485da5cad00cd1b7282145b08");
+
+    }
+
+    #[test]
+    fn test_cosign_transaction() {
+        let network = get_network_info();
+        //Alice->Bob
+        let tx1 = object!{
+            type:"TRANSFER",
+            signer_public_key:"5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
+            recipient_address:generate_address_id("TCO7HLVDQUX6V7C737BCM3VYJ3MKP6REE2EKROA"),
+            mosaics:[
+                {mosaic_id: 0x2A09B7F9097934C2u64, amount: 1u64},
+                {mosaic_id: 0x3A8416DB2D53B6C8u64, amount: 100u64},
+            ],
+            message:"Hello Tsunagi(Catjson) SDK!",
+        };
+        //Bob->Caroll
+        let tx2 = object!{
+            type:"TRANSFER",
+            signer_public_key:"6199BAE3B241DF60418E258D046C22C8C1A5DE2F4F325753554E7FD9C650AFEC",
+            recipient_address:generate_address_id("TDZBCWHAVA62R4JFZJJUXQWXLIRTUK5KZHFR5AQ"),
+            mosaics:[
+                {mosaic_id: 0x3A8416DB2D53B6C8u64, amount: 100u64},
+                {mosaic_id: 0x2A09B7F9097934C2u64, amount: 1u64},
+            ],
+            message:"Hello Carol! This is Bob.",
+        };
+        //Caroll->Alice
+        let tx3 = object!{
+            type:"TRANSFER",
+            signer_public_key:"886ADFBD4213576D63EA7E7A4BECE61C6933C27CD2FF36F85155C8FEBFB6EB4E",
+            recipient_address:generate_address_id("TBUXMJAYYW3EH3XHBZXSBVGVKXKZS4EH26TINKI"),
+            mosaics:[
+                {mosaic_id: 0x3A8416DB2D53B6C8u64, amount: 100u64},
+                {mosaic_id: 0x2A09B7F9097934C2u64, amount: 1u64},
+            ],
+            message:"Hello Alice, This is Carol.",
+        };
+
+        let cosignature1 = object!{
+            version:0u64,
+            signer_public_key:"6199BAE3B241DF60418E258D046C22C8C1A5DE2F4F325753554E7FD9C650AFEC",
+            signature:"",
+        };
+
+        let cosignature2 = object!{
+            version:0u64,
+            signer_public_key:"886ADFBD4213576D63EA7E7A4BECE61C6933C27CD2FF36F85155C8FEBFB6EB4E",
+            signature:"",
+        };
+
+        let agg_tx = object!{
+            type:"AGGREGATE_COMPLETE",
+            signer_public_key:"5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
+            fee:1000000u64,
+            deadline:get_deadline(&network),
+            transactions:[tx1,tx2,tx3],
+            cosignatures:[cosignature1,cosignature2]
+        };
+
+        let catjson = load_catjson(&agg_tx, &network);
+        let layout = load_layout(&agg_tx, &catjson, false);
+        let prepared_tx = prepare_transaction(&agg_tx, &layout, &network);
+        let parsed_tx = parse_transaction(&prepared_tx, &layout, &catjson, &network);
+        let built_tx    = build_transaction(&parsed_tx); //TX構築
+
+        let private_key = "94ee0f4d7fe388ac4b04a6a6ae2ba969617879b83616e4d25710d688a89d80c7";
+        let signature = sign_transaction(&built_tx, private_key, &network);
+        let updated_built_tx = updtae_transaction(&built_tx, "signature", "value", &signature);
+
+        let tx_hash = hash_transaction(agg_tx["signer_public_key"].to_string(), signature, &updated_built_tx, &network);
+        let bob_private_key = "fa6373f4f497773c5cc55c103e348b139461d61fd4b45387e69d08a68000e06b";
+
+		assert_eq!(cosign_transaction(tx_hash, bob_private_key), "e4b39b5be018de8141b3b0df3ceb358a197ff70b8be8da99fc9246dd979e6285e3547d01744df5a306150e51f49846bab0b2aecabb4d13ef1f3d49c08478a708");
+
+    }
+
+    #[test]
+    fn test_update_transaction() {
+        let network = get_network_info();
+        //Alice->Bob
+        let tx1 = object!{
+            type:"TRANSFER",
+            signer_public_key:"5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
+            recipient_address:generate_address_id("TCO7HLVDQUX6V7C737BCM3VYJ3MKP6REE2EKROA"),
+            mosaics:[
+                {mosaic_id: 0x2A09B7F9097934C2u64, amount: 1u64},
+                {mosaic_id: 0x3A8416DB2D53B6C8u64, amount: 100u64},
+            ],
+            message:"Hello Tsunagi(Catjson) SDK!",
+        };
+        //Bob->Caroll
+        let tx2 = object!{
+            type:"TRANSFER",
+            signer_public_key:"6199BAE3B241DF60418E258D046C22C8C1A5DE2F4F325753554E7FD9C650AFEC",
+            recipient_address:generate_address_id("TDZBCWHAVA62R4JFZJJUXQWXLIRTUK5KZHFR5AQ"),
+            mosaics:[
+                {mosaic_id: 0x3A8416DB2D53B6C8u64, amount: 100u64},
+                {mosaic_id: 0x2A09B7F9097934C2u64, amount: 1u64},
+            ],
+            message:"Hello Carol! This is Bob.",
+        };
+        //Caroll->Alice
+        let tx3 = object!{
+            type:"TRANSFER",
+            signer_public_key:"886ADFBD4213576D63EA7E7A4BECE61C6933C27CD2FF36F85155C8FEBFB6EB4E",
+            recipient_address:generate_address_id("TBUXMJAYYW3EH3XHBZXSBVGVKXKZS4EH26TINKI"),
+            mosaics:[
+                {mosaic_id: 0x3A8416DB2D53B6C8u64, amount: 100u64},
+                {mosaic_id: 0x2A09B7F9097934C2u64, amount: 1u64},
+            ],
+            message:"Hello Alice, This is Carol.",
+        };
+
+        let cosignature1 = object!{
+            version:0u64,
+            signer_public_key:"6199BAE3B241DF60418E258D046C22C8C1A5DE2F4F325753554E7FD9C650AFEC",
+            signature:"",
+        };
+
+        let cosignature2 = object!{
+            version:0u64,
+            signer_public_key:"886ADFBD4213576D63EA7E7A4BECE61C6933C27CD2FF36F85155C8FEBFB6EB4E",
+            signature:"",
+        };
+
+        let agg_tx = object!{
+            type:"AGGREGATE_COMPLETE",
+            signer_public_key:"5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
+            fee:1000000u64,
+            deadline:get_deadline(&network),
+            transactions:[tx1,tx2,tx3],
+            cosignatures:[cosignature1,cosignature2]
+        };
+
+        let catjson = load_catjson(&agg_tx, &network);
+        let layout = load_layout(&agg_tx, &catjson, false);
+        let prepared_tx = prepare_transaction(&agg_tx, &layout, &network);
+        let parsed_tx = parse_transaction(&prepared_tx, &layout, &catjson, &network);
+        let built_tx    = build_transaction(&parsed_tx); //TX構築
+
+        let private_key = "94ee0f4d7fe388ac4b04a6a6ae2ba969617879b83616e4d25710d688a89d80c7";
+        let signature = sign_transaction(&built_tx, private_key, &network);
+        let updated_built_tx = updtae_transaction(&built_tx, "signature", "value", &signature);
+
+        assert_eq!(updated_built_tx[2]["value"], "6f2651ea4046cbb9eca41fd2e38c4868915cae2ba4d77d00fc91eb5b3d0be60e243bb13248bb26b766ceecfc5f3452f6e25612160d476000694cfe39d867e60c");
+
+    }
+    
+
+    // this.privateKey = "94ee0f4d7fe388ac4b04a6a6ae2ba969617879b83616e4d25710d688a89d80c7";
+    // this.bobPrivateKey = "fa6373f4f497773c5cc55c103e348b139461d61fd4b45387e69d08a68000e06b";
+    // this.carolPrivateKey = "1e090b2a266877a9f88a510af2eb0945a63dc69dbce674ccd83272717d4175cf";
+
     fn get_network_info() -> JsonValue {
         let network = object!{
 			version:1,
@@ -678,3 +893,10 @@ mod unit_test {
         deadline
     }
 }
+
+// #[cfg(test)]
+// mod _test {
+//     use tsunagi_sdk::*;
+//     use json::{self, object, JsonValue};
+
+// }
