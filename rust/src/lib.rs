@@ -398,8 +398,6 @@ pub fn build_transaction(parsed_tx: &json::Array) -> json::Array {
         }
         None => ()
     }
-    println!("{:?}", built_tx.len());
-
     built_tx
 }
 
@@ -495,29 +493,44 @@ pub fn hash_transaction(signer: String, signature: String, built_tx: &json::Arra
     tx_hash
 }
 
-pub fn updtae_transaction(built_tx: &json::Array, name: String, type_string: String, value: &JsonValue) -> json::Array {
+pub fn updtae_transaction(built_tx: &json::Array, name: &str, type_string: &str, value: &str) -> json::Array {
     let mut update_tx = built_tx.clone();
-    update_tx.iter_mut().find(|x| x["name"] == name).unwrap()[type_string] = value.clone();
+    update_tx.iter_mut().find(|x| x["name"] == name).unwrap()[type_string] = value.into();
     update_tx
 }
 
-pub fn sign_transaction(built_tx: &json::Array, my_secret_key: String, network: &JsonValue) -> String {
+pub fn sign_transaction(built_tx: &json::Array, my_secret_key: &str, network: &JsonValue) -> String {
     let tmp_sec_seed = hex::decode(my_secret_key).unwrap();
-    let tmp_key_pair = Keypair::from_bytes(&tmp_sec_seed).unwrap();
+    let tmp_secret_key = SecretKey::from_bytes(&tmp_sec_seed).unwrap();
+    let tmp_public_key = (&tmp_secret_key).into();
+    let tmp_key_pair = Keypair{ secret: tmp_secret_key, public: tmp_public_key};
     let verifiable_data = get_verifiable_data(built_tx);
     let payload = network["generationHash"].to_string() + &hexlify_transaction(&verifiable_data.into(), 0);
 
     let verifiable_buffer = hex::decode(payload).unwrap();
     let signature = tmp_key_pair.sign(&verifiable_buffer);
 
-    signature.to_string()
+    signature.to_string().to_lowercase()
 }
 
-pub fn cosign_transaction(tx_hash: String, my_secret_key: String) -> String {
+pub fn cosign_transaction(tx_hash: String, my_secret_key: &str) -> String {
     let tmp_sec_seed = hex::decode(my_secret_key).unwrap();
-    let tmp_key_pair = Keypair::from_bytes(&tmp_sec_seed).unwrap();
+    let tmp_secret_key = SecretKey::from_bytes(&tmp_sec_seed).unwrap();
+    let tmp_public_key = (&tmp_secret_key).into();
+    let tmp_key_pair = Keypair{ secret: tmp_secret_key, public: tmp_public_key};
     let tx_hash_bytes = hex::decode(tx_hash).unwrap();
     let signature = tmp_key_pair.sign(&tx_hash_bytes);
 
-    signature.to_string()
+    signature.to_string().to_lowercase()
 }
+
+pub fn generate_address_id(address: &str) -> String {
+    let recipient_address = hex::encode(base32::decode(base32::Alphabet::RFC4648{padding:true}, address).unwrap());
+    recipient_address
+}
+
+// pub fn generate_namespace_id() {
+//     let namespace_flag = 1u64 << 63;
+//     let hasher = Sha3_256::new();
+
+// }
