@@ -31,9 +31,16 @@ pub fn load_catjson(tx: &JsonValue, network: &JsonValue) -> json::Array {
 /// 列挙型JsonValue内のArray形式である事を確認する。
 /// Array形式に違いない時にのみ使用する。
 /// Array形式でない時、panicして終了する。
-fn must_json_array_as_ref(json_value: &JsonValue) -> &json::Array {
+pub fn must_json_array_as_ref(json_value: &JsonValue) -> &json::Array {
     match json_value {
         JsonValue::Array(ref json_array) => json_array,
+        _ => panic!("error: このcaseにmatchすることは想定していない。")
+    }
+}
+
+pub fn must_json_array_as_ref_mut(json_value: &mut JsonValue) -> &mut json::Array {
+    match json_value {
+        JsonValue::Array(ref mut json_array) => json_array,
         _ => panic!("error: このcaseにmatchすることは想定していない。")
     }
 }
@@ -146,14 +153,14 @@ pub fn prepare_transaction(tx: &JsonValue, layout: &json::Array, network: &JsonV
     prepared_tx
 }
 
-pub fn parse_transaction(tx: &JsonValue, layout: &json::Array, catjson: &json::Array, network: &JsonValue) -> json::Array 
+pub fn parse_transaction(tx: &mut JsonValue, layout: &json::Array, catjson: &json::Array, network: &JsonValue) -> json::Array 
 {
     let mut parsed_tx = Vec::new();
     
     for layer in layout {
+
         let layer_type = layer["type"].to_string();
         let mut layer_disposition = "".to_string();
-        let mut tx_layer_name = tx[layer["name"].to_string()].clone();
 
         if layer.has_key("disposition") {
             layer_disposition = layer["disposition"].to_string();
@@ -177,14 +184,14 @@ pub fn parse_transaction(tx: &JsonValue, layout: &json::Array, catjson: &json::A
             let mut tx_layer = layer.clone();
 
             let mut items = Vec::new();
-            for e_tx in must_json_array_as_ref(&tx["transactions"]) {
+            for e_tx in must_json_array_as_ref_mut(&mut tx["transactions"]) {
 
-                let e_tx_map = e_tx;
+                let mut e_tx_map = e_tx;
                 let e_catjson = load_catjson(&e_tx_map, network);
                 let e_layout = load_layout(&e_tx_map, &e_catjson, true);
 
                 // 再帰処理
-                let e_prepared_tx = parse_transaction(&e_tx_map, &e_layout, &e_catjson, network);
+                let e_prepared_tx = parse_transaction(&mut e_tx_map, &e_layout, &e_catjson, network);
                 items.push(e_prepared_tx);
             }
             tx_layer["layout"] = items.into();
@@ -195,10 +202,10 @@ pub fn parse_transaction(tx: &JsonValue, layout: &json::Array, catjson: &json::A
             let mut tx_layer = layer.clone();
             let mut items = Vec::new();
 
-            for item in must_json_array_as_ref(&tx_layer_name) {
+            for item in must_json_array_as_ref_mut(&mut tx[layer["name"].to_string()]) {
                 let catjson_at_layer_type = catjson.iter().find(|x| x["name"].to_string() == layer_type).unwrap();
                 let catjson_layout = must_json_array_as_ref(&catjson_at_layer_type["layout"]);
-                let item_parsed_tx = parse_transaction(&item, &catjson_layout, catjson, network); // 再帰
+                let item_parsed_tx = parse_transaction(item, &catjson_layout, catjson, network); // 再帰
                 items.push(item_parsed_tx);
             }
 
@@ -207,11 +214,12 @@ pub fn parse_transaction(tx: &JsonValue, layout: &json::Array, catjson: &json::A
             continue;
         } else if layer_type == "UnresolvedAddress" {
             //アドレスに30個の0が続く場合はネームスペースとみなします。
-            if tx.has_key(&layer["name"].to_string()) && tx_layer_name.to_string().contains("000000000000000000000000000000") {
+            dbg!(&tx[layer["name"].to_string()]);
+            if tx.has_key(&layer["name"].to_string()) && tx[layer["name"].to_string()].is_string() && tx[layer["name"].to_string()].to_string().contains("000000000000000000000000000000") {
                 let cat_json_idx_value = catjson.iter().find(|x| x["name"].to_string() == "NetworkType").unwrap()["values"].clone();
                 let idx = must_json_array_as_ref(&cat_json_idx_value).iter().position(|x| x["name"].to_string() == tx["network"].to_string()).unwrap();
                 let prefix = format!("{:x}", must_json_array_as_ref(&cat_json_idx_value)[idx]["value"].as_u64().unwrap() + 1);
-                tx_layer_name = (prefix + &tx_layer_name.to_string()).into();
+                tx[layer["name"].to_string()] = (prefix + &tx[layer["name"].to_string()].to_string()).into();
             }
         } else if catitem["type"] == "enum" {
             if catitem["name"].to_string().contains("Flags") {
@@ -219,7 +227,7 @@ pub fn parse_transaction(tx: &JsonValue, layout: &json::Array, catjson: &json::A
                 match catitem["values"] {
                     JsonValue::Array(ref item_layers) => {
                         for item_layer in item_layers {
-                            if tx_layer_name.to_string().contains(&item_layer["name"].to_string()) {
+                            if tx[layer["name"].to_string()].to_string().contains(&item_layer["name"].to_string()) {
                                 value += item_layer["value"].as_u64().unwrap();
                             }
                         }
@@ -227,13 +235,14 @@ pub fn parse_transaction(tx: &JsonValue, layout: &json::Array, catjson: &json::A
                     _ => ()
                 }
                 catitem["value"] = value.into();
-            } else if layer_disposition.contains("array") {
+            } else if layer_disposition.to_string().contains("array") {
                 let mut values = Vec::new();
-                for item in must_json_array_as_ref(&tx_layer_name) {
-                    values.push(must_json_array_as_ref(&catitem["values"]).iter().find(|x| x["name"].to_string() == item.to_string()).unwrap().clone());
+                for item in must_json_array_as_ref(&tx[layer["name"].to_string()]) {
+                    values.push(must_json_array_as_ref(&catitem["values"]).iter().find(|x| x["name"].to_string() == item.to_string()).unwrap()["value"].clone());
                 }
+                tx[layer["name"].to_string()] = values.into();
             } else {
-                catitem["value"] = must_json_array_as_ref(&catitem["values"]).iter().find(|x| x["name"] == tx_layer_name).unwrap()["value"].clone();
+                catitem["value"] = must_json_array_as_ref(&catitem["values"]).iter().find(|x| x["name"] == tx[layer["name"].to_string()]).unwrap()["value"].clone();
             }
         }
         if layer_disposition.to_string().contains("array") {
@@ -248,7 +257,7 @@ pub fn parse_transaction(tx: &JsonValue, layout: &json::Array, catjson: &json::A
                         tx_layer["signedness"] = layer["element_disposition"]["signedness"].clone();
                         tx_layer["name"] = "element_disposition".clone().into();
                         tx_layer["size"] = layer["element_disposition"]["size"].clone();
-                        tx_layer["value"] = (&tx_layer_name.to_string())[i*2 .. i*2+2].into();
+                        tx_layer["value"] = (&tx[layer["name"].to_string()].to_string())[i*2 .. i*2+2].into();
                         tx_layer["type"] = layer_type.clone().into();
 
                         items.push(tx_layer);
@@ -259,8 +268,7 @@ pub fn parse_transaction(tx: &JsonValue, layout: &json::Array, catjson: &json::A
             } else if tx.has_key(&layer["name"].to_string()) {
                 let mut sub_layout = layer.clone();
                 let mut items = Vec::new();
-
-                let tx_items = must_json_array_as_ref(&tx_layer_name);
+                let tx_items = must_json_array_as_ref(&tx[layer["name"].to_string()]); //この辺
 
                 for tx_item in tx_items {
                     let mut tx_layer = catjson.iter().find(|x| x["name"].to_string() == layer_type).unwrap().clone();
@@ -275,7 +283,8 @@ pub fn parse_transaction(tx: &JsonValue, layout: &json::Array, catjson: &json::A
                                 catjson_name_networktype_values.iter().find(|x| x["name"] == tx["network"]).unwrap();
 
                             let prefix = format!("{:x}", catjson_name_networktype_values_name_network["value"].as_u64().unwrap() + 1);
-                            tx_layer["value"] = (prefix + &tx_layer_name.to_string()).into();
+                            tx_layer["value"] = (prefix + &tx_layer["value"].to_string()).into();
+                            dbg!(&tx_layer["value"]);
                         }
                     }
                     items.push(tx_layer);
@@ -295,7 +304,7 @@ pub fn parse_transaction(tx: &JsonValue, layout: &json::Array, catjson: &json::A
             }
 
             if tx.has_key(&layer["name"].to_string()) && catitem["type"] != "enum" {
-                tx_layer["value"] = tx_layer_name.clone()
+                tx_layer["value"] = tx[layer["name"].to_string()].clone()
             }
 
             parsed_tx.push(tx_layer);
@@ -441,8 +450,8 @@ pub fn hexlify_transaction(item: &JsonValue, alignment: usize) -> String{
                     if item["name"] == "element_disposition" {
                         payload = item_value.to_string();
                     } else {
-                        let hex_string = format!("{:02x}", u64::from_str(&item_value.to_string()).unwrap());
-                        payload = hex_string;
+                        let hex_string = &format!("{:02x}", i64::from_str(&item_value.to_string()).unwrap())[0..2];
+                        payload = hex_string.to_string();
                     }
                 } else if size == 2 || size == 4 || size == 8 {
                     let mut buf = "".to_string();
@@ -470,7 +479,7 @@ pub fn hexlify_transaction(item: &JsonValue, alignment: usize) -> String{
             }
         }
     }
-    payload
+    payload.to_lowercase()
 }
 
 pub fn get_verifiable_data(built_tx: &json::Array) -> json::Array {
@@ -482,7 +491,7 @@ pub fn get_verifiable_data(built_tx: &json::Array) -> json::Array {
     }
 }
 
-pub fn hash_transaction(signer: String, signature: String, built_tx: &json::Array, network: &JsonValue) -> String {
+pub fn hash_transaction(signer: &str, signature: &str, built_tx: &json::Array, network: &JsonValue) -> String {
     let mut hasher = Sha3_256::new();
     hasher.update(hex::decode(signature).unwrap());
     hasher.update(hex::decode(signer).unwrap());
@@ -493,9 +502,9 @@ pub fn hash_transaction(signer: String, signature: String, built_tx: &json::Arra
     tx_hash
 }
 
-pub fn updtae_transaction(built_tx: &json::Array, name: &str, type_string: &str, value: &str) -> json::Array {
+pub fn update_transaction(built_tx: &json::Array, name: &str, type_string: &str, value: &JsonValue) -> json::Array {
     let mut update_tx = built_tx.clone();
-    update_tx.iter_mut().find(|x| x["name"] == name).unwrap()[type_string] = value.into();
+    update_tx.iter_mut().find(|x| x["name"] == name).unwrap()[type_string] = value.clone();
     update_tx
 }
 
@@ -513,7 +522,7 @@ pub fn sign_transaction(built_tx: &json::Array, my_secret_key: &str, network: &J
     signature.to_string().to_lowercase()
 }
 
-pub fn cosign_transaction(tx_hash: String, my_secret_key: &str) -> String {
+pub fn cosign_transaction(tx_hash: &str, my_secret_key: &str) -> String {
     let tmp_sec_seed = hex::decode(my_secret_key).unwrap();
     let tmp_secret_key = SecretKey::from_bytes(&tmp_sec_seed).unwrap();
     let tmp_public_key = (&tmp_secret_key).into();
@@ -529,8 +538,48 @@ pub fn generate_address_id(address: &str) -> String {
     recipient_address
 }
 
-// pub fn generate_namespace_id() {
-//     let namespace_flag = 1u64 << 63;
-//     let hasher = Sha3_256::new();
+pub fn generate_namespace_id(name: &str, parent_namespace_id: u64) -> u64{
+    let namespace_flag = 1u64 << 63;
+    let mut hasher = Sha3_256::new();
+    let variant_1 = parent_namespace_id as u32;
+    hasher.update(variant_1.to_le_bytes());
 
-// }
+    let variant_2 = (parent_namespace_id >> 32) as u32;
+    hasher.update(variant_2.to_le_bytes());
+
+    hasher.update(name);
+    let digest = hasher.finalize();
+    let (head, _tail) = digest.split_at(8);
+    u64::from_le_bytes(head.try_into().unwrap()) | namespace_flag
+}
+
+pub fn convert_address_alias_id(namespace_id: u64) -> String{
+    hex::encode(namespace_id.to_le_bytes()) + "000000000000000000000000000000"
+}
+
+pub fn generate_mosaic_id(owner_address: String, nonce: u64) -> u64{
+    let namespace_flag = 1u64 << 63;
+    let mut hasher = Sha3_256::new();
+    let variant_1 = nonce as u32;
+    hasher.update(variant_1.to_le_bytes());
+
+    let hexed_string = hex::decode(owner_address).unwrap();
+    hasher.update(hexed_string);
+    let digest = hasher.finalize();
+    let (head, _tail) = digest.split_at(8);
+    let mut result = u64::from_le_bytes(head.try_into().unwrap()) | namespace_flag;
+
+    if result & namespace_flag > 0 { // 0bit目だけ見ても大丈夫かも
+        result -= namespace_flag;
+    }
+    result
+}
+
+pub fn generate_key(name: &str) -> u64 {
+    let namespace_flag = 1u64 << 63;
+    let mut hasher = Sha3_256::new();
+    hasher.update(name);
+    let digest = hasher.finalize();
+    let (head, _tail) = digest.split_at(8);
+    u64::from_le_bytes(head.try_into().unwrap()) | namespace_flag
+}
