@@ -31,6 +31,7 @@ pub fn load_catjson(tx: &JsonValue, network: &JsonValue) -> json::Array {
 /// 列挙型JsonValue内のArray形式である事を確認する。
 /// Array形式に違いない時にのみ使用する。
 /// Array形式でない時、panicして終了する。
+/// 返り値は共有参照であり、可変参照が必要な場合はmust_json_array_as_ref_mut()を使う。
 pub fn must_json_array_as_ref(json_value: &JsonValue) -> &json::Array {
     match json_value {
         JsonValue::Array(ref json_array) => json_array,
@@ -38,6 +39,10 @@ pub fn must_json_array_as_ref(json_value: &JsonValue) -> &json::Array {
     }
 }
 
+/// 列挙型JsonValue内のArray形式である事を確認する。
+/// Array形式に違いない時にのみ使用する。
+/// Array形式でない時、panicして終了する。
+/// 返り値は可変参照であり、共有参照で十分な場合はmust_json_array_as_ref()を使う。
 pub fn must_json_array_as_ref_mut(json_value: &mut JsonValue) -> &mut json::Array {
     match json_value {
         JsonValue::Array(ref mut json_array) => json_array,
@@ -268,7 +273,7 @@ pub fn parse_transaction(tx: &mut JsonValue, layout: &json::Array, catjson: &jso
             } else if tx.has_key(&layer["name"].to_string()) {
                 let mut sub_layout = layer.clone();
                 let mut items = Vec::new();
-                let tx_items = must_json_array_as_ref(&tx[layer["name"].to_string()]); //この辺
+                let tx_items = must_json_array_as_ref(&tx[layer["name"].to_string()]);
 
                 for tx_item in tx_items {
                     let mut tx_layer = catjson.iter().find(|x| x["name"].to_string() == layer_type).unwrap().clone();
@@ -313,7 +318,6 @@ pub fn parse_transaction(tx: &mut JsonValue, layout: &json::Array, catjson: &jso
     }
     let idx = parsed_tx.iter().position(|x| x["name"] == "size");
     match idx {
-        // TODO: cloneによる計算の無駄遣いを解消すべき
         Some(idx) => parsed_tx[idx]["value"] = count_size(&(parsed_tx.clone().into()), 0).into(),
         _ => ()
     }
@@ -459,18 +463,18 @@ pub fn hexlify_transaction(item: &JsonValue, alignment: usize) -> String{
                     let mut item_value_num = u64::from_str(&item_value.to_string()).unwrap();
                     // 256進数と見なし、数値(uint64)を文字列(hex)に変換する
                     while item_value_num / 256 >= 1 {
-                        let b = item_value_num % 256;
-                        buf += &format!("{:02x}", b);
+                        let tmp = item_value_num % 256;
+                        buf += &format!("{:02x}", tmp);
                         item_value_num /= 256;
                     }
-                    let b = item_value_num % 256;
-                    buf += &format!("{:02x}", b);
+                    let tmp = item_value_num % 256;
+                    buf += &format!("{:02x}", tmp);
 
                     // 足りない分は"00"で埋める
                     let len = buf.len() / 2;
                     assert!(len <= size);
-                    let d = size - len;
-                    payload = buf + &"00".repeat(d);
+                    let diff = size - len;
+                    payload = buf + &"00".repeat(diff);
                 } else if size == 24 || size == 32 || size == 64 {
                     payload = item_value.to_string();
                 } else {
@@ -569,7 +573,7 @@ pub fn generate_mosaic_id(owner_address: String, nonce: u64) -> u64{
     let (head, _tail) = digest.split_at(8);
     let mut result = u64::from_le_bytes(head.try_into().unwrap()) | namespace_flag;
 
-    if result & namespace_flag > 0 { // 0bit目だけ見ても大丈夫かも
+    if result & namespace_flag > 0 {
         result -= namespace_flag;
     }
     result
