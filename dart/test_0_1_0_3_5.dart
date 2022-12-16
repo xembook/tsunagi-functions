@@ -1265,7 +1265,7 @@ void main() {
 			expect(await getPayload(tx1), "aa00000000000000676b3b3db2b78c44a7b7ac90bcca2207596847316666f82ce36491f718712e9803f720f6a90e7e7d07eb5a2c106dca3b70f099549433174b98aa358624b3250a5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb0000000001985141a86100000000000000dd6d000000000076e65d50e5fbaf4d0000000000000000d72781051bb77297000000000000000001000000000000000001");
 		});
 
-		test('resolves global mosaic restriction transfer',  () async {
+		test('resolves global mosaic restriction transfer2',  () async {
 
 			var tx1 = {
 				"type":'MOSAIC_ADDRESS_RESTRICTION',
