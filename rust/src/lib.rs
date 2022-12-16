@@ -512,7 +512,7 @@ pub fn update_transaction(built_tx: &json::Array, name: &str, type_string: &str,
     update_tx
 }
 
-pub fn sign_transaction(built_tx: &json::Array, my_secret_key: &str, network: &JsonValue) -> String {
+pub fn sign_transaction(built_tx: &json::Array, my_secret_key: &str, network: &JsonValue) -> JsonValue {
     let tmp_sec_seed = hex::decode(my_secret_key).unwrap();
     let tmp_secret_key = SecretKey::from_bytes(&tmp_sec_seed).unwrap();
     let tmp_public_key = (&tmp_secret_key).into();
@@ -523,7 +523,7 @@ pub fn sign_transaction(built_tx: &json::Array, my_secret_key: &str, network: &J
     let verifiable_buffer = hex::decode(payload).unwrap();
     let signature = tmp_key_pair.sign(&verifiable_buffer);
 
-    signature.to_string().to_lowercase()
+    signature.to_string().to_lowercase().into()
 }
 
 pub fn cosign_transaction(tx_hash: &str, my_secret_key: &str) -> String {

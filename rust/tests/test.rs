@@ -35,9 +35,9 @@ fn get_payload(tx: &JsonValue) -> String {
     let parsed_tx = parse_transaction(&mut prepared_tx, &layout, &catjson, &network);
     let built_tx = build_transaction(&parsed_tx);
     let signature = sign_transaction(&built_tx, PRIVATE_KEY, &network);
-    let built_tx = update_transaction(&built_tx, "signature", "value", &signature.clone().into());
+    let built_tx = update_transaction(&built_tx, "signature", "value", &signature);
 
-    let _tx_hash = hash_transaction(&tx["signer_public_key"].to_string(), &signature, &built_tx, &network);
+    let _tx_hash = hash_transaction(&tx["signer_public_key"].to_string(), &signature.to_string(), &built_tx, &network);
     let payload = hexlify_transaction(&built_tx.into(), 0);
     payload
 }
@@ -888,10 +888,10 @@ use super::*;
 			let mut built_tx    = build_transaction(&parsed_tx); //TX構築
 
 			let signature = sign_transaction(&built_tx,PRIVATE_KEY,&get_network_info());
-			built_tx = update_transaction(&built_tx,"signature","value",&signature.clone().into());
+			built_tx = update_transaction(&built_tx,"signature","value",&signature);
 
 			//トランザクションハッシュ作成
-			let tx_hash = hash_transaction(&agg_tx["signer_public_key"].to_string(),&signature,&built_tx,&get_network_info());
+			let tx_hash = hash_transaction(&agg_tx["signer_public_key"].to_string(),&signature.to_string(),&built_tx,&get_network_info());
 
 			assert_eq!(cosign_transaction(&tx_hash,BOB_PRIVATE_KEY), "e4b39b5be018de8141b3b0df3ceb358a197ff70b8be8da99fc9246dd979e6285e3547d01744df5a306150e51f49846bab0b2aecabb4d13ef1f3d49c08478a708");
 		}	
@@ -1163,10 +1163,10 @@ use super::*;
 			let mut built_tx    = build_transaction(&parsed_tx); //TX構築
 
 			let signature = sign_transaction(&built_tx,PRIVATE_KEY,&get_network_info());
-			built_tx = update_transaction(&built_tx,"signature","value",&signature.clone().into());
+			built_tx = update_transaction(&built_tx,"signature","value",&signature);
 
 			//トランザクションハッシュ作成
-			let tx_hash = hash_transaction(&agg_tx["signer_public_key"].to_string(),&signature,&built_tx,&get_network_info());
+			let tx_hash = hash_transaction(&agg_tx["signer_public_key"].to_string(),&signature.to_string(),&built_tx,&get_network_info());
 
 			//連署
 			prepared_tx["cosignatures"][0]["signature"] = cosign_transaction(&tx_hash,BOB_PRIVATE_KEY).into();
@@ -1248,10 +1248,10 @@ use super::*;
 			let mut built_tx    = build_transaction(&parsed_tx); //TX構築
 
 			let signature = sign_transaction(&built_tx,PRIVATE_KEY,&get_network_info());
-			built_tx = update_transaction(&built_tx,"signature","value",&signature.clone().into());
+			built_tx = update_transaction(&built_tx,"signature","value",&signature);
 
 			//トランザクションハッシュ作成
-			let tx_hash = hash_transaction(&agg_tx["signer_public_key"].to_string(),&signature,&built_tx,&get_network_info());
+			let tx_hash = hash_transaction(&agg_tx["signer_public_key"].to_string(),&signature.to_string(),&built_tx,&get_network_info());
 
 			//連署
 			prepared_tx["cosignatures"][0]["signature"] = cosign_transaction(&tx_hash,CAROL_PRIVATE_KEY).into();
@@ -1500,10 +1500,10 @@ use super::*;
 			let mut built_tx    = build_transaction(&parsed_tx); //TX構築
 
 			let signature = sign_transaction(&built_tx,PRIVATE_KEY,&get_network_info());
-			built_tx = update_transaction(&built_tx,"signature","value",&signature.clone().into());
+			built_tx = update_transaction(&built_tx,"signature","value",&signature);
 
 			//トランザクションハッシュ作成
-			let tx_hash = hash_transaction(&agg_tx["signer_public_key"].to_string(),&signature,&built_tx,&get_network_info());
+			let tx_hash = hash_transaction(&agg_tx["signer_public_key"].to_string(),&signature.to_string(),&built_tx,&get_network_info());
 
 			//連署
 			prepared_tx["cosignatures"][0]["signature"] = cosign_transaction(&tx_hash,BOB_PRIVATE_KEY).into();
@@ -1938,9 +1938,9 @@ use super::*;
 			let mut built_tx    = build_transaction(&parsed_tx); //TX構築
 
 			let signature = sign_transaction(&built_tx,"22F0BA129FE0C66BA596D7127B85961BF8EEF32784364338BACB4E88D6F284D6",&get_network_info());
-			built_tx = update_transaction(&built_tx,"signature","value",&signature.clone().into());
+			built_tx = update_transaction(&built_tx,"signature","value",&signature);
 			//トランザクションハッシュ作成
-			let tx_hash = hash_transaction(&agg_tx["signer_public_key"].to_string(),&signature,&built_tx,&get_network_info());
+			let tx_hash = hash_transaction(&agg_tx["signer_public_key"].to_string(),&signature.to_string(),&built_tx,&get_network_info());
 
 			//連署
 			prepared_tx["cosignatures"][0]["signature"] = cosign_transaction(&tx_hash,"94ee0f4d7fe388ac4b04a6a6ae2ba969617879b83616e4d25710d688a89d80c7").into();
@@ -2017,10 +2017,10 @@ use super::*;
 			let mut built_tx    = build_transaction(&parsed_tx); //TX構築
 
 			let signature = sign_transaction(&built_tx,"94ee0f4d7fe388ac4b04a6a6ae2ba969617879b83616e4d25710d688a89d80c7",&get_network_info());
-			built_tx = update_transaction(&built_tx,"signature","value",&signature.clone().into());
+			built_tx = update_transaction(&built_tx,"signature","value",&signature);
 
 			//トランザクションハッシュ作成
-			let tx_hash = hash_transaction(&agg_tx["signer_public_key"].to_string(),&signature,&built_tx,&get_network_info());
+			let tx_hash = hash_transaction(&agg_tx["signer_public_key"].to_string(),&signature.to_string(),&built_tx,&get_network_info());
 
 			//連署
 			prepared_tx["cosignatures"][0]["signature"] = cosign_transaction(&tx_hash,"fa6373f4f497773c5cc55c103e348b139461d61fd4b45387e69d08a68000e06b").into();
