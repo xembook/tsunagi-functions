@@ -1,4 +1,3 @@
-
 use tsunagi_sdk::*;
 use json::{self, object, JsonValue};
 
@@ -52,28 +51,23 @@ const CAROL_PRIVATE_KEY: &str = "1e090b2a266877a9f88a510af2eb0945a63dc69dbce674c
 mod tsunagi_sdk_0_1 {
 use super::*;
 
-	
-
-	
-
-	
-
 	#[cfg(test)]
-mod function_unit_test {
-use super::*;
+	mod function_unit_test {
+		use super::*;
+		
 		#[test]
-fn test_load_catjson() {
+		fn test_load_catjson() {
 			let tx1 = object!{type:"TRANSFER"};
 			let catjson = load_catjson(&tx1,&get_network_info());
 			assert_eq!(catjson.iter().find(|&cj| cj["name"] == "TransferTransaction").unwrap()["layout"][1]["value"], "TRANSFER");
-	
+
 			let tx2 = object!{type:"AGGREGATE_COMPLETE"};
 			let catjson2 = load_catjson(&tx2,&get_network_info());
 			assert_eq!(catjson2.iter().find(|&cj| cj["name"] == "AggregateCompleteTransaction").unwrap()["layout"][1]["value"], "AGGREGATE_COMPLETE");
 		}	
 
 		#[test]
-fn test_load_layout() {
+		fn test_load_layout() {
 			let tx1 = object!{type:"TRANSFER"};
 
 			let catjson = load_catjson(&tx1,&get_network_info());
@@ -94,7 +88,7 @@ fn test_load_layout() {
 		}	
 
 		#[test]
-fn test_prepare_transaction() {
+		fn test_prepare_transaction() {
 			let tx1 = object!{
 				type:"TRANSFER",
 				name:"xembook",
@@ -138,7 +132,7 @@ fn test_prepare_transaction() {
 
 
 		#[test]
-fn test_parse_transaction() {
+		fn test_parse_transaction() {
 
 
 			let tx1 = object!{
@@ -216,7 +210,7 @@ fn test_parse_transaction() {
 
 
 		#[test]
-fn test_parse_transaction2() {
+		fn test_parse_transaction2() {
 
 			let tx1 = object!{
 				type:"TRANSFER",
@@ -264,7 +258,7 @@ fn test_parse_transaction2() {
 
 
 		#[test]
-fn test_parse_transaction3() {
+		fn test_parse_transaction3() {
 
 			let tx1 = object!{
 				type:"MULTISIG_ACCOUNT_MODIFICATION",
@@ -305,7 +299,7 @@ fn test_parse_transaction3() {
 		}	
 
 		#[test]
-fn test_parse_transaction4() {
+		fn test_parse_transaction4() {
 
 			let tx1 = object!{
 				type:"ACCOUNT_ADDRESS_RESTRICTION",
@@ -348,8 +342,7 @@ fn test_parse_transaction4() {
 
 
 		#[test]
-fn test_build_transaction() {
-			
+		fn test_build_transaction() {
 			let tx1 = object!{
 				type:"TRANSFER",
 				signer_public_key:"5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
@@ -368,7 +361,6 @@ fn test_build_transaction() {
 				deadline:get_deadline(&get_network_info()),
 				transactions:[tx1],
 			};
-
 			let catjson = load_catjson(&agg_tx,&get_network_info());
 			let layout = load_layout(&agg_tx,&catjson,false); //isEmbedded false
 
@@ -379,13 +371,10 @@ fn test_build_transaction() {
 			assert_eq!(built_tx[11]["value"], 144);
 			assert_eq!(built_tx[10]["value"], "a5b60f432c88daaf89d3154c5f1e6f7be3090c1af95ba0f21c308ecf119b2222");
 
-			
-
 		}	
 
 		#[test]
-fn test_build_transaction2() {
-			
+		fn test_build_transaction2() {
 			//Alice->Bob
 			let tx1 = object!{
 				type:"TRANSFER",
@@ -408,7 +397,6 @@ fn test_build_transaction2() {
 				],
 				message:"Hello Carol! This is Alice.",
 			};
-
 			let agg_tx = object!{
 				type:"AGGREGATE_COMPLETE",
 				signer_public_key:"5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
@@ -416,8 +404,6 @@ fn test_build_transaction2() {
 				deadline:get_deadline(&get_network_info()),
 				transactions:[tx1,tx2],
 			};
-
-
 			let catjson = load_catjson(&agg_tx,&get_network_info());
 			let layout = load_layout(&agg_tx,&catjson,false); //isEmbedded false
 
@@ -427,14 +413,10 @@ fn test_build_transaction2() {
 
 			assert_eq!(built_tx[11]["value"], 288);
 			assert_eq!(built_tx[10]["value"], "00de2f57a150d1073330b9d3273c651b675ed9ce2f200cac1d29717dffe6fe31");
-
-			
-
 		}	
 
 		#[test]
-fn test_build_transaction3() {
-			
+		fn test_build_transaction3() {
 			//Alice->Bob
 			let tx1 = object!{
 				type:"TRANSFER",
@@ -468,7 +450,6 @@ fn test_build_transaction3() {
 				],
 				message:"Hello Alice, This is Carol.",
 			};
-
 			let agg_tx = object!{
 				type:"AGGREGATE_COMPLETE",
 				signer_public_key:"5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
@@ -476,8 +457,6 @@ fn test_build_transaction3() {
 				deadline:get_deadline(&get_network_info()),
 				transactions:[tx1,tx2,tx3],
 			};
-
-
 			let catjson = load_catjson(&agg_tx,&get_network_info());
 			let layout = load_layout(&agg_tx,&catjson,false); //isEmbedded false
 
@@ -487,14 +466,10 @@ fn test_build_transaction3() {
 
 			assert_eq!(built_tx[11]["value"], 432);
 			assert_eq!(built_tx[10]["value"], "ae67220a53b24a241f2da951ba6cfe044aedc42a0afb5f2742c5a454e3c9c6e1");
-
-			
-
 		}	
 
 		#[test]
-fn test_get_verifiable_data() {
-			
+		fn test_get_verifiable_data() {
 			//Alice->Bob
 			let tx1 = object!{
 				type:"TRANSFER",
@@ -528,7 +503,6 @@ fn test_get_verifiable_data() {
 				],
 				message:"Hello Alice, This is Carol.",
 			};
-
 			let agg_tx = object!{
 				type:"AGGREGATE_COMPLETE",
 				signer_public_key:"5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
@@ -536,8 +510,6 @@ fn test_get_verifiable_data() {
 				deadline:get_deadline(&get_network_info()),
 				transactions:[tx1,tx2,tx3],
 			};
-
-
 			let catjson = load_catjson(&agg_tx,&get_network_info());
 			let layout = load_layout(&agg_tx,&catjson,false); //isEmbedded false
 
@@ -548,15 +520,12 @@ fn test_get_verifiable_data() {
 
 			assert_eq!(verifiable_data[0]["name"], "version");
 			assert_eq!(verifiable_data[5]["value"], "ae67220a53b24a241f2da951ba6cfe044aedc42a0afb5f2742c5a454e3c9c6e1");
-
-
 		}	
 
 
 
 		#[test]
-fn test_get_verifiable_data2() {
-			
+		fn test_get_verifiable_data2() {
 			let tx1 = object!{
 				type:"TRANSFER",
 				signer_public_key:"5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
@@ -569,8 +538,6 @@ fn test_get_verifiable_data2() {
 				],
 				message:"Hello Tsunagi(Catjson) SDK!",
 			};
-
-
 			let catjson = load_catjson(&tx1,&get_network_info());
 			let layout = load_layout(&tx1,&catjson,false); //isEmbedded false
 
@@ -581,12 +548,10 @@ fn test_get_verifiable_data2() {
 
 			assert_eq!(verifiable_data[0]["name"], "version");
 			assert_eq!(verifiable_data[11]["name"], "message");
-
 		}	
 
 		#[test]
-fn test_sign_transaction() {
-			
+		fn test_sign_transaction() {
 			let tx1 = object!{
 				type:"TRANSFER",
 				signer_public_key:"5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
@@ -599,8 +564,6 @@ fn test_sign_transaction() {
 				],
 				message:"Hello Tsunagi(Catjson) SDK!",
 			};
-
-
 			let catjson = load_catjson(&tx1,&get_network_info());
 			let layout = load_layout(&tx1,&catjson,false); //isEmbedded false
 
@@ -611,12 +574,10 @@ fn test_sign_transaction() {
 			let signature = sign_transaction(&built_tx,PRIVATE_KEY,&get_network_info());
 
 			assert_eq!(&signature, "478839283a58f4167d6f308e472c0a8e5ba410e8ac20b252af2102bfd955efc56d0250b80e07e83fecaff4d63be2f607823da0aadaa1ed13e96a75be8770780e");
-
 		}	
 
 		#[test]
-fn test_sign_transaction2() {
-			
+		fn test_sign_transaction2() {
 			//Alice->Bob
 			let tx1 = object!{
 				type:"TRANSFER",
@@ -628,7 +589,6 @@ fn test_sign_transaction2() {
 				],
 				message:"Hello Tsunagi(Catjson) SDK!",
 			};
-
 			let agg_tx = object!{
 				type:"AGGREGATE_COMPLETE",
 				signer_public_key:"5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
@@ -636,7 +596,6 @@ fn test_sign_transaction2() {
 				deadline:get_deadline(&get_network_info()),
 				transactions:[tx1],
 			};
-
 
 			let catjson = load_catjson(&agg_tx,&get_network_info());
 			let layout = load_layout(&agg_tx,&catjson,false); //isEmbedded false
@@ -650,8 +609,7 @@ fn test_sign_transaction2() {
 		}	
 
 		#[test]
-fn test_hexlify_transaction() {
-			
+		fn test_hexlify_transaction() {
 			let tx1 = object!{
 				type:"TRANSFER",
 				signer_public_key:"5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
@@ -662,7 +620,6 @@ fn test_hexlify_transaction() {
 				],
 				message:"Hello Tsunagi(Catjson) SDK!",
 			};
-
 			let agg_tx = object!{
 				type:"AGGREGATE_COMPLETE",
 				signer_public_key:"5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
@@ -682,8 +639,7 @@ fn test_hexlify_transaction() {
 		}	
 
 		#[test]
-fn test_hexlify_transaction2() {
-			
+		fn test_hexlify_transaction2() {
 			//Alice->Bob
 			let tx1 = object!{
 				type:"TRANSFER",
@@ -706,7 +662,6 @@ fn test_hexlify_transaction2() {
 				],
 				message:"Hello Carol! This is Alice.",
 			};
-
 			let agg_tx = object!{
 				type:"AGGREGATE_COMPLETE",
 				signer_public_key:"5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
@@ -714,7 +669,6 @@ fn test_hexlify_transaction2() {
 				deadline:get_deadline(&get_network_info()),
 				transactions:[tx1,tx2],
 			};
-
 
 			let catjson = load_catjson(&agg_tx,&get_network_info());
 			let layout = load_layout(&agg_tx,&catjson,false); //isEmbedded false
@@ -728,8 +682,7 @@ fn test_hexlify_transaction2() {
 
 
 		#[test]
-fn test_count_size() {
-			
+		fn test_count_size() {
 			let tx1 = object!{
 				type:"TRANSFER",
 				signer_public_key:"5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
@@ -740,7 +693,6 @@ fn test_count_size() {
 				],
 				message:"Hello Tsunagi(Catjson) SDK!",
 			};
-
 			let agg_tx = object!{
 				type:"AGGREGATE_COMPLETE",
 				signer_public_key:"5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
@@ -759,8 +711,7 @@ fn test_count_size() {
 		}	
 
 		#[test]
-fn test_count_size2() {
-			
+		fn test_count_size2() {
 			//Alice->Bob
 			let tx1 = object!{
 				type:"TRANSFER",
@@ -783,7 +734,6 @@ fn test_count_size2() {
 				],
 				message:"Hello Carol! This is Alice.",
 			};
-
 			let agg_tx = object!{
 				type:"AGGREGATE_COMPLETE",
 				signer_public_key:"5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
@@ -791,7 +741,6 @@ fn test_count_size2() {
 				deadline:get_deadline(&get_network_info()),
 				transactions:[tx1,tx2],
 			};
-
 
 			let catjson = load_catjson(&agg_tx,&get_network_info());
 			let layout = load_layout(&agg_tx,&catjson,false); //isEmbedded false
@@ -804,9 +753,7 @@ fn test_count_size2() {
 		}	
 
 		#[test]
-fn test_update_transaction() {
-			
-
+		fn test_update_transaction() {
 			//Alice->Bob
 			let tx1 = object!{
 				type:"TRANSFER",
@@ -876,9 +823,8 @@ fn test_update_transaction() {
 		}	
 
 		#[test]
-fn test_cosign_transaction() {
+		fn test_cosign_transaction() {
 			
-
 			//Alice->Bob
 			let tx1 = object!{
 				type:"TRANSFER",
@@ -947,12 +893,11 @@ fn test_cosign_transaction() {
 			//トランザクションハッシュ作成
 			let tx_hash = hash_transaction(&agg_tx["signer_public_key"].to_string(),&signature,&built_tx,&get_network_info());
 
-
 			assert_eq!(cosign_transaction(&tx_hash,BOB_PRIVATE_KEY), "e4b39b5be018de8141b3b0df3ceb358a197ff70b8be8da99fc9246dd979e6285e3547d01744df5a306150e51f49846bab0b2aecabb4d13ef1f3d49c08478a708");
 		}	
 
 		#[test]
-fn test_convert() {
+		fn test_convert() {
 			assert_eq!(generate_namespace_id("xembook", 0), 11832106220717372293u64);
 			assert_eq!(convert_address_alias_id(generate_namespace_id("xembook", 0)), "85738c26eb1534a4000000000000000000000000000000");
 			assert_eq!(generate_address_id("TBUXMJAYYW3EH3XHBZXSBVGVKXKZS4EH26TINKI"), "9869762418c5b643eee70e6f20d4d555d5997087d7a686a9");
@@ -960,18 +905,16 @@ fn test_convert() {
 
 			let nonce = 1700836761;
 			assert_eq!(generate_mosaic_id(generate_address_id("TBUXMJAYYW3EH3XHBZXSBVGVKXKZS4EH26TINKI"),nonce), 5597969824159229558u64);
-
 			assert_eq!(generate_key("key_account"), 10912986173756483543u64);
 		}	
 	}
 
 	#[cfg(test)]
-mod transfer_transaction {
-use super::*;
+	mod transfer_transaction {
+	use super::*;
 
 		#[test]
-fn test_resolves_2_mosaic_transfer() {
-
+		fn test_resolves_2_mosaic_transfer() {
 			//Alice->Bob
 			let tx1 = object!{
 				type:"TRANSFER",
@@ -985,15 +928,13 @@ fn test_resolves_2_mosaic_transfer() {
 				],
 				message:"Hello Tsunagi(Catjson) SDK!",
 			};
-
 			assert_eq!(&get_payload(&tx1), 
 				"dc000000000000001e1a289eef4550fe482ff5a073ba9b91bf38e8623e8767eb54eae5fd48dba354f662dce635ad299efb050cbf187c6b52674613d7e81bb58a4a662d2528d491005f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb0000000001985441a86100000000000000dd6d0000000000989df3aea3852feafc5fdfc2266eb84ed8a7fa242688a8b81c00020000000000c2347909f9b7092a0100000000000000c8b6532ddb16843a64000000000000000048656c6c6f205473756e616769284361746a736f6e292053444b21"
 			);
 		}
 
 		#[test]
-fn test_resolves_2_mosaic_transfer_by_namespace() {
-
+		fn test_resolves_2_mosaic_transfer_by_namespace() {
 			//Alice->Bob
 			let tx1 = object!{
 				type:"TRANSFER",
@@ -1008,7 +949,6 @@ fn test_resolves_2_mosaic_transfer_by_namespace() {
 				],
 				message:"Hello Tsunagi(Catjson) SDK!",
 			};
-
 			assert_eq!(&get_payload(&tx1), 
 				"dc00000000000000a1bcb56de796c45cd982e79748772cd9a616a084c95fc775a1d003b9f5f2dcbffa95e869e8a2d77873bbe3d26d5c2764e8299bded689037e4ede6095008cc2075f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb0000000001985441a86100000000000000dd6d00000000009985738c26eb1534a40000000000000000000000000000001c00020000000000eeaff441ba994be764000000000000003164838cd27f54fa01000000000000000048656c6c6f205473756e616769284361746a736f6e292053444b21"
 			);
@@ -1016,8 +956,7 @@ fn test_resolves_2_mosaic_transfer_by_namespace() {
 
 
 		#[test]
-fn test_resolves_opposite_mosaice_order() {
-
+		fn test_resolves_opposite_mosaice_order() {
 			//Alice->Bob
 			let tx1 = object!{
 				type:"TRANSFER",
@@ -1031,15 +970,13 @@ fn test_resolves_opposite_mosaice_order() {
 				],
 				message:"Hello Tsunagi(Catjson) SDK!",
 			};
-
 			assert_eq!(&get_payload(&tx1), 
 				"dc000000000000001e1a289eef4550fe482ff5a073ba9b91bf38e8623e8767eb54eae5fd48dba354f662dce635ad299efb050cbf187c6b52674613d7e81bb58a4a662d2528d491005f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb0000000001985441a86100000000000000dd6d0000000000989df3aea3852feafc5fdfc2266eb84ed8a7fa242688a8b81c00020000000000c2347909f9b7092a0100000000000000c8b6532ddb16843a64000000000000000048656c6c6f205473756e616769284361746a736f6e292053444b21"
 			);
 		}
 
 		#[test]
-fn test_resolves_0_byte_message() {
-
+		fn test_resolves_0_byte_message() {
 			//Alice->Bob
 			let tx1 = object!{
 				type:"TRANSFER",
@@ -1053,7 +990,6 @@ fn test_resolves_0_byte_message() {
 				],
 				message:"",
 			};
-
 			assert_eq!(&get_payload(&tx1), 
 				"c100000000000000c086746240315084735ebee633ff541056c5ba0f17c4d924a4b59c9531aa72243eaa7b76e5e0a9e32a15fb475be49a2f1ff1e380c763bcb2ab3ef5d83125b40d5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb0000000001985441a86100000000000000dd6d0000000000989df3aea3852feafc5fdfc2266eb84ed8a7fa242688a8b80100020000000000c2347909f9b7092a0100000000000000c8b6532ddb16843a640000000000000000"
 			);
@@ -1061,8 +997,7 @@ fn test_resolves_0_byte_message() {
 
 
 		#[test]
-fn test_resolves_undefined_message() {
-
+		fn test_resolves_undefined_message() {
 			//Alice->Bob
 			let tx1 = object!{
 				type:"TRANSFER",
@@ -1075,15 +1010,13 @@ fn test_resolves_undefined_message() {
 					{mosaic_id: 0x2A09B7F9097934C2u64, amount: 1u64},
 				],
 			};
-
 			assert_eq!(&get_payload(&tx1), 
 				"c000000000000000fee4646022be8647455bc876a8f7f303233d297a5755cd1eb41999ae6c8cca2f0225e2b93c4aa793c68657c230578dc3af26c3ef32acae96ea1ae10c438278055f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb0000000001985441a86100000000000000dd6d0000000000989df3aea3852feafc5fdfc2266eb84ed8a7fa242688a8b80000020000000000c2347909f9b7092a0100000000000000c8b6532ddb16843a6400000000000000"
 			);
 		}
 
 		#[test]
-fn test_resolves_null_mosaic_transfer() {
-
+		fn test_resolves_null_mosaic_transfer() {
 			//Alice->Bob
 			let tx1 = object!{
 				type:"TRANSFER",
@@ -1094,7 +1027,6 @@ fn test_resolves_null_mosaic_transfer() {
 				mosaics:[],
 				message:"Hello Tsunagi(Catjson) SDK!",
 			};
-
 			assert_eq!(&get_payload(&tx1), 
 				"bc00000000000000cd5b93e94f053a07a5a132d7f59708b6818d88840c150d6f6dc38a2ca2408fff0e7e3ee39599d1242a0e4a5869dec8a2847b05fb698fa39db2bf1c3bf46ce2005f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb0000000001985441a86100000000000000dd6d0000000000989df3aea3852feafc5fdfc2266eb84ed8a7fa242688a8b81c000000000000000048656c6c6f205473756e616769284361746a736f6e292053444b21"
 			);
@@ -1102,8 +1034,7 @@ fn test_resolves_null_mosaic_transfer() {
 
 
 		#[test]
-fn test_resolves_undefined_message_and_null_mosaic() {
-
+		fn test_resolves_undefined_message_and_null_mosaic() {
 			//Alice->Bob
 			let tx1 = object!{
 				type:"TRANSFER",
@@ -1113,15 +1044,13 @@ fn test_resolves_undefined_message_and_null_mosaic() {
 				recipient_address:generate_address_id("TCO7HLVDQUX6V7C737BCM3VYJ3MKP6REE2EKROA"),
 				mosaics:[],
 			};
-
 			assert_eq!(&get_payload(&tx1), 
 				"a0000000000000002c271a17d41832515a9ad0e995a524a4859a001436a990370c4b53eaa63677b4d69edde0831171a10defc157ea01f1d5528a562c423e38c725fc5b37af35ee055f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb0000000001985441a86100000000000000dd6d0000000000989df3aea3852feafc5fdfc2266eb84ed8a7fa242688a8b80000000000000000"
 			);
 		}
 
 		#[test]
-fn test_resolves_0_byte_message_and_null_mosaic() {
-
+		fn test_resolves_0_byte_message_and_null_mosaic() {
 			//Alice->Bob
 			let tx1 = object!{
 				type:"TRANSFER",
@@ -1132,7 +1061,6 @@ fn test_resolves_0_byte_message_and_null_mosaic() {
 				mosaics:[],
 				message:""
 			};
-
 			assert_eq!(&get_payload(&tx1), 
 				"a100000000000000786d46993afe584dd4e1fd2904d8eb0ea67e27ca3c7ef81fd208a6f27c1450807234093f9be03bbda0b02d96a69bd2766595ac4ab59fbc5119d247181b5596065f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb0000000001985441a86100000000000000dd6d0000000000989df3aea3852feafc5fdfc2266eb84ed8a7fa242688a8b8010000000000000000"
 			);
@@ -1143,12 +1071,11 @@ fn test_resolves_0_byte_message_and_null_mosaic() {
 
 
 	#[cfg(test)]
-mod aggregate_complete_transaction {
-use super::*;
+	mod aggregate_complete_transaction {
+	use super::*;
 
 		#[test]
-fn test_resolves_siimple_complete() {
-
+		fn test_resolves_siimple_complete() {
 			//Alice->Bob
 			let tx1 = object!{
 				type:"TRANSFER",
@@ -1160,7 +1087,6 @@ fn test_resolves_siimple_complete() {
 				],
 				message:"Hello Tsunagi(Catjson) SDK!",
 			};
-
 			let agg_tx = object!{
 				type:"AGGREGATE_COMPLETE",
 				signer_public_key:"5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
@@ -1172,13 +1098,11 @@ fn test_resolves_siimple_complete() {
 			assert_eq!(&get_payload(&agg_tx), 
 				"380100000000000048b5dad7211f0ff1aee442484bac4def33fe600b37a52a39966e61ed93e54ddcb3517a60471ba4fb37660e5abf164c1ac364bdc485da5cad00cd1b7282145b085f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb000000000198414140420f000000000000dd6d0000000000a5b60f432c88daaf89d3154c5f1e6f7be3090c1af95ba0f21c308ecf119b222290000000000000008c000000000000005f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb0000000001985441989df3aea3852feafc5fdfc2266eb84ed8a7fa242688a8b81c00020000000000c2347909f9b7092a0100000000000000c8b6532ddb16843a64000000000000000048656c6c6f205473756e616769284361746a736f6e292053444b2100000000"
 			);
-
 		}
 
 
 		#[test]
-fn test_resolves_3_account_transfer() {
-
+		fn test_resolves_3_account_transfer() {
 			//Alice->Bob
 			let tx1 = object!{
 				type:"TRANSFER",
@@ -1212,19 +1136,16 @@ fn test_resolves_3_account_transfer() {
 				],
 				message:"Hello Alice, This is Carol.",
 			};
-
 			let cosignature1 = object!{
 				version:0u64,
 				signer_public_key:"6199BAE3B241DF60418E258D046C22C8C1A5DE2F4F325753554E7FD9C650AFEC",
 				signature:"",
 			};
-
 			let cosignature2 = object!{
 				version:0u64,
 				signer_public_key:"886ADFBD4213576D63EA7E7A4BECE61C6933C27CD2FF36F85155C8FEBFB6EB4E",
 				signature:"",
 			};
-
 			let agg_tx = object!{
 				type:"AGGREGATE_COMPLETE",
 				signer_public_key:"5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
@@ -1247,7 +1168,6 @@ fn test_resolves_3_account_transfer() {
 			//トランザクションハッシュ作成
 			let tx_hash = hash_transaction(&agg_tx["signer_public_key"].to_string(),&signature,&built_tx,&get_network_info());
 
-
 			//連署
 			prepared_tx["cosignatures"][0]["signature"] = cosign_transaction(&tx_hash,BOB_PRIVATE_KEY).into();
 			prepared_tx["cosignatures"][1]["signature"] = cosign_transaction(&tx_hash,CAROL_PRIVATE_KEY).into();
@@ -1261,12 +1181,10 @@ fn test_resolves_3_account_transfer() {
 			assert_eq!(payload, 
 				"28030000000000006f2651ea4046cbb9eca41fd2e38c4868915cae2ba4d77d00fc91eb5b3d0be60e243bb13248bb26b766ceecfc5f3452f6e25612160d476000694cfe39d867e60c5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb000000000198414140420f000000000000dd6d0000000000ae67220a53b24a241f2da951ba6cfe044aedc42a0afb5f2742c5a454e3c9c6e1b0010000000000008c000000000000005f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb0000000001985441989df3aea3852feafc5fdfc2266eb84ed8a7fa242688a8b81c00020000000000c2347909f9b7092a0100000000000000c8b6532ddb16843a64000000000000000048656c6c6f205473756e616769284361746a736f6e292053444b21000000008a000000000000006199bae3b241df60418e258d046c22c8c1a5de2f4f325753554e7fd9c650afec000000000198544198f21158e0a83da8f125ca534bc2d75a233a2baac9cb1e821a00020000000000c2347909f9b7092a0100000000000000c8b6532ddb16843a64000000000000000048656c6c6f204361726f6c21205468697320697320426f622e0000000000008c00000000000000886adfbd4213576d63ea7e7a4bece61c6933c27cd2ff36f85155c8febfb6eb4e00000000019854419869762418c5b643eee70e6f20d4d555d5997087d7a686a91c00020000000000c2347909f9b7092a0100000000000000c8b6532ddb16843a64000000000000000048656c6c6f20416c6963652c2054686973206973204361726f6c2e0000000000000000000000006199bae3b241df60418e258d046c22c8c1a5de2f4f325753554e7fd9c650afece4b39b5be018de8141b3b0df3ceb358a197ff70b8be8da99fc9246dd979e6285e3547d01744df5a306150e51f49846bab0b2aecabb4d13ef1f3d49c08478a7080000000000000000886adfbd4213576d63ea7e7a4bece61c6933c27cd2ff36f85155c8febfb6eb4e4794f0617eae1f3f862c286c3e75494f0bb8009f8a8bccf8acb3ceb7719234f0282cdddab7bbc6adb8041788a8642729ec53ea8f6e107e8e2615ae592d44a60c"
 			);
-
 		}
 
 		#[test]
-fn test_resolves_opposite_cosignature() {
-
+		fn test_resolves_opposite_cosignature() {
 			//Alice->Bob
 			let tx1 = object!{
 				type:"TRANSFER",
@@ -1352,8 +1270,7 @@ fn test_resolves_opposite_cosignature() {
 		}
 
 		#[test]
-fn test_resolves_no_cosignature() {
-
+		fn test_resolves_no_cosignature() {
 			//Alice->Bob
 			let tx1 = object!{
 				type:"TRANSFER",
@@ -1393,8 +1310,7 @@ fn test_resolves_no_cosignature() {
 		}
 
 		#[test]
-fn test_resolves_undefined_cosignature() {
-
+		fn test_resolves_undefined_cosignature() {
 			//Alice->Bob
 			let tx1 = object!{
 				type:"TRANSFER",
@@ -1429,18 +1345,15 @@ fn test_resolves_undefined_cosignature() {
 			assert_eq!(&get_payload(&agg_tx), 
 				"c80100000000000083de0648e05d23036b302e5249554f6fc164917021d4cf07f1d19dfefaea34bfb8679fde237115d5ac3885ef4d4d76c16d4a930429970edbc1fb32a967d0d5025f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb000000000198414140420f000000000000dd6d000000000000de2f57a150d1073330b9d3273c651b675ed9ce2f200cac1d29717dffe6fe3120010000000000008c000000000000005f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb0000000001985441989df3aea3852feafc5fdfc2266eb84ed8a7fa242688a8b81c00020000000000c2347909f9b7092a0100000000000000c8b6532ddb16843a64000000000000000048656c6c6f205473756e616769284361746a736f6e292053444b21000000008c000000000000005f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb000000000198544198f21158e0a83da8f125ca534bc2d75a233a2baac9cb1e821c00020000000000c2347909f9b7092a0100000000000000c8b6532ddb16843a64000000000000000048656c6c6f204361726f6c21205468697320697320416c6963652e00000000"
 			);
-			
 		}
-
 	} // aggregate complete transaction
 
 	#[cfg(test)]
-mod aggregate_bonded_transaction {
-use super::*;
+	mod aggregate_bonded_transaction {
+	use super::*;
 
 		#[test]
-fn test_resolves_hash_lock() {
-
+		fn test_resolves_hash_lock() {
 			let tx1 = object!{
 				type:"HASH_LOCK",
 				signer_public_key:"5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
@@ -1451,7 +1364,6 @@ fn test_resolves_hash_lock() {
 				hash:"a3ed27ee26592f6c501349a7de3427fc729e8d625ed214a6331c11b981f59f78"
 
 			};
-
 			assert_eq!(&get_payload(&tx1), 
 				"b8000000000000008f0e4dc6dc42be7428219f820718d723803b0dde5455adec3f8ed1871318656ccd7fb4aab539ff722384b0cccf2d66603d5458a12ea01e12ffdd7bbbca9c5a0a5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb0000000001984841a86100000000000000dd6d0000000000c8b6532ddb16843a8096980000000000e001000000000000a3ed27ee26592f6c501349a7de3427fc729e8d625ed214a6331c11b981f59f78"
 			);
@@ -1459,8 +1371,7 @@ fn test_resolves_hash_lock() {
 
 
 		#[test]
-fn test_resolves_hash_lock_by_aggregate() {
-
+		fn test_resolves_hash_lock_by_aggregate() {
 			let tx1 = object!{
 				type:"HASH_LOCK",
 				signer_public_key:"5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
@@ -1469,7 +1380,6 @@ fn test_resolves_hash_lock_by_aggregate() {
 				hash:"4ecd6d1830d46f21d03906885a25c30d6df48418746105201a77dad65287985c"
 
 			};
-			
 			let agg_tx = object!{
 				type:"AGGREGATE_COMPLETE",
 				signer_public_key:"5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
@@ -1481,14 +1391,10 @@ fn test_resolves_hash_lock_by_aggregate() {
 			assert_eq!(&get_payload(&agg_tx), 
 				"1001000000000000c2941402f941376e3b58c9931c45cd768334fe6ac65e9b746fe484e8ec8067795f5ba4b895ff582395a5d74e8f79a861c6239495b3b38e6215d9d9eef699ac055f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb000000000198414140420f000000000000dd6d000000000064b515ba0d874c0e0db27687514491d0bb74969cb82b767dde37a0b330a9f3ee680000000000000068000000000000005f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb0000000001984841c8b6532ddb16843a8096980000000000e0010000000000004ecd6d1830d46f21d03906885a25c30d6df48418746105201a77dad65287985c"
 			);
-
-
 		}
 
 		#[test]
-fn test_resolves_3_account_transfer() {
-
-
+		fn test_resolves_3_account_transfer() {
 			//Alice->Bob
 			let tx1 = object!{
 				type:"TRANSFER",
@@ -1523,7 +1429,6 @@ fn test_resolves_3_account_transfer() {
 				message:"Hello Alice, This is Carol.",
 			};
 
-
 			let agg_tx = object!{
 				type:"AGGREGATE_BONDED",
 				signer_public_key:"5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
@@ -1531,18 +1436,13 @@ fn test_resolves_3_account_transfer() {
 				deadline:get_deadline(&get_network_info()),
 				transactions:[tx1,tx2,tx3],
 			};
-
 			assert_eq!(&get_payload(&agg_tx), 
 				"5802000000000000ffd1ebcc029c4997d904586292aa1aab8c87e992cd736c074d639419aeae7adc82ce4782f1276f2504b0c4548777dd48616754205c7741af5b2a248f89b4c4035f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb000000000198414240420f000000000000dd6d0000000000ae67220a53b24a241f2da951ba6cfe044aedc42a0afb5f2742c5a454e3c9c6e1b0010000000000008c000000000000005f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb0000000001985441989df3aea3852feafc5fdfc2266eb84ed8a7fa242688a8b81c00020000000000c2347909f9b7092a0100000000000000c8b6532ddb16843a64000000000000000048656c6c6f205473756e616769284361746a736f6e292053444b21000000008a000000000000006199bae3b241df60418e258d046c22c8c1a5de2f4f325753554e7fd9c650afec000000000198544198f21158e0a83da8f125ca534bc2d75a233a2baac9cb1e821a00020000000000c2347909f9b7092a0100000000000000c8b6532ddb16843a64000000000000000048656c6c6f204361726f6c21205468697320697320426f622e0000000000008c00000000000000886adfbd4213576d63ea7e7a4bece61c6933c27cd2ff36f85155c8febfb6eb4e00000000019854419869762418c5b643eee70e6f20d4d555d5997087d7a686a91c00020000000000c2347909f9b7092a0100000000000000c8b6532ddb16843a64000000000000000048656c6c6f20416c6963652c2054686973206973204361726f6c2e00000000"
 			);
-
 		}
 
-
 		#[test]
-fn test_resolves_3_account_transfer_partial_complete() {
-
-
+		fn test_resolves_3_account_transfer_partial_complete() {
 			//Alice->Bob
 			let tx1 = object!{
 				type:"TRANSFER",
@@ -1605,7 +1505,6 @@ fn test_resolves_3_account_transfer_partial_complete() {
 			//トランザクションハッシュ作成
 			let tx_hash = hash_transaction(&agg_tx["signer_public_key"].to_string(),&signature,&built_tx,&get_network_info());
 
-
 			//連署
 			prepared_tx["cosignatures"][0]["signature"] = cosign_transaction(&tx_hash,BOB_PRIVATE_KEY).into();
 
@@ -1613,9 +1512,7 @@ fn test_resolves_3_account_transfer_partial_complete() {
 			let parsed_cosignatures = parse_transaction(&mut prepared_tx,&vec![cosignatures_layout],&catjson,&get_network_info()); //構築
 			built_tx = update_transaction(&built_tx,"cosignatures","layout",&parsed_cosignatures[0]["layout"]);
 
-
 			let payload = hexlify_transaction(&built_tx.into(), 0);
-			
 			
 			assert_eq!(payload, 
 				"c002000000000000ffd1ebcc029c4997d904586292aa1aab8c87e992cd736c074d639419aeae7adc82ce4782f1276f2504b0c4548777dd48616754205c7741af5b2a248f89b4c4035f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb000000000198414240420f000000000000dd6d0000000000ae67220a53b24a241f2da951ba6cfe044aedc42a0afb5f2742c5a454e3c9c6e1b0010000000000008c000000000000005f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb0000000001985441989df3aea3852feafc5fdfc2266eb84ed8a7fa242688a8b81c00020000000000c2347909f9b7092a0100000000000000c8b6532ddb16843a64000000000000000048656c6c6f205473756e616769284361746a736f6e292053444b21000000008a000000000000006199bae3b241df60418e258d046c22c8c1a5de2f4f325753554e7fd9c650afec000000000198544198f21158e0a83da8f125ca534bc2d75a233a2baac9cb1e821a00020000000000c2347909f9b7092a0100000000000000c8b6532ddb16843a64000000000000000048656c6c6f204361726f6c21205468697320697320426f622e0000000000008c00000000000000886adfbd4213576d63ea7e7a4bece61c6933c27cd2ff36f85155c8febfb6eb4e00000000019854419869762418c5b643eee70e6f20d4d555d5997087d7a686a91c00020000000000c2347909f9b7092a0100000000000000c8b6532ddb16843a64000000000000000048656c6c6f20416c6963652c2054686973206973204361726f6c2e0000000000000000000000006199bae3b241df60418e258d046c22c8c1a5de2f4f325753554e7fd9c650afecbdde1c296d3e2e82bb1ae878586f832aa59080290b0f095f7e8d73921b6d2f67742e4588795f41b652500fdc1230ce4f45d2099fe37e182ebbe0f86121336e03"
@@ -1627,12 +1524,12 @@ fn test_resolves_3_account_transfer_partial_complete() {
 
 
 	#[cfg(test)]
-mod mosaic_transaction {
-use super::*;
+	mod mosaic_transaction {
+	use super::*;
 
 		//Failure_Mosaic_Modification_Disallowed
 		#[test]
-fn test_resolves_mosaic_definition() {
+		fn test_resolves_mosaic_definition() {
 			let nonce = 1700836761;
 			let tx1 = object!{
 				type:"MOSAIC_DEFINITION",
@@ -1652,7 +1549,7 @@ fn test_resolves_mosaic_definition() {
 		}
 
 		#[test]
-fn test_resolves_mosaic_supply_change() {
+		fn test_resolves_mosaic_supply_change() {
 			let nonce = 1700836761;
 			let tx1 = object!{
 				type: "MOSAIC_SUPPLY_CHANGE",
@@ -1670,7 +1567,7 @@ fn test_resolves_mosaic_supply_change() {
 		}
 
 		#[test]
-fn test_resolves_aggregate_mosaic_definition_and_supply_change() {
+		fn test_resolves_aggregate_mosaic_definition_and_supply_change() {
 
 			//buffer.Buffer.from(nonce.nonce).read_u_int32_le();
 			//buffer.Buffer.from(new Uint32_array([699275411]).buffer).to_string("hex");
@@ -1714,11 +1611,11 @@ fn test_resolves_aggregate_mosaic_definition_and_supply_change() {
 	}
 
 	#[cfg(test)]
-mod namespace_transaction {
-use super::*;
+	mod namespace_transaction {
+	use super::*;
 
 		#[test]
-fn test_resolves_root_namespace_regisration() {
+		fn test_resolves_root_namespace_regisration() {
 
 			let tx1 = object!{
 				type:"NAMESPACE_REGISTRATION",
@@ -1737,7 +1634,7 @@ fn test_resolves_root_namespace_regisration() {
 		}
 
 		#[test]
-fn test_resolves_sub_namespace_regisration() {
+		fn test_resolves_sub_namespace_regisration() {
 
 			let tx1 = object!{
 				type:"NAMESPACE_REGISTRATION",
@@ -1756,7 +1653,7 @@ fn test_resolves_sub_namespace_regisration() {
 		}
 
 		#[test]
-fn test_resolves_address_alias() {
+		fn test_resolves_address_alias() {
 
 			let tx1 = object!{
 				type:"ADDRESS_ALIAS",
@@ -1774,7 +1671,7 @@ fn test_resolves_address_alias() {
 		}
 
 		#[test]
-fn test_resolves_mosaic_alias() {
+		fn test_resolves_mosaic_alias() {
 
 			let tx1 = object!{
 				type:"MOSAIC_ALIAS",
@@ -1792,7 +1689,7 @@ fn test_resolves_mosaic_alias() {
 		}
 
 		#[test]
-fn test_resolves_namespace_by_aggregate() {
+		fn test_resolves_namespace_by_aggregate() {
 
 			let tx1 = object!{
 				type:"NAMESPACE_REGISTRATION",
@@ -1844,11 +1741,11 @@ fn test_resolves_namespace_by_aggregate() {
 	}
 	
 	#[cfg(test)]
-mod metadata_transaction {
-use super::*;
+	mod metadata_transaction {
+	use super::*;
 
 		#[test]
-fn test_resolves_account_metadata() {
+		fn test_resolves_account_metadata() {
 
 			let tx1 = object!{
 				type:"ACCOUNT_METADATA",
@@ -1873,7 +1770,7 @@ fn test_resolves_account_metadata() {
 		}
 
 		#[test]
-fn test_resolves_account_metadata_without_aggregate() {
+		fn test_resolves_account_metadata_without_aggregate() {
 			//ResourceNotFound
 
 			let tx1 = object!{
@@ -1894,7 +1791,7 @@ fn test_resolves_account_metadata_without_aggregate() {
 
 
 		#[test]
-fn test_resolves_mosaic_metadata() {
+		fn test_resolves_mosaic_metadata() {
 
 			let tx1 = object!{
 				type:"MOSAIC_METADATA",
@@ -1922,7 +1819,7 @@ fn test_resolves_mosaic_metadata() {
 		}
 
 		#[test]
-fn test_resolves_mosaic_metadata_without_aggregate() {
+		fn test_resolves_mosaic_metadata_without_aggregate() {
 			//ResourceNotFound
 
 			let tx1 = object!{
@@ -1943,7 +1840,7 @@ fn test_resolves_mosaic_metadata_without_aggregate() {
 		}
 
 		#[test]
-fn test_resolves_namespace_metadata() {
+		fn test_resolves_namespace_metadata() {
 
 			let tx1 = object!{
 				type:"NAMESPACE_METADATA",
@@ -1971,7 +1868,7 @@ fn test_resolves_namespace_metadata() {
 		}
 
 		#[test]
-fn test_resolves_namespace_metadata_without_aggregate() {
+		fn test_resolves_namespace_metadata_without_aggregate() {
 			//ResourceNotFound
 
 			let tx1 = object!{
@@ -1994,13 +1891,12 @@ fn test_resolves_namespace_metadata_without_aggregate() {
 	}
 
 	#[cfg(test)]
-mod multisig_transaction {
-use super::*;
+	mod multisig_transaction {
+	use super::*;
 	
 
 		#[test]
-fn test_resolves_multisig_account_modification_address_additions() {
-
+		fn test_resolves_multisig_account_modification_address_additions() {
 			let tx1 = object!{
 				type:"MULTISIG_ACCOUNT_MODIFICATION",
 				signer_public_key:"66ADB706BC9A93E6E803B2B76A1341A8ACD98690EF204B402643AE3D4701EE77",
@@ -2063,7 +1959,7 @@ fn test_resolves_multisig_account_modification_address_additions() {
 		}
 
 		#[test]
-fn test_resolves_multisig_account_modification_change_delta() {
+		fn test_resolves_multisig_account_modification_change_delta() {
 
 			let tx1 = object!{
 				type:"MULTISIG_ACCOUNT_MODIFICATION",
@@ -2086,7 +1982,7 @@ fn test_resolves_multisig_account_modification_change_delta() {
 		}
 
 		#[test]
-fn test_resolves_multisig_account_modification_address_deletions() {
+		fn test_resolves_multisig_account_modification_address_deletions() {
 
 			let tx1 = object!{
 				type:"MULTISIG_ACCOUNT_MODIFICATION",
@@ -2104,8 +2000,6 @@ fn test_resolves_multisig_account_modification_address_deletions() {
 				signer_public_key:"6199BAE3B241DF60418E258D046C22C8C1A5DE2F4F325753554E7FD9C650AFEC",
 				signature:"",
 			};
-
-
 			let agg_tx = object!{
 				type:"AGGREGATE_COMPLETE",
 				signer_public_key:"5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
@@ -2137,7 +2031,6 @@ fn test_resolves_multisig_account_modification_address_deletions() {
 
 			let payload = hexlify_transaction(&built_tx.into(), 0);
 			
-			
 			assert_eq!(payload, 
 				"6001000000000000a119633807603dffcfa86a981b4e31d97f6d21a024470139aeee0400ea748695943486743bf3fa3c6edf6207b47afbdfec3b086b8560e9ba3460f43a70391c0e5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb000000000198414140420f000000000000dd6d0000000000317c15bcbe4d9edadca95ed3fbeabe47fe41e749fbc120e9b83abf57083163745000000000000000500000000000000066adb706bc9a93e6e803b2b76a1341a8acd98690ef204b402643ae3d4701ee770000000001985541ffff000100000000989df3aea3852feafc5fdfc2266eb84ed8a7fa242688a8b800000000000000006199bae3b241df60418e258d046c22c8c1a5de2f4f325753554e7fd9c650afeccf75de4350bbfd1a8f4e7fb3c42e7c50725a9403ca5234fb71268c5eb6691734007a5fe0f8cc14a93011e76a6477e0e8ae1d7a0f9607e4deed709d1a3937c309"
 			);
@@ -2145,8 +2038,7 @@ fn test_resolves_multisig_account_modification_address_deletions() {
 
 
 		#[test]
-fn test_resolves_multisig_account_modification_address_deletions_2() {
-
+		fn test_resolves_multisig_account_modification_address_deletions_2() {
 			let tx1 = object!{
 				type:"MULTISIG_ACCOUNT_MODIFICATION",
 				signer_public_key:"66ADB706BC9A93E6E803B2B76A1341A8ACD98690EF204B402643AE3D4701EE77",
@@ -2172,12 +2064,12 @@ fn test_resolves_multisig_account_modification_address_deletions_2() {
 	}
 
 	#[cfg(test)]
-mod account_restriction_transaction {
-use super::*;
+	mod account_restriction_transaction {
+	use super::*;
 	
 	
 		#[test]
-fn test_resolves_2_address_restriction_additions_transfer() {
+		fn test_resolves_2_address_restriction_additions_transfer() {
 
 			let tx1 = object!{
 				type:"ACCOUNT_ADDRESS_RESTRICTION",
@@ -2195,7 +2087,7 @@ fn test_resolves_2_address_restriction_additions_transfer() {
 		}
 
 		#[test]
-fn test_resolves_2_address_restriction_additions_by_namespace() {
+		fn test_resolves_2_address_restriction_additions_by_namespace() {
 
 			let tx1 = object!{
 				type:"ACCOUNT_ADDRESS_RESTRICTION",
@@ -2219,7 +2111,7 @@ fn test_resolves_2_address_restriction_additions_by_namespace() {
 
 
 		#[test]
-fn test_resolves_2_address_restriction_deletions_transfer() {
+		fn test_resolves_2_address_restriction_deletions_transfer() {
 
 			let tx1 = object!{
 				type:"ACCOUNT_ADDRESS_RESTRICTION",
@@ -2237,7 +2129,7 @@ fn test_resolves_2_address_restriction_deletions_transfer() {
 		}
 
 		#[test]
-fn test_resolves_2_mosaic_restriction_additions_transfer() {
+		fn test_resolves_2_mosaic_restriction_additions_transfer() {
 
 			let tx1 = object!{
 				type:"ACCOUNT_MOSAIC_RESTRICTION",
@@ -2255,7 +2147,7 @@ fn test_resolves_2_mosaic_restriction_additions_transfer() {
 		}
 
 		#[test]
-fn test_resolves_2_mosaic_restriction_deletions_transfer() {
+		fn test_resolves_2_mosaic_restriction_deletions_transfer() {
 
 			let tx1 = object!{
 				type:"ACCOUNT_MOSAIC_RESTRICTION",
@@ -2273,7 +2165,7 @@ fn test_resolves_2_mosaic_restriction_deletions_transfer() {
 		}
 	
 		#[test]
-fn test_resolves_2_operation_restriction_additions_transfer() {
+		fn test_resolves_2_operation_restriction_additions_transfer() {
 
 			let tx1 = object!{
 				type:"ACCOUNT_OPERATION_RESTRICTION",
@@ -2291,7 +2183,7 @@ fn test_resolves_2_operation_restriction_additions_transfer() {
 		}
 	
 		#[test]
-fn test_resolves_2_operation_restriction_deletions_transfer() {
+		fn test_resolves_2_operation_restriction_deletions_transfer() {
 
 			let tx1 = object!{
 				type:"ACCOUNT_OPERATION_RESTRICTION",
@@ -2310,11 +2202,11 @@ fn test_resolves_2_operation_restriction_deletions_transfer() {
 	}
 
 	#[cfg(test)]
-mod global_mosaic_restriction_transaction {
-use super::*;
+	mod global_mosaic_restriction_transaction {
+	use super::*;
 	
 		#[test]
-fn test_resolves_global_mosaic_restriction_transfer() {
+		fn test_resolves_global_mosaic_restriction_transfer() {
 
 			let tx1 = object!{
 				type:"MOSAIC_GLOBAL_RESTRICTION",
@@ -2336,7 +2228,7 @@ fn test_resolves_global_mosaic_restriction_transfer() {
 		}
 
 		#[test]
-fn test_resolves_global_mosaic_restriction_transfer_1() {
+		fn test_resolves_global_mosaic_restriction_transfer_1() {
 
 			let tx1 = object!{
 				type:"MOSAIC_ADDRESS_RESTRICTION",
@@ -2361,11 +2253,11 @@ fn test_resolves_global_mosaic_restriction_transfer_1() {
 	}
 
 	#[cfg(test)]
-mod mosaic_supply_revocation_transaction {
-use super::*;
+	mod mosaic_supply_revocation_transaction {
+	use super::*;
 	
 		#[test]
-fn test_resolves_mosaic_supply_revocation_2() {
+		fn test_resolves_mosaic_supply_revocation_2() {
 
 			let tx1 = object!{
 				type:"MOSAIC_SUPPLY_REVOCATION",
@@ -2380,17 +2272,14 @@ fn test_resolves_mosaic_supply_revocation_2() {
 				"a800000000000000fd67cc1e3962d068da002cc79531e8972575a771cddf8b9317492bc1022dfc80944540bfca1aba09c44aedf56aef5a7c00eb7f569ef7f94a7f0dad46eebcb70a5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb0000000001984d43a86100000000000000dd6d00000000009869762418c5b643eee70e6f20d4d555d5997087d7a686a99d58bdf55ebc52056400000000000000"
 			);
 		}
-
-	
 	}
 
 	#[cfg(test)]
-mod secret_lock_proof_transaction {
-use super::*;
+	mod secret_lock_proof_transaction {
+	use super::*;
 	
 		#[test]
-fn test_resolves_secret_lock() {
-
+		fn test_resolves_secret_lock() {
 			let tx1 = object!{
 				type:"SECRET_LOCK",
 				signer_public_key:"5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
@@ -2407,12 +2296,10 @@ fn test_resolves_secret_lock() {
 			assert_eq!(&get_payload(&tx1), 
 				"d1000000000000000117860215bbc73d6ab56fa39f5ae1495ff55ad76104c3371701de042d6a0865bfb551ece7549abf636d60d443d690beee087f9417290b65da230abf280039085f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb0000000001985241a86100000000000000dd6d00000000009869762418c5b643eee70e6f20d4d555d5997087d7a686a9f260bfb53478f163ee61ee3e5fb7cfcaf7f0b663bc9dd4c537b958d4ce00e240c8b6532ddb16843a8096980000000000e00100000000000000"
 			);
-
 		}
 
 		#[test]
-fn test_resolves_secret_proof() {
-
+		fn test_resolves_secret_proof() {
 			let tx1 = object!{
 				type:"SECRET_PROOF",
 				signer_public_key:"5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
@@ -2427,12 +2314,11 @@ fn test_resolves_secret_proof() {
 			assert_eq!(&get_payload(&tx1), 
 				"cf000000000000008a17b7e88005e436580b8b500bf01da70fb22906065590412c458f31094a11c4fee2b08cc1025f40642f96285ffa54bb1a88c4cf373f11b6c240ce146b41a4055f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb0000000001985242a86100000000000000dd6d00000000009869762418c5b643eee70e6f20d4d555d5997087d7a686a9f260bfb53478f163ee61ee3e5fb7cfcaf7f0b663bc9dd4c537b958d4ce00e2401400007944496ac0f572173c2549baf9ac18f893aab6d0"
 			);
-
 		}
 
 
 		#[test]
-fn test_resolves_secret_lock_with_aggregate() {
+		fn test_resolves_secret_lock_with_aggregate() {
 
 			let tx1 = object!{
 				type:"SECRET_LOCK",
@@ -2459,7 +2345,7 @@ fn test_resolves_secret_lock_with_aggregate() {
 
 
 		#[test]
-fn test_resolves_secret_proof_with_aggregate() {
+		fn test_resolves_secret_proof_with_aggregate() {
 
 			let tx1 = object!{
 				type:"SECRET_PROOF",
@@ -2469,7 +2355,6 @@ fn test_resolves_secret_proof_with_aggregate() {
 				hash_algorithm:"SHA3_256",
 				proof:"d91a8258175a6213225bd4ec240f1971c8742dca"
 			};
-
 
 			let agg_tx = object!{
 				type:"AGGREGATE_COMPLETE",
@@ -2485,7 +2370,7 @@ fn test_resolves_secret_proof_with_aggregate() {
 		}
 
 		#[test]
-fn test_resolves_secret_lock_by_namespace() {
+		fn test_resolves_secret_lock_by_namespace() {
 
 			let tx1 = object!{
 				type:"SECRET_LOCK",
@@ -2507,8 +2392,7 @@ fn test_resolves_secret_lock_by_namespace() {
 		}
 
 		#[test]
-fn test_resolves_secret_proof_by_namespace() {
-
+		fn test_resolves_secret_proof_by_namespace() {
 			let tx1 = object!{
 				type:"SECRET_PROOF",
 				signer_public_key:"5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
@@ -2523,9 +2407,6 @@ fn test_resolves_secret_proof_by_namespace() {
 			assert_eq!(&get_payload(&tx1), 
 				"cf0000000000000043d7a84b4c20435ffdd50644a2a0eaaed667326975d8af93015013899f5b4741f92d66ea7b2d23ad57fb5cd8d71344ffe34dd9654dbc58d9a447aaab70814d0b5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb0000000001985242a86100000000000000dd6d00000000009985738c26eb1534a4000000000000000000000000000000760b4407e82970bc86f5a3063b445c0cfec35c6720cbf1f8b5ca643d51bb5a00140000336b7e682903606a2fef4c91d83c4af7da3e7486"
 			);
-
 		}
-
 	}
-
 }//symbol-sdk
