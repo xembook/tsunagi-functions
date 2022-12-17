@@ -6,7 +6,7 @@ import re
 
 # tsunagi-sdk/rustディレクトリにて実行する事を想定
 # 相対パスにて管理
-SRC_TEST_FILE = "../test-0.1.html"
+SRC_TEST_FILE = "../test-0.1.0.3.5.html"
 OUT_TEST_FILE = "./tests/a.rs"
 
 header = '''
@@ -75,6 +75,8 @@ replace_and_convert_tasks = (
     ("\)[\n\t ]*.toEqual\(", ", "),
     ("([a-z0-9]+[A-Z]+[a-zA-Z0-9]+)\(", r"\1("),
     ("this\.([a-zA-Z]*rivateKey)", r"\1"),
+    # ("(aggTx", r"\1"),
+    # ("(preparedTx)", r"\1"),
 )
 
 replace_tasks = (
