@@ -1,4 +1,4 @@
-use tsunagi_sdk::*;
+use tsunagi_sdk::v0_1::*;
 use json::{self, object, JsonValue};
 
 fn get_network_info() -> JsonValue {
