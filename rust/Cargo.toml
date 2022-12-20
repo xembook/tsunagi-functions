@@ -9,6 +9,8 @@ license = "MIT"
 readme = "README.md"
 keywords = ["Symbol"]
 
+repository = "https://github.com/xembook/tsunagi-sdk"
+
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
