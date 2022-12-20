@@ -1,6 +1,6 @@
 ## Example
 
-Example of get_payload() function implementation.
+Example of obtaining "payload".
 ```rust
 use tsunagi_sdk::v0_1::*;
 use json::object;
