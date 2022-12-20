@@ -18,7 +18,8 @@ JsonValueを用いて、両方に対応した。
 * JsonValueを辞書型として扱う場合は dict["key"] のようにアクセスする。
 * JsonValueを配列型として扱う場合は、match文で JsonValue::Array である事を確認してからでないといけない。
 * JsonValueでない型をJsonValueに変換するには .into() を多用した。
-* JsonValueのkeyにはString型を使用する必要がある。
+* JsonValueを文字列と比較する時などは暗黙的に型変換を行ってくれるが、
+  keyとして使用するときなどは明示的に型変換を行う必要がある。
 * JsonValueのhas_key()メソッドとcontains()メソッド、さらにString型のcontains()メソッドをそれぞれ使用する必要があり、混乱した。これによるエラーは実行時に期待値と比較するまで気づくことができないため、問題個所を見つけづらい。
 * &str型とString型の違いによるエラーが多発した。&strからStringへは .to_string() で変換可能。逆は、&を付けるだけで変換可能。
 * 他には、純粋にRustの所有権が難しかった。
