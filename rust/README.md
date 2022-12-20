@@ -51,7 +51,7 @@ fn main() {
     let signature = sign_transaction(&built_tx, private_key, &network);
     // トランザクションの更新
     let built_tx = update_transaction(&built_tx, "signature", "value", &signature);
-    
+
     //ペイロード出力
     let payload = hexlify_transaction(&built_tx.into(), 0);
     // payloadを任意の方法でJson形式でSymbolネットワークへ送信してください。
@@ -64,6 +64,3 @@ fn main() {
 ```
 
 Check the "tests" directory for details.
-
-## Terms
-* 
