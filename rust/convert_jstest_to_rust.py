@@ -10,7 +10,7 @@ SRC_TEST_FILE = "../test-0.1.0.3.5.html"
 OUT_TEST_FILE = "./tests/a.rs"
 
 header = '''
-use tsunagi_sdk::*;
+use tsunagi_sdk::?::*;
 use json::{self, object, JsonValue};
 
 fn get_network_info() -> JsonValue {
@@ -42,20 +42,20 @@ fn get_payload(tx: &JsonValue) -> String {
     let network = get_network_info();
     let catjson = load_catjson(&tx, &network);
     let layout = load_layout(&tx, &catjson, false);
-    let prepared_tx = prepare_transaction(&tx, &layout, &network);
-    let parsed_tx = parse_transaction(&prepared_tx, &layout, &catjson, &network);
+    let mut prepared_tx = prepare_transaction(&tx, &layout, &network);
+    let parsed_tx = parse_transaction(&mut prepared_tx, &layout, &catjson, &network);
     let built_tx = build_transaction(&parsed_tx);
-    let signature = sign_transaction(&built_tx, private_key, &network);
+    let signature = sign_transaction(&built_tx, PRIVATE_KEY, &network);
     let built_tx = update_transaction(&built_tx, "signature", "value", &signature);
 
-    let _tx_hash = hash_transaction(&tx["signer_public_key"].to_string(), &signature, &built_tx, &network);
+    let _tx_hash = hash_transaction(&tx["signer_public_key"].to_string(), &signature.to_string(), &built_tx, &network);
     let payload = hexlify_transaction(&built_tx.into(), 0);
     payload
 }
 
-const private_key: &str = "94ee0f4d7fe388ac4b04a6a6ae2ba969617879b83616e4d25710d688a89d80c7";
-const bob_private_key: &str = "fa6373f4f497773c5cc55c103e348b139461d61fd4b45387e69d08a68000e06b";
-const carol_private_key: &str = "1e090b2a266877a9f88a510af2eb0945a63dc69dbce674ccd83272717d4175cf";
+const PRIVATE_KEY: &str = "94ee0f4d7fe388ac4b04a6a6ae2ba969617879b83616e4d25710d688a89d80c7";
+const BOB_PRIVATE_KEY: &str = "fa6373f4f497773c5cc55c103e348b139461d61fd4b45387e69d08a68000e06b";
+const CAROL_PRIVATE_KEY: &str = "1e090b2a266877a9f88a510af2eb0945a63dc69dbce674ccd83272717d4175cf";
 \n
 '''
 
@@ -75,8 +75,7 @@ replace_and_convert_tasks = (
     ("\)[\n\t ]*.toEqual\(", ", "),
     ("([a-z0-9]+[A-Z]+[a-zA-Z0-9]+)\(", r"\1("),
     ("this\.([a-zA-Z]*rivateKey)", r"\1"),
-    # ("(aggTx", r"\1"),
-    # ("(preparedTx)", r"\1"),
+
 )
 
 replace_tasks = (
@@ -116,10 +115,21 @@ replace_tasks = (
     ("([0-9])n", r"\1u64"),
     ("(0x[0-9A-F]+)n", r"\1u64"),
     ("(cosign_transaction\([^;]+);", r"\1.into();"),
-    ("\[cosignaturesLayout\]", r"must_json_array_as_ref(cosignaturesLayout)"),
     ("(aggTx\[\"signer_public_key\"\])", r"&\1.to_string()"),
-    ("(parsedCosignatures\[0\]\[\"layout\"\])", r"&\1.to_string()"),
     ("(txHash,)", r"&\1"),
+    ("aggTx", r"agg_tx"),
+    ("parseTx", r"parse_tx"),
+    ("builtTx", r"built_tx"),
+    ("txHash", r"tx_hash"),
+    ("private_key", r"PRIVATE_KEY"),
+    ("bob_", r"BOB_"),
+    ("carol_", r"CAROL_"),
+    ("aggTx", r"agg_tx"),
+    ("preparedTx", r"prepared_tx"),
+    ("parsedTx", r"parsed_tx"),
+    ("cosignaturesLayout", r"cosignatures_layout"),
+    ("parsedCosignatures", r"parsed_cosignatures"),
+    ("&prepared_tx", r"&mut prepared_tx"),
 )
 
 
