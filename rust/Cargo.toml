@@ -1,7 +1,13 @@
 [package]
+authors = ["XEMBook", "Yoshizawa Shogo <shogo.yoshizawa.2000@gmail.com>"]
+description = "This is a bridge until a de facto standard SDK is available."
+
 name = "tsunagi_sdk"
 version = "0.1.0"
 edition = "2021"
+license = "MIT"
+readme = "README.md"
+keywords = ["Symbol"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
