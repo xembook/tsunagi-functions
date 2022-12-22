@@ -1,12 +1,7 @@
-## Example
-
-Example of obtaining "payload".
-```rust
-use tsunagi_sdk::v0_1::*; // tsunagi_sdkの関数群をインポート
+use tsunagi_sdk::v0_1::*;
 use json::object;
 
 fn main() {
-    // network情報を定義
     let network = object!{
         version:1,
         network:"TESTNET",
@@ -22,9 +17,7 @@ fn main() {
             "https://sym-test.opening-line.jp:3001",
         ]
     };
-    // 自分の秘密鍵
     let private_key: &str = "94ee0f4d7fe388ac4b04a6a6ae2ba969617879b83616e4d25710d688a89d80c7";
-    // トランザクションを定義
     let tx = object!{
         type:"TRANSFER",
         signer_public_key:"5f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb",
@@ -37,22 +30,14 @@ fn main() {
         ],
         message:"Hello Tsunagi(Catjson) SDK!",
     };
-    // catjsonの取得
     let catjson = load_catjson(&tx, &network);
-    // トランザクションレイアウトの取得
     let layout = load_layout(&tx, &catjson, false);
-    // トランザクションの事前準備
     let mut prepared_tx = prepare_transaction(&tx, &layout, &network);
-    // レイアウトの解析とトランザクションデータの注入
     let parsed_tx = parse_transaction(&mut prepared_tx, &layout, &catjson, &network);
-    // トランザクションの構築
     let built_tx = build_transaction(&parsed_tx);
-    // 署名
     let signature = sign_transaction(&built_tx, private_key, &network);
-    // トランザクションの更新
     let built_tx = update_transaction(&built_tx, "signature", "value", &signature);
-
-    //ペイロード出力
+    
     let payload = hexlify_transaction(&built_tx.into(), 0);
     // payloadを任意の方法でJson形式でSymbolネットワークへ送信してください。
     // Send the payload to the Symbol network in Json format in any way you wish.
@@ -61,6 +46,3 @@ fn main() {
         "dc000000000000001e1a289eef4550fe482ff5a073ba9b91bf38e8623e8767eb54eae5fd48dba354f662dce635ad299efb050cbf187c6b52674613d7e81bb58a4a662d2528d491005f594dfc018578662e0b5a2f5f83ecfb1cda2b32e29ff1d9b2c5e7325c4cf7cb0000000001985441a86100000000000000dd6d0000000000989df3aea3852feafc5fdfc2266eb84ed8a7fa242688a8b81c00020000000000c2347909f9b7092a0100000000000000c8b6532ddb16843a64000000000000000048656c6c6f205473756e616769284361746a736f6e292053444b21"
     );
 }
-```
-
-Check the "tests" directory for details.
