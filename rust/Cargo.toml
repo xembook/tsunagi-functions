@@ -3,7 +3,7 @@ authors = ["XEMBook <xembook81@gmail.com>", "Yoshizawa Shogo <shogo.yoshizawa.20
 description = "This is a bridge until a de facto standard SDK is available."
 
 name = "tsunagi_functions"
-version = "0.1.0.1"
+version = "0.1.1"
 edition = "2021"
 license = "MIT"
 readme = "README.md"
