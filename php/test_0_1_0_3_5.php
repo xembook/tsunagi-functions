@@ -43,12 +43,7 @@ class test_0_1_0_3_5 extends \PHPUnit\Framework\TestCase {
 			"currencyNamespaceId" => 0xE74B99BA41F4AFEE,
 			"currencyDivisibility" => 6,
 			"epochAdjustment" => 1667250467,
-			"catjasonBase" => "https://xembook.github.io/tsunagi-sdk/catjson/0.1.0.3.4/",
-			"wellknownNodes" => [
-				"https://sym-test.opening-line.jp:3001",
-				"https://sym-test.opening-line.jp:3001",
-				"https://sym-test.opening-line.jp:3001",
-			]
+			"catjasonBase" => "https://xembook.github.io/tsunagi-functions/catjson/0.1.0.3.4/"
 		];
 
 		$now = $this->network["epochAdjustment"] * 1000;

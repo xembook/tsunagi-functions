@@ -19,7 +19,7 @@ void main() {
 		"network":'TESTNET',
 		"generationHash":'7fccd304802016bebbcd342a332f91ff1f3bb5e902988b352697be245f48e836',
 		"epochAdjustment":1637848847,
-		"catjasonBase":"https://xembook.github.io/tsunagi-sdk/catjson/",
+		"catjasonBase":"https://xembook.github.io/tsunagi-functions/catjson/",
 	};
 
 //	var now = (new DateTime.now().millisecondsSinceEpoch / 1000).floor();

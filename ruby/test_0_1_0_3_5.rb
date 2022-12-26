@@ -18,7 +18,7 @@ class TestTsunagi < Test::Unit::TestCase
 			"network" => "TESTNET",
 			"generationHash" => "49d6e1ce276a85b70eafe52349aacca389302e7a9754bcf1221e79494fc665a4",
 			"epochAdjustment" => 1667250467,
-			"catjasonBase" => "https://xembook.github.io/tsunagi-sdk/catjson/0.1.0.3.4/",
+			"catjasonBase" => "https://xembook.github.io/tsunagi-functions/catjson/0.1.0.3.4/",
 		};
 		return network
 
