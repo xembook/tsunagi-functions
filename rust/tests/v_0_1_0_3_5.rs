@@ -1,4 +1,4 @@
-use tsunagi_sdk::v0_1_0_3_5::*;
+use tsunagi_functions::v0_1_0_3_5::*;
 use json::{self, object, JsonValue};
 
 fn get_network_info() -> JsonValue {
@@ -9,7 +9,7 @@ fn get_network_info() -> JsonValue {
 		currencyNamespaceId:0xE74B99BA41F4AFEEu64,
 		currencyDivisibility:6,
 		epochAdjustment:1667250467,
-		catjasonBase:"https://xembook.github.io/tsunagi-sdk/catjson/0.1.0.3.4/",
+		catjasonBase:"https://xembook.github.io/tsunagi-functions/catjson/0.1.0.3.4/",
 		wellknownNodes:[
 			"https://d-testnet.d-world.fun:3001",
 		]
@@ -44,7 +44,7 @@ const CAROL_PRIVATE_KEY: &str = "1e090b2a266877a9f88a510af2eb0945a63dc69dbce674c
 
 
 #[cfg(test)]
-mod tsunagi_sdk_0_1_0_3_5 {
+mod tsunagi_functions_0_1_0_3_5 {
     use super::*;
 
 	#[cfg(test)]

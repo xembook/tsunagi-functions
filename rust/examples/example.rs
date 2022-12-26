@@ -1,4 +1,4 @@
-use tsunagi_sdk::v0_1::*;
+use tsunagi_functions::v0_1::*;
 use json::object;
 
 fn main() {
@@ -11,11 +11,6 @@ fn main() {
         currencyDivisibility:6,
         epochAdjustment:1637848847,
         catjasonBase:"https://xembook.github.io/tsunagi-sdk/catjson/",
-        wellknownNodes:[
-            "https://sym-test.opening-line.jp:3001",
-            "https://sym-test.opening-line.jp:3001",
-            "https://sym-test.opening-line.jp:3001",
-        ]
     };
     let private_key: &str = "94ee0f4d7fe388ac4b04a6a6ae2ba969617879b83616e4d25710d688a89d80c7";
     let tx = object!{
