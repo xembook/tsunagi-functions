@@ -2,7 +2,7 @@
 
 Example of obtaining "payload".
 ```rust
-use tsunagi_sdk::v0_1::*; // tsunagi_sdkの関数群をインポート
+use tsunagi_functions::v0_1::*; // tsunagi_sdkの関数群をインポート
 use json::object;
 
 fn main() {
@@ -15,12 +15,7 @@ fn main() {
         currencyNamespaceId:0xE74B99BA41F4AFEEu64,
         currencyDivisibility:6,
         epochAdjustment:1637848847,
-        catjasonBase:"https://xembook.github.io/tsunagi-sdk/catjson/",
-        wellknownNodes:[
-            "https://sym-test.opening-line.jp:3001",
-            "https://sym-test.opening-line.jp:3001",
-            "https://sym-test.opening-line.jp:3001",
-        ]
+        catjasonBase:"https://xembook.github.io/tsunagi-functions/catjson/"
     };
     // 自分の秘密鍵
     let private_key: &str = "94ee0f4d7fe388ac4b04a6a6ae2ba969617879b83616e4d25710d688a89d80c7";
