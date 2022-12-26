@@ -10,7 +10,7 @@ fn main() {
         currencyNamespaceId:0xE74B99BA41F4AFEEu64,
         currencyDivisibility:6,
         epochAdjustment:1637848847,
-        catjasonBase:"https://xembook.github.io/tsunagi-sdk/catjson/",
+        catjasonBase:"https://xembook.github.io/tsunagi-functions/catjson/",
     };
     let private_key: &str = "94ee0f4d7fe388ac4b04a6a6ae2ba969617879b83616e4d25710d688a89d80c7";
     let tx = object!{
